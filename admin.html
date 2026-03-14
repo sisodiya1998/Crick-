@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart 11 - Admin Master Panel</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --bg: #0f172a; --card: #1e293b; --primary: #3b82f6; --success: #10b981; --warning: #f59e0b; --danger: #ef4444; --text: #f8fafc; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .admin-container { width: 100%; max-width: 600px; }
+        .section { background: var(--card); padding: 20px; border-radius: 15px; margin-bottom: 20px; border: 1px solid #334155; }
+        input, select { width: 100%; padding: 12px; margin-bottom: 12px; background: #0f172a; border: 1px solid #334155; color: white; border-radius: 8px; box-sizing: border-box; }
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 10px; text-transform: uppercase; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-success { background: var(--success); color: white; }
+        .btn-warning { background: var(--warning); color: black; }
+        .btn-danger { background: var(--danger); color: white; }
+        .task-card { background: #334155; padding: 15px; border-radius: 10px; margin-top: 10px; border-left: 5px solid var(--primary); }
+        h2, h3 { margin-top: 0; color: var(--warning); }
+        #auth-screen { text-align: center; margin-top: 100px; }
+    </style>
+</head>
+<body>
+
+    <div id="auth-screen" class="admin-container">
+        <h1>🔐 Admin Access</h1>
+        <input type="password" id="adminPass" placeholder="Enter Secret Password">
+        <button class="btn btn-primary" onclick="checkPass()">Unlock Panel</button>
+    </div>
+
+    <div id="main-admin" class="admin-container" style="display: none;">
+        <h2>Master Control</h2>
+
+        <div class="section">
+            <h3>1. Pool Settings</h3>
+            <label>Current Mega Pool Entry Fee (₹):</label>
+            <input type="number" id="newPoolFee" placeholder="New Entry Fee">
+            <button class="btn btn-primary" onclick="updatePoolFee()">Update Price</button>
+        </div>
+
+        <div class="section">
+            <h3>2. Push Live Prediction</h3>
+            <input type="text" id="admQ" placeholder="Sawal: Rohit 50 Runs?">
+            <input type="number" id="admWin" placeholder="Winning Prize (₹)">
+            <button class="btn btn-warning" onclick="pushQuestion()">Push to Users</button>
+        </div>
+
+        <div class="section" style="border-color: var(--success);">
+            <h3>3. Settle & Pay Winners</h3>
+            <div id="settle-area">No active question.</div>
+        </div>
+
+        <div class="section">
+            <h3>4. Pending Requests</h3>
+            <button class="btn btn-success" onclick="loadTasks()">Refresh Requests</button>
+            <div id="tasks-container"></div>
+        </div>
+    </div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+    import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, where, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBfSfeiOmyBSyYBTV87OKH6IqFU0YXemw0",
+        authDomain: "ayur-620e7.firebaseapp.com",
+        projectId: "ayur-620e7",
+        storageBucket: "ayur-620e7.firebasestorage.app",
+        messagingSenderId: "732502202884",
+        appId: "1:732502202884:web:3863c7d829b54d79743351"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // 1. Password Protection (Set your password here)
+    window.checkPass = () => {
+        const pass = document.getElementById('adminPass').value;
+        if(pass === "123456") { // APNA PASSWORD YAHAN BADLEIN
+            document.getElementById('auth-screen').style.display = 'none';
+            document.getElementById('main-admin').style.display = 'block';
+            listenGame();
+        } else { alert("Galat Password!"); }
+    };
+
+    // 2. Update Pool Price
+    window.updatePoolFee = async () => {
+        const fee = parseInt(document.getElementById('newPoolFee').value);
+        if(!fee) return;
+        await setDoc(doc(db, "settings", "pool_config"), { entryFee: fee });
+        alert("Mega Pool Price Updated!");
+    };
+
+    // 3. Push Live Question
+    window.pushQuestion = async () => {
+        const q = document.getElementById('admQ').value;
+        const w = parseInt(document.getElementById('admWin').value);
+        if(!q || !w) return;
+        await setDoc(doc(db, "live_game", "current"), { question: q, win: w });
+        alert("Question is now Live!");
+    };
+
+    // 4. Listen & Settle In-Play
+    function listenGame() {
+        onSnapshot(doc(db, "live_game", "current"), (snap) => {
+            const area = document.getElementById('settle-area');
+            if(snap.exists()) {
+                const d = snap.data();
+                area.innerHTML = `
+                    <p><b>Q:</b> ${d.question}</p>
+                    <button class="btn btn-success" onclick="settle('YES')">YES IS RIGHT</button>
+                    <button class="btn btn-danger" onclick="settle('NO')">NO IS RIGHT</button>
+                `;
+            } else { area.innerHTML = "No active game."; }
+        });
+    }
+
+    window.settle = async (right) => {
+        if(!confirm(`Settle game as ${right}? Winners will be paid.`)) return;
+        const qSnap = await getDoc(doc(db, "live_game", "current"));
+        const prize = qSnap.data().win;
+        
+        const winners = await getDocs(query(collection(db, "live_entries"), where("choice", "==", right)));
+        for (const w of winners.docs) {
+            const userRef = doc(db, "users", w.data().uid);
+            const userSnap = await getDoc(userRef);
+            await updateDoc(userRef, { walletBalance: userSnap.data().walletBalance + prize });
+            await deleteDoc(doc(db, "live_entries", w.id));
+        }
+
+        const all = await getDocs(collection(db, "live_entries"));
+        for (const e of all.docs) { await deleteDoc(doc(db, "live_entries", e.id)); }
+        await deleteDoc(doc(db, "live_game", "current"));
+        alert("Winners Paid & Game Cleared!");
+    };
+
+    // 5. Load Payment/Withdrawal Tasks
+    window.loadTasks = async () => {
+        const container = document.getElementById('tasks-container');
+        container.innerHTML = "Loading...";
+        const snap = await getDocs(query(collection(db, "requests"), where("status", "==", "Pending")));
+        container.innerHTML = "";
+        snap.forEach(d => {
+            const data = d.data();
+            const card = document.createElement('div');
+            card.className = "task-card";
+            card.style.borderLeftColor = data.type === "ADD" ? "var(--success)" : "var(--danger)";
+            card.innerHTML = `
+                <p><b>Type:</b> ${data.type} | <b>Amt:</b> ₹${data.amt}</p>
+                <p><b>Details:</b> ${data.utr || data.upi}</p>
+                <button class="btn btn-success" style="padding:5px; font-size:12px;" onclick="approveTask('${d.id}', '${data.uid}', ${data.amt}, '${data.type}')">Approve Request</button>
+            `;
+            container.appendChild(card);
+        });
+    };
+
+    window.approveTask = async (id, uid, amt, type) => {
+        if(!confirm("Approve this transaction?")) return;
+        if(type === "ADD") {
+            const userRef = doc(db, "users", uid);
+            const userSnap = await getDoc(userRef);
+            await updateDoc(userRef, { walletBalance: (userSnap.data().walletBalance || 0) + amt });
+        }
+        await updateDoc(doc(db, "requests", id), { status: "Done" });
+        alert("Approved!"); loadTasks();
+    };
+</script>
+</body>
+</html>
+
