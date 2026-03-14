@@ -1,171 +1,645 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart 11 - Admin Master Panel</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        :root { --bg: #0f172a; --card: #1e293b; --primary: #3b82f6; --success: #10b981; --warning: #f59e0b; --danger: #ef4444; --text: #f8fafc; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        .admin-container { width: 100%; max-width: 600px; }
-        .section { background: var(--card); padding: 20px; border-radius: 15px; margin-bottom: 20px; border: 1px solid #334155; }
-        input, select { width: 100%; padding: 12px; margin-bottom: 12px; background: #0f172a; border: 1px solid #334155; color: white; border-radius: 8px; box-sizing: border-box; }
-        .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 10px; text-transform: uppercase; }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-success { background: var(--success); color: white; }
-        .btn-warning { background: var(--warning); color: black; }
-        .btn-danger { background: var(--danger); color: white; }
-        .task-card { background: #334155; padding: 15px; border-radius: 10px; margin-top: 10px; border-left: 5px solid var(--primary); }
-        h2, h3 { margin-top: 0; color: var(--warning); }
-        #auth-screen { text-align: center; margin-top: 100px; }
-    </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Smart11 – Admin Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#080c18;
+  --bg2:#0d1426;
+  --bg3:#111827;
+  --sidebar:#0a0e1a;
+  --card:rgba(255,255,255,0.04);
+  --card-border:rgba(0,212,255,0.15);
+  --neon:#00d4ff;
+  --neon2:#0099bb;
+  --gold:#ffd700;
+  --green:#00ff9d;
+  --red:#ff4757;
+  --orange:#ff8c00;
+  --text:#e8f4f8;
+  --text2:#8899aa;
+  --radius:14px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh;display:flex}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{background:var(--neon2);border-radius:2px}
+
+/* SIDEBAR */
+.sidebar{width:220px;min-height:100vh;background:var(--sidebar);border-right:1px solid var(--card-border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:50;transition:transform .3s}
+.sidebar-logo{padding:24px 20px;border-bottom:1px solid var(--card-border)}
+.sidebar-logo h1{font-family:'Orbitron',sans-serif;font-size:1.3rem;font-weight:900;background:linear-gradient(135deg,var(--neon),#fff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:3px}
+.sidebar-logo p{color:var(--red);font-size:0.7rem;letter-spacing:2px;margin-top:2px}
+.sidebar-nav{flex:1;padding:16px 0;overflow-y:auto}
+.nav-section{padding:8px 16px 4px;font-size:0.65rem;color:var(--text2);letter-spacing:2px;text-transform:uppercase}
+.nav-link{display:flex;align-items:center;gap:12px;padding:11px 20px;color:var(--text2);cursor:pointer;transition:all .3s;border-left:3px solid transparent;font-size:0.9rem;font-weight:600;letter-spacing:1px}
+.nav-link:hover{color:var(--text);background:rgba(0,212,255,0.04)}
+.nav-link.active{color:var(--neon);border-left-color:var(--neon);background:rgba(0,212,255,0.06)}
+.nav-link .icon{font-size:1.1rem;width:22px;text-align:center}
+.badge{background:var(--red);color:#fff;font-size:0.65rem;padding:1px 6px;border-radius:10px;font-weight:700}
+
+/* MAIN */
+.main{margin-left:220px;flex:1;min-height:100vh;overflow-x:hidden}
+.topbar{background:rgba(8,12,24,0.98);border-bottom:1px solid var(--card-border);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:40;backdrop-filter:blur(20px)}
+.topbar h2{font-family:'Orbitron',sans-serif;font-size:1rem;font-weight:700;color:var(--text);letter-spacing:2px}
+.admin-badge{background:rgba(255,71,87,0.15);border:1px solid rgba(255,71,87,0.3);color:#ff4757;padding:5px 14px;border-radius:20px;font-size:0.78rem;font-weight:600;letter-spacing:1px}
+
+/* SECTIONS */
+.section{display:none;padding:24px}
+.section.active{display:block}
+
+/* STAT CARDS */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px}
+.stat-card{background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);padding:20px;position:relative;overflow:hidden;transition:all .3s}
+.stat-card:hover{border-color:rgba(0,212,255,0.3);transform:translateY(-2px)}
+.stat-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(to right,var(--neon),var(--neon2))}
+.stat-val{font-family:'Orbitron',sans-serif;font-size:2rem;font-weight:900;color:var(--neon);margin-bottom:4px}
+.stat-label{font-size:0.8rem;color:var(--text2);letter-spacing:1px;text-transform:uppercase}
+.stat-icon{position:absolute;top:16px;right:16px;font-size:2rem;opacity:0.2}
+
+/* TABLES */
+.table-wrap{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--card-border)}
+table{width:100%;border-collapse:collapse;min-width:600px}
+thead tr{background:rgba(0,212,255,0.06);border-bottom:1px solid var(--card-border)}
+thead th{padding:12px 14px;text-align:left;font-size:0.75rem;color:var(--text2);letter-spacing:1px;text-transform:uppercase;font-weight:700}
+tbody tr{border-bottom:1px solid rgba(255,255,255,0.03);transition:background .2s}
+tbody tr:hover{background:rgba(0,212,255,0.03)}
+tbody td{padding:12px 14px;font-size:0.9rem}
+.status-badge{font-size:0.7rem;padding:3px 10px;border-radius:20px;font-weight:700;letter-spacing:1px;display:inline-block}
+.status-badge.pending{background:rgba(255,215,0,0.15);color:var(--gold);border:1px solid rgba(255,215,0,0.3)}
+.status-badge.approved{background:rgba(0,255,157,0.1);color:var(--green);border:1px solid rgba(0,255,157,0.3)}
+.status-badge.rejected{background:rgba(255,71,87,0.1);color:#ff4757;border:1px solid rgba(255,71,87,0.3)}
+
+/* BUTTONS */
+.btn{padding:8px 16px;border:none;border-radius:8px;font-family:'Rajdhani',sans-serif;font-size:0.82rem;font-weight:700;cursor:pointer;transition:all .3s;letter-spacing:1px}
+.btn-neon{background:var(--neon);color:#000}
+.btn-neon:hover{box-shadow:0 4px 15px rgba(0,212,255,0.4);transform:translateY(-1px)}
+.btn-green{background:var(--green);color:#000}
+.btn-green:hover{box-shadow:0 4px 15px rgba(0,255,157,0.3)}
+.btn-red{background:var(--red);color:#fff}
+.btn-red:hover{box-shadow:0 4px 15px rgba(255,71,87,0.3)}
+.btn-gold{background:var(--gold);color:#000}
+.btn-outline{background:transparent;border:1px solid var(--card-border);color:var(--text2)}
+.btn-outline:hover{border-color:var(--neon);color:var(--neon)}
+.btn-gap{display:flex;gap:6px;flex-wrap:wrap}
+
+/* FORM */
+.form-card{background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);padding:24px;margin-bottom:24px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.form-group{margin-bottom:0}
+.form-group label{display:block;color:var(--text2);font-size:0.78rem;letter-spacing:1px;margin-bottom:6px;text-transform:uppercase}
+.form-group input,.form-group textarea,.form-group select{width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(0,212,255,0.15);border-radius:10px;padding:11px 14px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:0.95rem;outline:none;transition:border-color .3s}
+.form-group input:focus,.form-group textarea:focus,.form-group select:focus{border-color:var(--neon)}
+.form-group textarea{min-height:80px;resize:vertical}
+.form-group select option{background:var(--bg3)}
+.section-title{font-family:'Orbitron',sans-serif;font-size:0.85rem;font-weight:700;color:var(--neon);letter-spacing:2px;margin-bottom:16px;text-transform:uppercase;display:flex;align-items:center;gap:10px}
+.section-title::after{content:'';flex:1;height:1px;background:linear-gradient(to right,var(--card-border),transparent)}
+.msg{padding:8px 12px;border-radius:8px;font-size:0.85rem;margin-top:10px}
+.msg.error{background:rgba(255,71,87,0.15);color:#ff6b7a}
+.msg.success{background:rgba(0,255,157,0.1);color:var(--green)}
+
+/* QUESTION CARD (admin) */
+.q-card{background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);padding:16px;margin-bottom:12px;display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.q-card .q-text{font-size:1rem;font-weight:600;flex:1}
+.q-card .q-actions{display:flex;flex-direction:column;gap:6px;min-width:140px}
+
+/* CHAT */
+.chat-container{display:grid;grid-template-columns:240px 1fr;gap:0;border:1px solid var(--card-border);border-radius:var(--radius);overflow:hidden;height:500px}
+.chat-users{background:rgba(0,0,0,0.3);border-right:1px solid var(--card-border);overflow-y:auto}
+.chat-user-item{padding:12px 14px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.03);transition:all .2s;font-size:0.85rem}
+.chat-user-item:hover,.chat-user-item.active{background:rgba(0,212,255,0.06);color:var(--neon)}
+.chat-user-item .u-email{font-size:0.75rem;color:var(--text2);margin-top:2px}
+.chat-panel{display:flex;flex-direction:column}
+.chat-msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:8px}
+.chat-msg{max-width:75%;padding:8px 12px;border-radius:12px;font-size:0.88rem;line-height:1.4}
+.chat-msg.user{background:rgba(0,212,255,0.1);align-self:flex-start}
+.chat-msg.admin{background:rgba(0,255,157,0.08);align-self:flex-end;border:1px solid rgba(0,255,157,0.2)}
+.chat-msg .t{font-size:0.65rem;color:var(--text2);margin-top:3px}
+.chat-reply{display:flex;gap:8px;padding:12px;border-top:1px solid var(--card-border)}
+.chat-reply input{flex:1;background:rgba(255,255,255,0.04);border:1px solid var(--card-border);border-radius:8px;padding:8px 12px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:0.9rem;outline:none}
+
+/* POOL ITEMS */
+.pool-item{background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);padding:16px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.pool-item-info h3{font-family:'Orbitron',sans-serif;font-size:0.9rem;margin-bottom:4px}
+.pool-item-info p{font-size:0.8rem;color:var(--text2)}
+.pool-meta{display:flex;gap:16px;font-size:0.8rem}
+.pool-meta span{color:var(--neon)}
+
+/* AUTH SCREEN */
+#admin-auth{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:var(--bg)}
+.auth-box{background:rgba(255,255,255,0.03);border:1px solid var(--card-border);border-radius:20px;padding:40px;width:100%;max-width:380px;text-align:center}
+.auth-box h1{font-family:'Orbitron',sans-serif;font-size:1.8rem;font-weight:900;background:linear-gradient(135deg,var(--neon),#fff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:6px}
+.auth-box p{color:var(--text2);font-size:0.85rem;margin-bottom:24px}
+
+/* LOADER */
+.loader{display:inline-block;width:16px;height:16px;border:2px solid rgba(0,212,255,0.2);border-top-color:var(--neon);border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* EMPTY */
+.empty{text-align:center;padding:40px;color:var(--text2)}
+.empty .e-icon{font-size:2.5rem;margin-bottom:10px}
+
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:translateX(0)}
+  .main{margin-left:0}
+  .form-grid{grid-template-columns:1fr}
+  .chat-container{grid-template-columns:1fr;height:auto}
+  .chat-users{max-height:150px}
+  .stats-grid{grid-template-columns:1fr 1fr}
+}
+</style>
 </head>
 <body>
 
-    <div id="auth-screen" class="admin-container">
-        <h1>🔐 Admin Access</h1>
-        <input type="password" id="adminPass" placeholder="Enter Secret Password">
-        <button class="btn btn-primary" onclick="checkPass()">Unlock Panel</button>
+<!-- ADMIN AUTH -->
+<div id="admin-auth">
+  <div class="auth-box">
+    <h1>SMART11</h1>
+    <p>🔐 ADMIN PANEL ACCESS</p>
+    <div style="margin-bottom:16px">
+      <label style="display:block;color:var(--text2);font-size:0.78rem;letter-spacing:1px;margin-bottom:6px;text-align:left">ADMIN PASSWORD</label>
+      <input type="password" id="admin-pass-input" placeholder="Enter password" style="width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(0,212,255,0.2);border-radius:10px;padding:12px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:1rem;outline:none;text-align:center;letter-spacing:4px" onkeydown="if(event.key==='Enter')checkAdminPass()"/>
     </div>
+    <button class="btn btn-neon" style="width:100%;padding:12px;font-family:'Orbitron',sans-serif;font-size:0.85rem;letter-spacing:2px" onclick="checkAdminPass()">ENTER PANEL</button>
+    <div id="auth-err" style="margin-top:10px;color:var(--red);font-size:0.85rem"></div>
+  </div>
+</div>
 
-    <div id="main-admin" class="admin-container" style="display: none;">
-        <h2>Master Control</h2>
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <h1>SMART11</h1>
+    <p>ADMIN PANEL</p>
+  </div>
+  <div class="sidebar-nav">
+    <div class="nav-section">OVERVIEW</div>
+    <div class="nav-link active" onclick="showSection('dashboard',this)"><span class="icon">📊</span>Dashboard</div>
+    <div class="nav-section">MANAGEMENT</div>
+    <div class="nav-link" onclick="showSection('pools',this)"><span class="icon">🏆</span>Pool Manager</div>
+    <div class="nav-link" onclick="showSection('questions',this)"><span class="icon">⚡</span>Live Questions</div>
+    <div class="nav-section">FINANCE</div>
+    <div class="nav-link" onclick="showSection('deposits',this)"><span class="icon">💳</span>Deposits <span class="badge" id="dep-badge">0</span></div>
+    <div class="nav-link" onclick="showSection('withdrawals',this)"><span class="icon">🏦</span>Withdrawals <span class="badge" id="wd-badge">0</span></div>
+    <div class="nav-section">SUPPORT</div>
+    <div class="nav-link" onclick="showSection('chat',this)"><span class="icon">💬</span>Live Chat</div>
+  </div>
+</div>
 
-        <div class="section">
-            <h3>1. Pool Settings</h3>
-            <label>Current Mega Pool Entry Fee (₹):</label>
-            <input type="number" id="newPoolFee" placeholder="New Entry Fee">
-            <button class="btn btn-primary" onclick="updatePoolFee()">Update Price</button>
-        </div>
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <h2 id="topbar-title">DASHBOARD</h2>
+    <div class="admin-badge">🔐 ADMIN</div>
+  </div>
 
-        <div class="section">
-            <h3>2. Push Live Prediction</h3>
-            <input type="text" id="admQ" placeholder="Sawal: Rohit 50 Runs?">
-            <input type="number" id="admWin" placeholder="Winning Prize (₹)">
-            <button class="btn btn-warning" onclick="pushQuestion()">Push to Users</button>
-        </div>
-
-        <div class="section" style="border-color: var(--success);">
-            <h3>3. Settle & Pay Winners</h3>
-            <div id="settle-area">No active question.</div>
-        </div>
-
-        <div class="section">
-            <h3>4. Pending Requests</h3>
-            <button class="btn btn-success" onclick="loadTasks()">Refresh Requests</button>
-            <div id="tasks-container"></div>
-        </div>
+  <!-- DASHBOARD -->
+  <div class="section active" id="sec-dashboard">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">👥</div>
+        <div class="stat-val" id="stat-users">–</div>
+        <div class="stat-label">Total Users</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">💳</div>
+        <div class="stat-val" id="stat-deps">–</div>
+        <div class="stat-label">Total Deposits</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🏦</div>
+        <div class="stat-val" id="stat-wds">–</div>
+        <div class="stat-label">Total Withdrawals</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🏆</div>
+        <div class="stat-val" id="stat-pools">–</div>
+        <div class="stat-label">Active Pools</div>
+      </div>
     </div>
+    <div style="background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);padding:20px">
+      <div class="section-title">📡 SYSTEM STATUS</div>
+      <p style="color:var(--green);font-size:0.9rem">✅ Firebase Connected &nbsp;|&nbsp; <span style="color:var(--neon)">Real-time Sync Active</span></p>
+    </div>
+  </div>
 
+  <!-- POOLS -->
+  <div class="section" id="sec-pools">
+    <div class="form-card">
+      <div class="section-title">➕ CREATE / EDIT POOL</div>
+      <div class="form-grid">
+        <div class="form-group"><label>Pool Name</label><input type="text" id="pool-name" placeholder="e.g. IND vs AUS Final"/></div>
+        <div class="form-group"><label>Entry Fee (₹)</label><input type="number" id="pool-fee" placeholder="100"/></div>
+        <div class="form-group"><label>Prize Pool (₹)</label><input type="number" id="pool-prize" placeholder="5000"/></div>
+        <div class="form-group"><label>Description</label><input type="text" id="pool-desc" placeholder="Short description"/></div>
+      </div>
+      <div style="margin-top:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button class="btn btn-neon" onclick="savePool()">SAVE POOL</button>
+        <button class="btn btn-outline" onclick="clearPoolForm()">CLEAR</button>
+        <span id="pool-msg" style="font-size:0.85rem"></span>
+      </div>
+      <input type="hidden" id="pool-edit-id"/>
+    </div>
+    <div class="section-title">🏆 EXISTING POOLS</div>
+    <div id="pools-list"></div>
+  </div>
+
+  <!-- LIVE QUESTIONS -->
+  <div class="section" id="sec-questions">
+    <div class="form-card">
+      <div class="section-title">⚡ CREATE LIVE QUESTION</div>
+      <div class="form-grid">
+        <div class="form-group" style="grid-column:1/-1">
+          <label>Question Text</label>
+          <input type="text" id="q-text" placeholder="e.g. Will Kohli score a 50 today?"/>
+        </div>
+        <div class="form-group">
+          <label>Countdown (seconds)</label>
+          <input type="number" id="q-duration" value="60" placeholder="60"/>
+        </div>
+        <div class="form-group">
+          <label>Prize Per Winner (₹)</label>
+          <input type="number" id="q-prize" value="10" placeholder="10"/>
+        </div>
+      </div>
+      <div style="margin-top:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button class="btn btn-neon" onclick="pushQuestion()">🚀 PUSH LIVE</button>
+        <span id="q-msg" style="font-size:0.85rem"></span>
+      </div>
+    </div>
+    <div class="section-title">📋 ACTIVE QUESTIONS</div>
+    <div id="questions-list"></div>
+  </div>
+
+  <!-- DEPOSITS -->
+  <div class="section" id="sec-deposits">
+    <div class="section-title">💳 DEPOSIT REQUESTS</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Email</th><th>Amount</th><th>UTR</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="deposits-table"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- WITHDRAWALS -->
+  <div class="section" id="sec-withdrawals">
+    <div class="section-title">🏦 WITHDRAWAL REQUESTS</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Email</th><th>Amount</th><th>UPI ID</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody id="withdrawals-table"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- CHAT -->
+  <div class="section" id="sec-chat">
+    <div class="section-title">💬 LIVE SUPPORT CHAT</div>
+    <div class="chat-container">
+      <div class="chat-users" id="chat-users-list"></div>
+      <div class="chat-panel">
+        <div class="chat-msgs" id="admin-chat-msgs"><div class="empty"><div class="e-icon">💬</div><p>Select a user to chat</p></div></div>
+        <div class="chat-reply">
+          <input type="text" id="admin-chat-input" placeholder="Type reply…" onkeydown="if(event.key==='Enter')sendAdminMsg()"/>
+          <button class="btn btn-neon" onclick="sendAdminMsg()">SEND</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FIREBASE -->
 <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-    import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, addDoc, getDocs, query, where, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, doc, onSnapshot, getDocs, getDoc, addDoc, updateDoc, deleteDoc, setDoc, increment, serverTimestamp, query, orderBy, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    const firebaseConfig = {
-        apiKey: "AIzaSyBfSfeiOmyBSyYBTV87OKH6IqFU0YXemw0",
-        authDomain: "ayur-620e7.firebaseapp.com",
-        projectId: "ayur-620e7",
-        storageBucket: "ayur-620e7.firebasestorage.app",
-        messagingSenderId: "732502202884",
-        appId: "1:732502202884:web:3863c7d829b54d79743351"
-    };
+const firebaseConfig = {
+  apiKey: "AIzaSyBfSfeiOmyBSyYBTV87OKH6IqFU0YXemw0",
+  authDomain: "ayur-620e7.firebaseapp.com",
+  projectId: "ayur-620e7",
+  storageBucket: "ayur-620e7.firebasestorage.app",
+  messagingSenderId: "732502202884",
+  appId: "1:732502202884:web:3863c7d829b54d79743351"
+};
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-    // 1. Password Protection (Set your password here)
-    window.checkPass = () => {
-        const pass = document.getElementById('adminPass').value;
-        if(pass === "123456") { // APNA PASSWORD YAHAN BADLEIN
-            document.getElementById('auth-screen').style.display = 'none';
-            document.getElementById('main-admin').style.display = 'block';
-            listenGame();
-        } else { alert("Galat Password!"); }
-    };
+let selectedChatUid = null;
+let chatMsgsUnsub = null;
 
-    // 2. Update Pool Price
-    window.updatePoolFee = async () => {
-        const fee = parseInt(document.getElementById('newPoolFee').value);
-        if(!fee) return;
-        await setDoc(doc(db, "settings", "pool_config"), { entryFee: fee });
-        alert("Mega Pool Price Updated!");
-    };
+// AUTH
+window.checkAdminPass = () => {
+  const pass = document.getElementById('admin-pass-input').value;
+  if (pass === '123456') {
+    document.getElementById('admin-auth').style.display = 'none';
+    initAdmin();
+  } else {
+    document.getElementById('auth-err').textContent = '❌ Wrong password. Access denied.';
+    document.getElementById('admin-pass-input').value = '';
+  }
+};
 
-    // 3. Push Live Question
-    window.pushQuestion = async () => {
-        const q = document.getElementById('admQ').value;
-        const w = parseInt(document.getElementById('admWin').value);
-        if(!q || !w) return;
-        await setDoc(doc(db, "live_game", "current"), { question: q, win: w });
-        alert("Question is now Live!");
-    };
+function initAdmin() {
+  loadDashboard();
+  loadPoolsList();
+  loadQuestions();
+  loadDeposits();
+  loadWithdrawals();
+  loadChatUsers();
+}
 
-    // 4. Listen & Settle In-Play
-    function listenGame() {
-        onSnapshot(doc(db, "live_game", "current"), (snap) => {
-            const area = document.getElementById('settle-area');
-            if(snap.exists()) {
-                const d = snap.data();
-                area.innerHTML = `
-                    <p><b>Q:</b> ${d.question}</p>
-                    <button class="btn btn-success" onclick="settle('YES')">YES IS RIGHT</button>
-                    <button class="btn btn-danger" onclick="settle('NO')">NO IS RIGHT</button>
-                `;
-            } else { area.innerHTML = "No active game."; }
-        });
-    }
+// NAV
+window.showSection = (name, el) => {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('sec-'+name).classList.add('active');
+  document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+  const titles = {dashboard:'DASHBOARD',pools:'POOL MANAGER',questions:'LIVE QUESTIONS',deposits:'DEPOSITS',withdrawals:'WITHDRAWALS',chat:'LIVE CHAT'};
+  document.getElementById('topbar-title').textContent = titles[name]||name.toUpperCase();
+};
 
-    window.settle = async (right) => {
-        if(!confirm(`Settle game as ${right}? Winners will be paid.`)) return;
-        const qSnap = await getDoc(doc(db, "live_game", "current"));
-        const prize = qSnap.data().win;
-        
-        const winners = await getDocs(query(collection(db, "live_entries"), where("choice", "==", right)));
-        for (const w of winners.docs) {
-            const userRef = doc(db, "users", w.data().uid);
-            const userSnap = await getDoc(userRef);
-            await updateDoc(userRef, { walletBalance: userSnap.data().walletBalance + prize });
-            await deleteDoc(doc(db, "live_entries", w.id));
-        }
+// DASHBOARD
+async function loadDashboard() {
+  onSnapshot(collection(db,'users'), s => document.getElementById('stat-users').textContent = s.size);
+  onSnapshot(collection(db,'deposit_requests'), s => {
+    document.getElementById('stat-deps').textContent = s.size;
+    const pending = s.docs.filter(d=>d.data().status==='pending').length;
+    document.getElementById('dep-badge').textContent = pending;
+  });
+  onSnapshot(collection(db,'withdraw_requests'), s => {
+    document.getElementById('stat-wds').textContent = s.size;
+    const pending = s.docs.filter(d=>d.data().status==='pending').length;
+    document.getElementById('wd-badge').textContent = pending;
+  });
+  onSnapshot(collection(db,'pools'), s => document.getElementById('stat-pools').textContent = s.size);
+}
 
-        const all = await getDocs(collection(db, "live_entries"));
-        for (const e of all.docs) { await deleteDoc(doc(db, "live_entries", e.id)); }
-        await deleteDoc(doc(db, "live_game", "current"));
-        alert("Winners Paid & Game Cleared!");
-    };
+// POOLS
+window.savePool = async () => {
+  const name = document.getElementById('pool-name').value.trim();
+  const fee = parseFloat(document.getElementById('pool-fee').value);
+  const prize = parseFloat(document.getElementById('pool-prize').value);
+  const desc = document.getElementById('pool-desc').value.trim();
+  const editId = document.getElementById('pool-edit-id').value;
+  const msg = document.getElementById('pool-msg');
+  if (!name||!fee||!prize) return showMsg(msg,'Fill all required fields','error');
+  const data = { name, entryFee: fee, prize, description: desc, updatedAt: serverTimestamp() };
+  if (editId) {
+    await updateDoc(doc(db,'pools',editId), data);
+    showMsg(msg,'✅ Pool updated!','success');
+    document.getElementById('pool-edit-id').value = '';
+  } else {
+    await addDoc(collection(db,'pools'), {...data, joined:0, createdAt: serverTimestamp()});
+    showMsg(msg,'✅ Pool created!','success');
+  }
+  clearPoolForm();
+};
 
-    // 5. Load Payment/Withdrawal Tasks
-    window.loadTasks = async () => {
-        const container = document.getElementById('tasks-container');
-        container.innerHTML = "Loading...";
-        const snap = await getDocs(query(collection(db, "requests"), where("status", "==", "Pending")));
-        container.innerHTML = "";
-        snap.forEach(d => {
-            const data = d.data();
-            const card = document.createElement('div');
-            card.className = "task-card";
-            card.style.borderLeftColor = data.type === "ADD" ? "var(--success)" : "var(--danger)";
-            card.innerHTML = `
-                <p><b>Type:</b> ${data.type} | <b>Amt:</b> ₹${data.amt}</p>
-                <p><b>Details:</b> ${data.utr || data.upi}</p>
-                <button class="btn btn-success" style="padding:5px; font-size:12px;" onclick="approveTask('${d.id}', '${data.uid}', ${data.amt}, '${data.type}')">Approve Request</button>
-            `;
-            container.appendChild(card);
-        });
-    };
+window.clearPoolForm = () => {
+  ['pool-name','pool-fee','pool-prize','pool-desc','pool-edit-id'].forEach(id => document.getElementById(id).value='');
+};
 
-    window.approveTask = async (id, uid, amt, type) => {
-        if(!confirm("Approve this transaction?")) return;
-        if(type === "ADD") {
-            const userRef = doc(db, "users", uid);
-            const userSnap = await getDoc(userRef);
-            await updateDoc(userRef, { walletBalance: (userSnap.data().walletBalance || 0) + amt });
-        }
-        await updateDoc(doc(db, "requests", id), { status: "Done" });
-        alert("Approved!"); loadTasks();
-    };
+function loadPoolsList() {
+  onSnapshot(collection(db,'pools'), snap => {
+    const el = document.getElementById('pools-list');
+    if (snap.empty) { el.innerHTML = '<div class="empty"><div class="e-icon">🏆</div><p>No pools yet</p></div>'; return; }
+    el.innerHTML = snap.docs.map(d => {
+      const p = d.data();
+      return `<div class="pool-item">
+        <div class="pool-item-info">
+          <h3>🏏 ${p.name}</h3>
+          <p>${p.description||'No description'}</p>
+        </div>
+        <div class="pool-meta">
+          <div>Entry: <span>₹${p.entryFee}</span></div>
+          <div>Prize: <span>₹${p.prize}</span></div>
+        </div>
+        <div class="btn-gap">
+          <button class="btn btn-outline" onclick="editPool('${d.id}','${p.name}',${p.entryFee},${p.prize},'${p.description||''}')">EDIT</button>
+          <button class="btn btn-red" onclick="deletePool('${d.id}')">DELETE</button>
+        </div>
+      </div>`;
+    }).join('');
+  });
+}
+
+window.editPool = (id,name,fee,prize,desc) => {
+  document.getElementById('pool-name').value = name;
+  document.getElementById('pool-fee').value = fee;
+  document.getElementById('pool-prize').value = prize;
+  document.getElementById('pool-desc').value = desc;
+  document.getElementById('pool-edit-id').value = id;
+  showSection('pools', document.querySelector('.nav-link[onclick*="pools"]'));
+  window.scrollTo(0,0);
+};
+
+window.deletePool = async (id) => {
+  if (!confirm('Delete this pool?')) return;
+  await deleteDoc(doc(db,'pools',id));
+};
+
+// QUESTIONS
+window.pushQuestion = async () => {
+  const text = document.getElementById('q-text').value.trim();
+  const duration = parseInt(document.getElementById('q-duration').value)||60;
+  const prize = parseFloat(document.getElementById('q-prize').value)||10;
+  const msg = document.getElementById('q-msg');
+  if (!text) return showMsg(msg,'Enter question text','error');
+  const endsAt = new Date(Date.now() + duration*1000);
+  await addDoc(collection(db,'questions'), {
+    text, active:true, prize, endsAt, duration, createdAt: serverTimestamp()
+  });
+  showMsg(msg,'✅ Question pushed live!','success');
+  document.getElementById('q-text').value='';
+};
+
+function loadQuestions() {
+  onSnapshot(collection(db,'questions'), snap => {
+    const el = document.getElementById('questions-list');
+    const qs = snap.docs.map(d=>({id:d.id,...d.data()})).filter(q=>q.active);
+    if (!qs.length) { el.innerHTML = '<div class="empty"><div class="e-icon">⚡</div><p>No active questions</p></div>'; return; }
+    el.innerHTML = qs.map(q=>`
+      <div class="q-card">
+        <div>
+          <div style="font-size:0.75rem;color:var(--red);margin-bottom:6px">🔴 LIVE</div>
+          <div class="q-text">${q.text}</div>
+          <div style="font-size:0.78rem;color:var(--text2);margin-top:6px">Prize/winner: ₹${q.prize}</div>
+        </div>
+        <div class="q-actions">
+          <button class="btn btn-green" onclick="resolveQuestion('${q.id}','YES',${q.prize})">✅ YES WINS</button>
+          <button class="btn btn-red" onclick="resolveQuestion('${q.id}','NO',${q.prize})">❌ NO WINS</button>
+          <button class="btn btn-outline" onclick="closeQuestion('${q.id}')">CLOSE</button>
+        </div>
+      </div>`).join('');
+  });
+}
+
+window.resolveQuestion = async (qId, winner, prize) => {
+  if (!confirm(`Declare "${winner}" as winner?`)) return;
+  // Find all votes for this question with winning answer
+  const votesSnap = await getDocs(collection(db,'votes'));
+  const winners = votesSnap.docs.filter(d=>d.data().qId===qId && d.data().answer===winner);
+  // Credit winners
+  for (const v of winners) {
+    const uid = v.data().uid;
+    await updateDoc(doc(db,'users',uid), { balance: increment(prize) });
+    await addDoc(collection(db,'transactions'), {
+      uid, type:`Won: Q${qId.slice(-4)} (${winner})`, amount: prize, credit:true, status:'approved', createdAt: serverTimestamp()
+    });
+  }
+  await closeQuestion(qId);
+  alert(`✅ ${winners.length} winner(s) credited ₹${prize} each!`);
+};
+
+window.closeQuestion = async (qId) => {
+  await updateDoc(doc(db,'questions',qId), { active: false });
+};
+
+// DEPOSITS
+function loadDeposits() {
+  onSnapshot(query(collection(db,'deposit_requests'), orderBy('createdAt','desc')), snap => {
+    const tbody = document.getElementById('deposits-table');
+    if (snap.empty) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text2)">No deposit requests</td></tr>'; return; }
+    tbody.innerHTML = snap.docs.map(d=>{
+      const r = d.data();
+      const date = r.createdAt?.toDate?.()?.toLocaleDateString('en-IN')||'–';
+      return `<tr>
+        <td><span style="font-size:0.82rem">${r.email}</span></td>
+        <td><strong style="color:var(--neon)">₹${r.amount}</strong></td>
+        <td><code style="font-size:0.78rem;color:var(--text2)">${r.utr}</code></td>
+        <td>${date}</td>
+        <td><span class="status-badge ${r.status}">${r.status?.toUpperCase()}</span></td>
+        <td>
+          ${r.status==='pending'?`
+            <div class="btn-gap">
+              <button class="btn btn-green" onclick="approveDeposit('${d.id}','${r.uid}',${r.amount})">APPROVE</button>
+              <button class="btn btn-red" onclick="rejectRequest('deposit_requests','${d.id}')">REJECT</button>
+            </div>`:`<span style="color:var(--text2);font-size:0.8rem">Processed</span>`}
+        </td>
+      </tr>`;
+    }).join('');
+  });
+}
+
+window.approveDeposit = async (reqId, uid, amount) => {
+  if (!confirm(`Approve deposit of ₹${amount}?`)) return;
+  await updateDoc(doc(db,'deposit_requests',reqId), { status:'approved' });
+  await updateDoc(doc(db,'users',uid), { balance: increment(amount) });
+  await addDoc(collection(db,'transactions'), {
+    uid, type:'Deposit Approved', amount, credit:true, status:'approved', createdAt: serverTimestamp()
+  });
+};
+
+window.rejectRequest = async (col, id) => {
+  if (!confirm('Reject this request?')) return;
+  await updateDoc(doc(db,col,id), { status:'rejected' });
+};
+
+// WITHDRAWALS
+function loadWithdrawals() {
+  onSnapshot(query(collection(db,'withdraw_requests'), orderBy('createdAt','desc')), snap => {
+    const tbody = document.getElementById('withdrawals-table');
+    if (snap.empty) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text2)">No withdrawal requests</td></tr>'; return; }
+    tbody.innerHTML = snap.docs.map(d=>{
+      const r = d.data();
+      const date = r.createdAt?.toDate?.()?.toLocaleDateString('en-IN')||'–';
+      return `<tr>
+        <td><span style="font-size:0.82rem">${r.email}</span></td>
+        <td><strong style="color:var(--gold)">₹${r.amount}</strong></td>
+        <td><code style="font-size:0.78rem;color:var(--text2)">${r.upiId}</code></td>
+        <td>${date}</td>
+        <td><span class="status-badge ${r.status}">${r.status?.toUpperCase()}</span></td>
+        <td>
+          ${r.status==='pending'?`
+            <div class="btn-gap">
+              <button class="btn btn-green" onclick="approveWithdrawal('${d.id}','${r.uid}',${r.amount})">APPROVE</button>
+              <button class="btn btn-red" onclick="rejectRequest('withdraw_requests','${d.id}')">REJECT</button>
+            </div>`:`<span style="color:var(--text2);font-size:0.8rem">Processed</span>`}
+        </td>
+      </tr>`;
+    }).join('');
+  });
+}
+
+window.approveWithdrawal = async (reqId, uid, amount) => {
+  if (!confirm(`Approve withdrawal of ₹${amount}?`)) return;
+  const userSnap = await getDoc(doc(db,'users',uid));
+  const bal = userSnap.data()?.balance||0;
+  if (bal < amount) return alert('User has insufficient balance!');
+  await updateDoc(doc(db,'withdraw_requests',reqId), { status:'approved' });
+  await updateDoc(doc(db,'users',uid), { balance: increment(-amount) });
+  await addDoc(collection(db,'transactions'), {
+    uid, type:'Withdrawal Approved', amount, credit:false, status:'approved', createdAt: serverTimestamp()
+  });
+};
+
+// CHAT
+function loadChatUsers() {
+  onSnapshot(collection(db,'chats'), snap => {
+    const users = {};
+    snap.docs.forEach(d => {
+      const m = d.data();
+      if (m.role !== 'admin' && m.uid) {
+        if (!users[m.uid]) users[m.uid] = { uid: m.uid, email: m.email, lastMsg: m.text };
+        else users[m.uid].lastMsg = m.text;
+      }
+    });
+    const el = document.getElementById('chat-users-list');
+    const userList = Object.values(users);
+    if (!userList.length) { el.innerHTML = '<div style="padding:16px;color:var(--text2);font-size:0.82rem">No chats yet</div>'; return; }
+    el.innerHTML = userList.map(u=>`
+      <div class="chat-user-item ${selectedChatUid===u.uid?'active':''}" onclick="selectChatUser('${u.uid}','${u.email}')">
+        <div style="font-weight:600;font-size:0.85rem">💬 ${u.email?.split('@')[0]}</div>
+        <div class="u-email">${u.email}</div>
+      </div>`).join('');
+  });
+}
+
+window.selectChatUser = (uid, email) => {
+  selectedChatUid = uid;
+  document.querySelectorAll('.chat-user-item').forEach(el => el.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+  if (chatMsgsUnsub) chatMsgsUnsub();
+  chatMsgsUnsub = onSnapshot(collection(db,'chats'), snap => {
+    const msgs = snap.docs.map(d=>d.data())
+      .filter(m=>m.uid===uid || (m.role==='admin' && m.toUid===uid))
+      .sort((a,b)=>a.createdAt?.seconds-b.createdAt?.seconds);
+    const el = document.getElementById('admin-chat-msgs');
+    el.innerHTML = msgs.map(m=>{
+      const isAdmin = m.role==='admin';
+      const time = m.createdAt?.toDate?.()?.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})||'';
+      return `<div class="chat-msg ${isAdmin?'admin':'user'}">
+        ${m.text}
+        <div class="t">${isAdmin?'You':email?.split('@')[0]} · ${time}</div>
+      </div>`;
+    }).join('');
+    el.scrollTop = el.scrollHeight;
+  });
+};
+
+window.sendAdminMsg = async () => {
+  if (!selectedChatUid) return alert('Select a user first');
+  const inp = document.getElementById('admin-chat-input');
+  const text = inp.value.trim();
+  if (!text) return;
+  await addDoc(collection(db,'chats'), {
+    uid: 'admin', toUid: selectedChatUid, text, role:'admin', createdAt: serverTimestamp()
+  });
+  inp.value='';
+};
+
+// UTIL
+function showMsg(el, text, type) {
+  if (typeof el === 'string') el = document.getElementById(el);
+  el.innerHTML = `<span style="color:${type==='error'?'var(--red)':'var(--green)'}">${text}</span>`;
+  setTimeout(()=>el.innerHTML='',3500);
+}
+window.showMsg = showMsg;
 </script>
 </body>
 </html>
-
