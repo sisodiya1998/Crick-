@@ -234,8 +234,12 @@ tbody td{padding:12px 14px;font-size:0.9rem}
         <div class="form-group"><label>Pool Name</label><input type="text" id="pool-name" placeholder="e.g. IND vs AUS Final"/></div>
         <div class="form-group"><label>Entry Fee (₹)</label><input type="number" id="pool-fee" placeholder="100"/></div>
         <div class="form-group"><label>Prize Pool (₹)</label><input type="number" id="pool-prize" placeholder="5000"/></div>
-        <div class="form-group"><label>Description</label><input type="text" id="pool-desc" placeholder="Short description"/></div>
+        <div class="form-group"><label>Max Players</label><input type="number" id="pool-max" placeholder="1000" value="1000"/></div>
+        <div class="form-group"><label>📅 Match Date & Time</label><input type="datetime-local" id="pool-matchtime"/></div>
+        <div class="form-group"><label>🔓 Pool Opens (1 din pehle auto)</label><input type="datetime-local" id="pool-opentime" placeholder="Auto: 1 day before match"/></div>
+        <div class="form-group" style="grid-column:1/-1"><label>Description</label><input type="text" id="pool-desc" placeholder="Short description"/></div>
       </div>
+      <p style="font-size:0.78rem;color:var(--text2);margin:8px 0">💡 Pool opens automatically 1 din pehle. Match start hote hi pool band ho jayegi aur naya pool show hoga.</p>
       <div style="margin-top:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
         <button class="btn btn-neon" onclick="savePool()">SAVE POOL</button>
         <button class="btn btn-outline" onclick="clearPoolForm()">CLEAR</button>
@@ -250,19 +254,35 @@ tbody td{padding:12px 14px;font-size:0.9rem}
   <!-- LIVE QUESTIONS -->
   <div class="section" id="sec-questions">
     <div class="form-card">
-      <div class="section-title">⚡ CREATE LIVE QUESTION</div>
+      <div class="section-title">⚡ LIVE QUESTION BANAO</div>
       <div class="form-grid">
         <div class="form-group" style="grid-column:1/-1">
           <label>Question Text</label>
-          <input type="text" id="q-text" placeholder="e.g. Will Kohli score a 50 today?"/>
+          <input type="text" id="q-text" placeholder="e.g. Kohli aaj 50 lagayega?"/>
         </div>
         <div class="form-group">
-          <label>Countdown (seconds)</label>
-          <input type="number" id="q-duration" value="60" placeholder="60"/>
+          <label>Prediction Type</label>
+          <select id="q-predtype" onchange="onPredTypeChange()">
+            <option value="yesno">✅ Yes / No</option>
+            <option value="fifty">🏏 50+ Score Lagayega?</option>
+            <option value="hundred">💯 Century Lagayega?</option>
+            <option value="score">📊 Team Score Kitna Hoga?</option>
+            <option value="winner">🏆 Kaun Jitega?</option>
+            <option value="wickets">🎯 Wickets Kitne Girenge?</option>
+            <option value="custom">✏️ Custom Options</option>
+          </select>
         </div>
         <div class="form-group">
           <label>Prize Per Winner (₹)</label>
-          <input type="number" id="q-prize" value="10" placeholder="10"/>
+          <input type="number" id="q-prize" value="10"/>
+        </div>
+        <div class="form-group">
+          <label>Countdown (seconds)</label>
+          <input type="number" id="q-duration" value="60"/>
+        </div>
+        <div class="form-group" id="winner-opts-row" style="grid-column:1/-1;display:none">
+          <label>Teams / Custom Options (comma se alag karo)</label>
+          <input type="text" id="q-options" placeholder="India, Australia  ya  Option A, Option B, Option C"/>
         </div>
       </div>
       <div style="margin-top:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
@@ -381,46 +401,65 @@ async function loadDashboard() {
 
 // POOLS
 window.savePool = async () => {
-  const name = document.getElementById('pool-name').value.trim();
-  const fee = parseFloat(document.getElementById('pool-fee').value);
-  const prize = parseFloat(document.getElementById('pool-prize').value);
-  const desc = document.getElementById('pool-desc').value.trim();
-  const editId = document.getElementById('pool-edit-id').value;
-  const msg = document.getElementById('pool-msg');
-  if (!name||!fee||!prize) return showMsg(msg,'Fill all required fields','error');
-  const data = { name, entryFee: fee, prize, description: desc, updatedAt: serverTimestamp() };
+  const name     = document.getElementById('pool-name').value.trim();
+  const fee      = parseFloat(document.getElementById('pool-fee').value);
+  const prize    = parseFloat(document.getElementById('pool-prize').value);
+  const desc     = document.getElementById('pool-desc').value.trim();
+  const maxP     = parseInt(document.getElementById('pool-max').value) || 1000;
+  const matchRaw = document.getElementById('pool-matchtime').value;
+  const openRaw  = document.getElementById('pool-opentime').value;
+  const editId   = document.getElementById('pool-edit-id').value;
+  const msg      = document.getElementById('pool-msg');
+  if (!name||!fee||!prize||!matchRaw) return showMsg(msg,'Pool name, fee, prize aur match time zaroori hai','error');
+
+  const matchTime = new Date(matchRaw);
+  // If openTime not set, auto = 1 day before match
+  const openTime  = openRaw ? new Date(openRaw) : new Date(matchTime.getTime() - 24*60*60*1000);
+
+  const data = { name, entryFee:fee, prize, description:desc, maxPlayers:maxP,
+    matchTime, openTime, updatedAt: serverTimestamp() };
+
   if (editId) {
     await updateDoc(doc(db,'pools',editId), data);
-    showMsg(msg,'✅ Pool updated!','success');
+    showMsg(msg,'✅ Pool update ho gayi!','success');
     document.getElementById('pool-edit-id').value = '';
   } else {
-    await addDoc(collection(db,'pools'), {...data, joined:0, createdAt: serverTimestamp()});
-    showMsg(msg,'✅ Pool created!','success');
+    await addDoc(collection(db,'pools'), {...data, joined:0, createdAt:serverTimestamp()});
+    showMsg(msg,'✅ Pool bana di!','success');
   }
   clearPoolForm();
 };
 
 window.clearPoolForm = () => {
-  ['pool-name','pool-fee','pool-prize','pool-desc','pool-edit-id'].forEach(id => document.getElementById(id).value='');
+  ['pool-name','pool-fee','pool-prize','pool-desc','pool-edit-id','pool-matchtime','pool-opentime'].forEach(id => document.getElementById(id).value='');
+  document.getElementById('pool-max').value='1000';
 };
 
 function loadPoolsList() {
   onSnapshot(collection(db,'pools'), snap => {
     const el = document.getElementById('pools-list');
-    if (snap.empty) { el.innerHTML = '<div class="empty"><div class="e-icon">🏆</div><p>No pools yet</p></div>'; return; }
+    if (snap.empty) { el.innerHTML = '<div class="empty"><div class="e-icon">🏆</div><p>Koi pool nahi hai</p></div>'; return; }
     el.innerHTML = snap.docs.map(d => {
       const p = d.data();
+      const matchDate = p.matchTime?.toDate?.()?.toLocaleString('en-IN')||'–';
+      const openDate  = p.openTime?.toDate?.()?.toLocaleString('en-IN')||'–';
+      const matchTs   = p.matchTime?.toDate?.()?.getTime()||0;
+      const openTs    = p.openTime?.toDate?.()?.getTime()||0;
+      const now = Date.now();
+      const statusColor = now >= matchTs ? 'var(--red)' : now >= openTs ? 'var(--green)' : 'var(--gold)';
+      const statusTxt   = now >= matchTs ? '🔴 CLOSED' : now >= openTs ? '🟢 OPEN' : '⏳ UPCOMING';
       return `<div class="pool-item">
         <div class="pool-item-info">
-          <h3>🏏 ${p.name}</h3>
-          <p>${p.description||'No description'}</p>
+          <h3>🏏 ${p.name} <span style="font-size:0.7rem;color:${statusColor};font-family:'Rajdhani',sans-serif">${statusTxt}</span></h3>
+          <p>📅 Match: ${matchDate} | 🔓 Opens: ${openDate}</p>
+          <p style="margin-top:4px">${p.description||''} | Max: ${p.maxPlayers||1000} | Joined: ${p.joined||0}</p>
         </div>
         <div class="pool-meta">
           <div>Entry: <span>₹${p.entryFee}</span></div>
           <div>Prize: <span>₹${p.prize}</span></div>
         </div>
         <div class="btn-gap">
-          <button class="btn btn-outline" onclick="editPool('${d.id}','${p.name}',${p.entryFee},${p.prize},'${p.description||''}')">EDIT</button>
+          <button class="btn btn-outline" onclick="editPool('${d.id}','${(p.name||'').replace(/'/g,"\\'")}',${p.entryFee},${p.prize},'${(p.description||'').replace(/'/g,"\\'")}',${p.maxPlayers||1000},${matchTs},${openTs})">EDIT</button>
           <button class="btn btn-red" onclick="deletePool('${d.id}')">DELETE</button>
         </div>
       </div>`;
@@ -428,14 +467,16 @@ function loadPoolsList() {
   });
 }
 
-window.editPool = (id,name,fee,prize,desc) => {
+window.editPool = (id,name,fee,prize,desc,max,matchTs,openTs) => {
   document.getElementById('pool-name').value = name;
   document.getElementById('pool-fee').value = fee;
   document.getElementById('pool-prize').value = prize;
   document.getElementById('pool-desc').value = desc;
+  document.getElementById('pool-max').value = max||1000;
   document.getElementById('pool-edit-id').value = id;
-  showSection('pools', document.querySelector('.nav-link[onclick*="pools"]'));
-  window.scrollTo(0,0);
+  if(matchTs){ const d=new Date(matchTs); document.getElementById('pool-matchtime').value=d.toISOString().slice(0,16); }
+  if(openTs){  const d=new Date(openTs);  document.getElementById('pool-opentime').value=d.toISOString().slice(0,16); }
+  document.getElementById('sec-pools').scrollIntoView({behavior:'smooth'});
 };
 
 window.deletePool = async (id) => {
@@ -444,56 +485,84 @@ window.deletePool = async (id) => {
 };
 
 // QUESTIONS
+window.onPredTypeChange = () => {
+  const t = document.getElementById('q-predtype').value;
+  const show = (t==='winner'||t==='custom');
+  document.getElementById('winner-opts-row').style.display = show ? 'block' : 'none';
+};
+
+const PRED_OPTS = {
+  yesno:   ['YES','NO'],
+  fifty:   ['50 Lagayega','Nahi Lagayega'],
+  hundred: ['100 Lagayega','Nahi Lagayega'],
+  score:   ['150 Se Kam','150-180','180-210','210+'],
+  wickets: ['1-3 Wickets','4-6 Wickets','7-10 Wickets'],
+};
+
 window.pushQuestion = async () => {
-  const text = document.getElementById('q-text').value.trim();
+  const text     = document.getElementById('q-text').value.trim();
+  const predType = document.getElementById('q-predtype').value;
   const duration = parseInt(document.getElementById('q-duration').value)||60;
-  const prize = parseFloat(document.getElementById('q-prize').value)||10;
-  const msg = document.getElementById('q-msg');
-  if (!text) return showMsg(msg,'Enter question text','error');
+  const prize    = parseFloat(document.getElementById('q-prize').value)||10;
+  const optsRaw  = document.getElementById('q-options').value;
+  const msg      = document.getElementById('q-msg');
+  if (!text) return showMsg(msg,'Question text likhna zaroori hai','error');
+
+  let options;
+  if (predType==='winner'||predType==='custom') {
+    options = optsRaw.split(',').map(s=>s.trim()).filter(Boolean);
+    if (options.length < 2) return showMsg(msg,'Kam se kam 2 options dalo','error');
+  } else {
+    options = PRED_OPTS[predType] || ['YES','NO'];
+  }
+
   const endsAt = new Date(Date.now() + duration*1000);
   await addDoc(collection(db,'questions'), {
-    text, active:true, prize, endsAt, duration, createdAt: serverTimestamp()
+    text, active:true, prize, predType, options, endsAt, duration, createdAt:serverTimestamp()
   });
-  showMsg(msg,'✅ Question pushed live!','success');
+  showMsg(msg,'✅ Question live push ho gaya!','success');
   document.getElementById('q-text').value='';
+  document.getElementById('q-options').value='';
 };
 
 function loadQuestions() {
   onSnapshot(collection(db,'questions'), snap => {
     const el = document.getElementById('questions-list');
     const qs = snap.docs.map(d=>({id:d.id,...d.data()})).filter(q=>q.active);
-    if (!qs.length) { el.innerHTML = '<div class="empty"><div class="e-icon">⚡</div><p>No active questions</p></div>'; return; }
-    el.innerHTML = qs.map(q=>`
-      <div class="q-card">
+    if (!qs.length) { el.innerHTML = '<div class="empty"><div class="e-icon">⚡</div><p>Koi active question nahi</p></div>'; return; }
+    el.innerHTML = qs.map(q=>{
+      const opts = q.options || ['YES','NO'];
+      const optBtns = opts.map(o =>
+        `<button class="btn btn-green" style="font-size:0.75rem;padding:6px 10px" onclick="resolveQuestion('${q.id}','${o.replace(/'/g,"\\'")}',${q.prize})">✅ "${o}" WINS</button>`
+      ).join('');
+      return `<div class="q-card">
         <div>
-          <div style="font-size:0.75rem;color:var(--red);margin-bottom:6px">🔴 LIVE</div>
+          <div style="font-size:0.72rem;color:var(--red);margin-bottom:6px">🔴 LIVE · ${q.predType||'yesno'}</div>
           <div class="q-text">${q.text}</div>
-          <div style="font-size:0.78rem;color:var(--text2);margin-top:6px">Prize/winner: ₹${q.prize}</div>
+          <div style="font-size:0.78rem;color:var(--text2);margin-top:6px">Prize/winner: ₹${q.prize} | Options: ${(q.options||[]).join(', ')}</div>
         </div>
         <div class="q-actions">
-          <button class="btn btn-green" onclick="resolveQuestion('${q.id}','YES',${q.prize})">✅ YES WINS</button>
-          <button class="btn btn-red" onclick="resolveQuestion('${q.id}','NO',${q.prize})">❌ NO WINS</button>
-          <button class="btn btn-outline" onclick="closeQuestion('${q.id}')">CLOSE</button>
+          ${optBtns}
+          <button class="btn btn-outline" style="margin-top:4px" onclick="closeQuestion('${q.id}')">CLOSE (No Winner)</button>
         </div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
   });
 }
 
 window.resolveQuestion = async (qId, winner, prize) => {
-  if (!confirm(`Declare "${winner}" as winner?`)) return;
-  // Find all votes for this question with winning answer
+  if (!confirm(`"${winner}" ko winner declare karein?`)) return;
   const votesSnap = await getDocs(collection(db,'votes'));
   const winners = votesSnap.docs.filter(d=>d.data().qId===qId && d.data().answer===winner);
-  // Credit winners
   for (const v of winners) {
     const uid = v.data().uid;
     await updateDoc(doc(db,'users',uid), { balance: increment(prize) });
     await addDoc(collection(db,'transactions'), {
-      uid, type:`Won: Q${qId.slice(-4)} (${winner})`, amount: prize, credit:true, status:'approved', createdAt: serverTimestamp()
+      uid, type:`Won: "${winner}"`, amount:prize, credit:true, status:'approved', createdAt:serverTimestamp()
     });
   }
   await closeQuestion(qId);
-  alert(`✅ ${winners.length} winner(s) credited ₹${prize} each!`);
+  alert(`✅ ${winners.length} winner(s) ko ₹${prize} credit ho gaya!`);
 };
 
 window.closeQuestion = async (qId) => {
