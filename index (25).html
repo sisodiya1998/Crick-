@@ -1,0 +1,1267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<title>Smart11 – Cricket Prediction</title>
+<link rel="manifest" href="manifest.json"/>
+<meta name="theme-color" content="#c0001a"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Smart11"/>
+<link rel="apple-touch-icon" href="icon-192.png"/>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#0a0a0f;--bg2:#12121a;--bg3:#1a1a24;
+  --red:#e8001e;--red2:#c0001a;--red3:rgba(232,0,30,0.12);
+  --gold:#ffd600;--green:#00e676;--orange:#ff6b00;
+  --text:#ffffff;--text2:#aaaaaa;--text3:#555566;
+  --card:rgba(255,255,255,0.05);--cb:rgba(232,0,30,0.25);
+  --r:12px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh;overflow-x:hidden}
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-thumb{background:var(--red);border-radius:2px}
+
+/* ══ TOPBAR ══ */
+.topbar{
+  position:sticky;top:0;z-index:200;
+  background:rgba(10,10,15,0.97);backdrop-filter:blur(20px);
+  border-bottom:1px solid rgba(255,255,255,0.06);
+  padding:0 16px;height:54px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.tl{display:flex;align-items:center;gap:10px}
+.tl-logo{
+  background:linear-gradient(135deg,var(--red),var(--red2));
+  border-radius:8px;width:32px;height:32px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Orbitron',sans-serif;font-size:0.58rem;font-weight:900;color:#fff;flex-shrink:0;
+}
+.tl-name{font-family:'Orbitron',sans-serif;font-size:1.05rem;font-weight:900;color:#fff;letter-spacing:2px}
+.tr{display:flex;align-items:center;gap:8px}
+.bal-chip{
+  background:rgba(232,0,30,0.15);border:1px solid rgba(232,0,30,0.3);
+  border-radius:20px;padding:5px 12px;
+  font-family:'Orbitron',sans-serif;font-size:0.78rem;font-weight:700;color:#fff;
+}
+.out-btn{
+  background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
+  border-radius:8px;padding:5px 10px;color:var(--text2);
+  font-size:0.75rem;cursor:pointer;font-family:'Rajdhani',sans-serif;transition:all .3s;
+}
+.out-btn:hover{color:#fff;border-color:var(--red)}
+
+/* ══ AUTH ══ */
+#auth-screen{
+  position:fixed;inset:0;z-index:1000;
+  background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px;
+}
+.auth-wrap{width:100%;max-width:400px}
+.auth-brand{text-align:center;margin-bottom:28px}
+.auth-brand-ico{
+  width:68px;height:68px;border-radius:18px;margin:0 auto 12px;
+  background:linear-gradient(135deg,var(--red),var(--red2));
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 8px 28px rgba(232,0,30,0.4);
+}
+.auth-brand-ico span{font-family:'Orbitron',sans-serif;font-size:1.3rem;font-weight:900;color:#fff}
+.auth-brand h1{font-family:'Orbitron',sans-serif;font-size:1.8rem;font-weight:900;color:#fff;letter-spacing:4px}
+.auth-brand p{color:var(--text2);font-size:0.78rem;margin-top:4px;letter-spacing:2px;text-transform:uppercase}
+.auth-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:18px;padding:24px}
+.auth-tabs{display:flex;gap:4px;background:rgba(0,0,0,0.4);padding:3px;border-radius:10px;margin-bottom:20px}
+.at{flex:1;padding:9px;text-align:center;border:none;background:transparent;color:var(--text2);font-family:'Rajdhani',sans-serif;font-size:0.9rem;font-weight:700;cursor:pointer;border-radius:8px;transition:all .3s;letter-spacing:1px;text-transform:uppercase}
+.at.active{background:var(--red);color:#fff;box-shadow:0 2px 10px rgba(232,0,30,0.4)}
+.af{margin-bottom:13px}
+.af label{display:block;color:var(--text2);font-size:0.7rem;letter-spacing:1px;margin-bottom:4px;text-transform:uppercase}
+.af input{width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:11px 13px;color:#fff;font-family:'Rajdhani',sans-serif;font-size:0.95rem;outline:none;transition:all .3s}
+.af input:focus{border-color:var(--red);box-shadow:0 0 0 3px rgba(232,0,30,0.12)}
+.af input::placeholder{color:var(--text3)}
+.btn-r{width:100%;padding:13px;border:none;border-radius:11px;background:linear-gradient(135deg,var(--red),var(--red2));color:#fff;font-family:'Orbitron',sans-serif;font-size:0.82rem;font-weight:700;cursor:pointer;transition:all .3s;letter-spacing:2px;margin-top:6px;box-shadow:0 4px 16px rgba(232,0,30,0.35)}
+.btn-r:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(232,0,30,0.5)}
+.btn-r:active{transform:translateY(0)}
+.btn-goo{width:100%;padding:11px;border:1px solid rgba(255,255,255,0.12);border-radius:11px;background:rgba(255,255,255,0.05);color:#fff;font-family:'Rajdhani',sans-serif;font-size:0.92rem;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;transition:all .3s;margin-top:10px}
+.btn-goo:hover{background:rgba(255,255,255,0.09)}
+.btn-goo img{width:18px;height:18px}
+.or{display:flex;align-items:center;gap:10px;margin:13px 0;color:var(--text3);font-size:0.72rem}
+.or::before,.or::after{content:'';flex:1;height:1px;background:rgba(255,255,255,0.07)}
+.amsg{padding:9px 12px;border-radius:9px;font-size:0.85rem;margin-top:10px;text-align:center}
+.amsg.ok{background:rgba(0,230,118,0.1);border:1px solid rgba(0,230,118,0.25);color:var(--green)}
+.amsg.er{background:rgba(232,0,30,0.1);border:1px solid rgba(232,0,30,0.25);color:#ff7070}
+
+/* ══ MAIN APP ══ */
+#main-app{display:none;min-height:100vh;padding-bottom:72px}
+
+/* ══ INSTALL BANNER ══ */
+#inst-banner{display:none;background:rgba(232,0,30,0.08);border-bottom:1px solid rgba(232,0,30,0.15);padding:9px 16px;align-items:center;justify-content:space-between;gap:10px}
+#inst-banner.show{display:flex}
+#inst-banner p{font-size:0.76rem;color:var(--text2)}.ibname{color:#fff;font-weight:700;display:block;font-size:0.84rem}
+.ib-btn{background:var(--red);border:none;border-radius:8px;padding:6px 14px;font-family:'Orbitron',sans-serif;font-size:0.66rem;font-weight:700;color:#fff;cursor:pointer;white-space:nowrap}
+
+/* ══ LIVE BONUS ══ */
+#lb-bar{display:none;background:rgba(255,214,0,0.06);border-bottom:1px solid rgba(255,214,0,0.15);padding:7px 16px;align-items:center;justify-content:space-between}
+#lb-bar.show{display:flex}
+
+/* ══ BOTTOM NAV ══ */
+.bnav{
+  position:fixed;bottom:0;left:0;right:0;z-index:200;
+  background:rgba(10,10,15,0.98);backdrop-filter:blur(20px);
+  border-top:1px solid rgba(255,255,255,0.05);
+  display:flex;justify-content:space-around;padding:5px 0 8px;
+}
+.ni{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 12px;border:none;background:transparent;color:var(--text3);font-family:'Rajdhani',sans-serif;font-size:0.6rem;font-weight:700;cursor:pointer;transition:all .3s;letter-spacing:0.5px;text-transform:uppercase;position:relative}
+.ni.active{color:#fff}
+.ni.active::before{content:'';position:absolute;top:-5px;left:50%;transform:translateX(-50%);width:20px;height:2px;background:var(--red);border-radius:0 0 2px 2px}
+.ni svg{width:20px;height:20px}
+
+/* ══ PAGES ══ */
+.page{display:none;animation:pgIn .2s ease}
+.page.active{display:block}
+@keyframes pgIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.sec{padding:14px 14px 0}
+.stitle{display:flex;align-items:center;gap:8px;font-family:'Orbitron',sans-serif;font-size:0.72rem;font-weight:700;color:var(--red);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px}
+.stitle::after{content:'';flex:1;height:1px;background:linear-gradient(to right,rgba(232,0,30,0.3),transparent)}
+
+/* ══ HOME HERO ══ */
+.home-hero{
+  padding:16px 14px 0;
+  background:linear-gradient(180deg,rgba(232,0,30,0.08) 0%,transparent 100%);
+  border-bottom:1px solid rgba(255,255,255,0.04);
+  margin-bottom:0;
+}
+.hh-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.hh-title{font-family:'Orbitron',sans-serif;font-size:1.1rem;font-weight:900;color:#fff}
+.hh-subtitle{font-size:0.8rem;color:var(--text2);margin-top:2px}
+.hh-install{display:flex;gap:7px}
+.hi-btn{display:flex;align-items:center;gap:5px;background:var(--red);border:none;border-radius:8px;padding:7px 12px;font-family:'Orbitron',sans-serif;font-size:0.66rem;font-weight:700;color:#fff;cursor:pointer;transition:all .3s;box-shadow:0 2px 10px rgba(232,0,30,0.35)}
+.hi-btn:hover{transform:translateY(-1px)}
+.hi-btn2{display:flex;align-items:center;gap:5px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:7px 12px;font-family:'Orbitron',sans-serif;font-size:0.66rem;font-weight:700;color:#fff;cursor:pointer}
+
+/* ══ STATS BAR ══ */
+.stats-bar{display:flex;gap:8px;padding:12px 14px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.stats-bar::-webkit-scrollbar{display:none}
+.sb-card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:10px 14px;text-align:center;flex-shrink:0;min-width:90px}
+.sb-val{font-family:'Orbitron',sans-serif;font-size:1.1rem;font-weight:900;color:#fff}
+.sb-lbl{font-size:0.62rem;color:var(--text2);letter-spacing:1px;text-transform:uppercase;margin-top:1px}
+
+/* ══ MATCH SLIDER ══ */
+.match-slider-wrap{padding:14px 0 0}
+.ms-header{display:flex;align-items:center;justify-content:space-between;padding:0 14px;margin-bottom:10px}
+.ms-title{font-family:'Orbitron',sans-serif;font-size:0.72rem;font-weight:700;color:var(--red);letter-spacing:2px;text-transform:uppercase}
+.ms-count{font-size:0.75rem;color:var(--text2)}
+.ms-scroll{
+  display:flex;gap:10px;padding:0 14px 14px;
+  overflow-x:auto;-webkit-overflow-scrolling:touch;scroll-snap-type:x mandatory;
+}
+.ms-scroll::-webkit-scrollbar{display:none}
+
+/* MATCH CARD */
+.match-card{
+  flex-shrink:0;width:200px;
+  background:var(--bg3);border:1px solid rgba(255,255,255,0.08);
+  border-radius:14px;overflow:hidden;cursor:pointer;
+  scroll-snap-align:start;transition:all .25s;position:relative;
+}
+.match-card:hover{border-color:rgba(232,0,30,0.4);transform:translateY(-2px)}
+.match-card.active-match{border-color:var(--red);box-shadow:0 0 0 1px var(--red),0 4px 20px rgba(232,0,30,0.2)}
+.mc-top{
+  padding:10px 12px 8px;
+  background:linear-gradient(135deg,rgba(232,0,30,0.1),rgba(0,0,0,0));
+  border-bottom:1px solid rgba(255,255,255,0.06);
+}
+.mc-match-type{font-size:0.62rem;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
+.mc-teams{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.mc-team{text-align:center;flex:1}
+.mc-team-flag{
+  width:36px;height:36px;border-radius:50%;margin:0 auto 4px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.4rem;background:rgba(255,255,255,0.06);
+  border:1px solid rgba(255,255,255,0.1);
+}
+.mc-team-name{font-family:'Orbitron',sans-serif;font-size:0.62rem;font-weight:700;color:#fff;letter-spacing:1px}
+.mc-vs{font-family:'Orbitron',sans-serif;font-size:0.68rem;font-weight:900;color:var(--red);flex-shrink:0}
+.mc-bottom{padding:8px 12px}
+.mc-time{display:flex;align-items:center;gap:4px;font-size:0.7rem;color:var(--text2);margin-bottom:5px}
+.mc-prize{display:flex;align-items:center;justify-content:space-between}
+.mc-prize-val{font-family:'Orbitron',sans-serif;font-size:0.75rem;font-weight:700;color:var(--gold)}
+.mc-status{font-size:0.6rem;font-weight:700;padding:2px 7px;border-radius:20px;text-transform:uppercase;letter-spacing:0.5px}
+.mcs-open{background:rgba(0,230,118,0.12);color:var(--green);border:1px solid rgba(0,230,118,0.2)}
+.mcs-live{background:rgba(232,0,30,0.15);color:#ff7070;border:1px solid rgba(232,0,30,0.25)}
+.mcs-upcoming{background:rgba(255,214,0,0.1);color:var(--gold);border:1px solid rgba(255,214,0,0.2)}
+.mcs-closed{background:rgba(255,255,255,0.05);color:var(--text2);border:1px solid rgba(255,255,255,0.1)}
+.mc-active-indicator{position:absolute;top:0;left:0;right:0;height:2px;background:var(--red)}
+.mc-join-count{font-size:0.62rem;color:var(--text3);margin-top:4px}
+
+/* ══ MATCH DETAIL PANEL ══ */
+#match-panel{
+  margin:0 14px 0;
+  background:rgba(232,0,30,0.05);border:1px solid rgba(232,0,30,0.2);
+  border-radius:14px;overflow:hidden;
+  display:none;
+}
+#match-panel.show{display:block;animation:pgIn .2s ease}
+.mp-header{
+  background:linear-gradient(135deg,rgba(232,0,30,0.15),rgba(0,0,0,0));
+  padding:14px 16px;border-bottom:1px solid rgba(232,0,30,0.15);
+}
+.mp-teams{display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:8px}
+.mp-team{text-align:center}
+.mp-team-flag{width:48px;height:48px;border-radius:50%;margin:0 auto 5px;display:flex;align-items:center;justify-content:center;font-size:1.8rem;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12)}
+.mp-team-name{font-family:'Orbitron',sans-serif;font-size:0.72rem;font-weight:700;color:#fff}
+.mp-vs{font-family:'Orbitron',sans-serif;font-size:1rem;font-weight:900;color:var(--red)}
+.mp-info{display:flex;justify-content:center;gap:16px;font-size:0.72rem;color:var(--text2);flex-wrap:wrap}
+.mp-info span{display:flex;align-items:center;gap:4px}
+.mp-tabs{display:flex;border-bottom:1px solid rgba(255,255,255,0.06)}
+.mp-tab{flex:1;padding:11px;text-align:center;border:none;background:transparent;color:var(--text2);font-family:'Rajdhani',sans-serif;font-size:0.8rem;font-weight:700;cursor:pointer;transition:all .3s;letter-spacing:0.5px;border-bottom:2px solid transparent}
+.mp-tab.active{color:#fff;border-bottom-color:var(--red)}
+.mp-tab-content{display:none;padding:14px}
+.mp-tab-content.active{display:block}
+
+/* Pool join card inside match panel */
+.pool-join-card{
+  background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);
+  border-radius:12px;padding:14px;margin-bottom:10px;
+}
+.pjc-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.pjc-name{font-family:'Orbitron',sans-serif;font-size:0.8rem;font-weight:700;color:#fff}
+.pjc-fee{font-family:'Orbitron',sans-serif;font-size:0.78rem;font-weight:700;color:var(--red)}
+.pjc-meta{display:flex;gap:14px;margin-bottom:10px;flex-wrap:wrap}
+.pjc-m{display:flex;flex-direction:column;gap:1px}
+.pjc-ml{font-size:0.62rem;color:var(--text3);letter-spacing:1px;text-transform:uppercase}
+.pjc-mv{font-size:0.85rem;font-weight:700;color:#fff}
+.pjc-mv.gold{color:var(--gold)}
+.pjc-progress{margin-bottom:10px}
+.pjc-pinfo{display:flex;justify-content:space-between;font-size:0.68rem;color:var(--text3);margin-bottom:3px}
+.pjc-pinfo span:last-child{color:var(--red);font-weight:700}
+.pbar{height:4px;background:rgba(255,255,255,0.07);border-radius:2px}
+.pfill{height:100%;border-radius:2px;background:linear-gradient(to right,var(--red),var(--orange));transition:width 1s}
+.pjc-footer{display:flex;align-items:center;justify-content:space-between}
+.pjc-players{font-size:0.7rem;color:var(--text3)}
+.join-btn{background:linear-gradient(135deg,var(--red),var(--red2));border:none;border-radius:9px;padding:9px 20px;font-family:'Orbitron',sans-serif;font-size:0.68rem;font-weight:700;color:#fff;cursor:pointer;transition:all .3s;box-shadow:0 2px 10px rgba(232,0,30,0.3);letter-spacing:1px}
+.join-btn:hover{transform:scale(1.04);box-shadow:0 4px 16px rgba(232,0,30,0.5)}
+.join-btn:active{transform:scale(0.98)}
+.join-btn.dis{opacity:0.4;cursor:not-allowed;transform:none;box-shadow:none}
+
+/* ══ QUESTIONS ══ */
+.q-card{
+  background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);
+  border-radius:12px;padding:14px;margin-bottom:10px;position:relative;overflow:hidden;
+}
+.q-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--red);opacity:0.6}
+.q-card.qbonus::before{background:var(--orange)}
+.q-card.qexact::before{background:#fff;opacity:0.3}
+.q-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
+.q-badge{display:inline-flex;align-items:center;gap:4px;font-size:0.65rem;font-weight:700;padding:3px 8px;border-radius:20px;letter-spacing:0.5px;text-transform:uppercase}
+.qb-live{background:rgba(232,0,30,0.15);border:1px solid rgba(232,0,30,0.25);color:#ff7070}
+.qb-bonus{background:rgba(255,107,0,0.15);border:1px solid rgba(255,107,0,0.25);color:var(--orange)}
+.qb-exact{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);color:#fff}
+.qb-dot{width:5px;height:5px;border-radius:50%;background:currentColor;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+.q-timer{font-family:'Orbitron',sans-serif;font-size:0.68rem;color:var(--text3);background:rgba(255,255,255,0.05);padding:2px 8px;border-radius:20px}
+.q-timer.urg{color:#ff7070;background:rgba(232,0,30,0.1);animation:blink 1s infinite}
+@keyframes blink{50%{opacity:0.4}}
+.q-pts{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px}
+.q-pt{font-size:0.63rem;font-weight:700;padding:2px 7px;border-radius:20px;background:rgba(255,255,255,0.05);color:var(--text2)}
+.q-pt.r{background:rgba(232,0,30,0.1);color:#ff8a8a}
+.q-pt.o{background:rgba(255,107,0,0.1);color:var(--orange)}
+.q-pt.w{background:rgba(255,255,255,0.08);color:#fff}
+.q-txt{font-size:0.98rem;font-weight:700;color:#fff;line-height:1.4;margin-bottom:12px}
+.vote-grid{display:grid;gap:8px}
+.vbtn{
+  padding:11px 14px;border:1.5px solid rgba(255,255,255,0.12);
+  border-radius:10px;background:transparent;
+  font-family:'Rajdhani',sans-serif;font-size:0.92rem;font-weight:700;
+  color:rgba(255,255,255,0.65);cursor:pointer;transition:all .2s;text-align:center;
+}
+.vbtn:active{transform:scale(0.98)}
+.vbtn.vy{border-color:rgba(0,230,118,0.35);color:var(--green)}
+.vbtn.vy:hover,.vbtn.vy.picked{background:rgba(0,230,118,0.1);border-color:var(--green);color:var(--green)}
+.vbtn.vn{border-color:rgba(232,0,30,0.35);color:#ff7070}
+.vbtn.vn:hover,.vbtn.vn.picked{background:rgba(232,0,30,0.1);border-color:#ff7070;color:#ff7070}
+.vbtn.v0{border-color:rgba(0,230,118,0.3);color:var(--green)}.vbtn.v0:hover,.vbtn.v0.picked{background:rgba(0,230,118,0.08);border-color:var(--green)}
+.vbtn.v1{border-color:rgba(232,0,30,0.3);color:#ff7070}.vbtn.v1:hover,.vbtn.v1.picked{background:rgba(232,0,30,0.08);border-color:#ff7070}
+.vbtn.v2{border-color:rgba(255,214,0,0.3);color:var(--gold)}.vbtn.v2:hover,.vbtn.v2.picked{background:rgba(255,214,0,0.07);border-color:var(--gold)}
+.vbtn.v3{border-color:rgba(255,255,255,0.2);color:#fff}.vbtn.v3:hover,.vbtn.v3.picked{background:rgba(255,255,255,0.05);border-color:#fff}
+.vbtn.faded{opacity:0.35}
+.vote-result{font-size:0.78rem;color:var(--green);margin-top:9px;text-align:center;padding:7px;background:rgba(0,230,118,0.06);border-radius:8px}
+.exact-row{display:flex;gap:7px;margin-top:4px}
+.exact-inp{flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:9px;padding:10px 13px;color:#fff;font-family:'Orbitron',sans-serif;font-size:0.95rem;outline:none;text-align:center;transition:border-color .3s}
+.exact-inp:focus{border-color:rgba(255,255,255,0.35)}
+.exact-sub{background:var(--red);border:none;border-radius:9px;padding:10px 16px;font-family:'Orbitron',sans-serif;font-size:0.7rem;font-weight:700;color:#fff;cursor:pointer;white-space:nowrap}
+.exact-sub:hover{background:var(--red2)}
+
+/* ══ ALL MATCHES PAGE ══ */
+.match-list-card{
+  background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);
+  border-radius:14px;padding:14px;margin-bottom:10px;cursor:pointer;transition:all .25s;
+}
+.match-list-card:hover{border-color:rgba(232,0,30,0.35);background:rgba(232,0,30,0.04)}
+.mlc-teams{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.mlc-team{display:flex;align-items:center;gap:8px}
+.mlc-flag{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0}
+.mlc-tname{font-family:'Orbitron',sans-serif;font-size:0.78rem;font-weight:700;color:#fff}
+.mlc-tname small{display:block;font-size:0.62rem;color:var(--text2);font-family:'Rajdhani',sans-serif;letter-spacing:0;font-weight:400;margin-top:1px}
+.mlc-vs{font-family:'Orbitron',sans-serif;font-size:0.8rem;font-weight:900;color:var(--red)}
+.mlc-bottom{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.mlc-meta{display:flex;gap:12px;flex-wrap:wrap}
+.mlc-m{font-size:0.7rem;color:var(--text2)}
+.mlc-m span{color:#fff;font-weight:700}
+.view-btn{background:rgba(232,0,30,0.12);border:1px solid rgba(232,0,30,0.25);border-radius:8px;padding:7px 14px;font-family:'Orbitron',sans-serif;font-size:0.64rem;font-weight:700;color:#ff7070;cursor:pointer;transition:all .3s;letter-spacing:1px}
+.view-btn:hover{background:rgba(232,0,30,0.2)}
+
+/* ══ LEADERBOARD ══ */
+.lb-row{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:12px;margin-bottom:7px;display:flex;align-items:center;gap:10px;transition:all .2s}
+.lb-row.me{border-color:rgba(232,0,30,0.3);background:rgba(232,0,30,0.04)}
+.lb-row.r1{border-color:rgba(255,214,0,0.3);background:rgba(255,214,0,0.03)}
+.lb-row.r2{border-color:rgba(192,192,192,0.2)}
+.lb-row.r3{border-color:rgba(180,120,60,0.25)}
+.lb-rank{font-family:'Orbitron',sans-serif;font-size:0.95rem;font-weight:900;width:28px;text-align:center;flex-shrink:0}
+
+/* ══ WALLET ══ */
+.w-hero{
+  margin:14px;border-radius:16px;overflow:hidden;
+  background:linear-gradient(135deg,#1a0005,#2d000a);
+  border:1px solid rgba(232,0,30,0.2);padding:20px;
+  position:relative;
+}
+.w-hero::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(to right,transparent,var(--red),transparent)}
+.w-lbl{font-size:0.68rem;color:rgba(255,255,255,0.4);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px}
+.w-amt{font-family:'Orbitron',sans-serif;font-size:2.2rem;font-weight:900;color:#fff;margin-bottom:10px}
+.w-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.w-chip{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:4px 11px;font-size:0.76rem;font-weight:700;color:#fff}
+.w-chip.g{background:rgba(255,214,0,0.1);border-color:rgba(255,214,0,0.2);color:var(--gold)}
+.w-actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px}
+.wa{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:11px;padding:13px 8px;text-align:center;cursor:pointer;transition:all .3s}
+.wa:hover{border-color:var(--red);background:rgba(232,0,30,0.07);transform:translateY(-2px)}
+.wa:active{transform:translateY(0)}
+.wa-i{font-size:1.3rem;margin-bottom:3px}
+.wa-l{font-size:0.62rem;color:var(--text2);letter-spacing:1px;text-transform:uppercase;font-weight:700}
+.tx-item{display:flex;justify-content:space-between;align-items:center;padding:11px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:9px;margin-bottom:7px}
+.tx-type{font-weight:700;font-size:0.84rem;color:#fff}
+.tx-date{font-size:0.68rem;color:var(--text3);margin-top:1px}
+.tx-amt{font-family:'Orbitron',sans-serif;font-weight:700;font-size:0.88rem}
+.tx-amt.cr{color:var(--green)}.tx-amt.dr{color:#ff7070}
+.tx-st{font-size:0.6rem;padding:2px 7px;border-radius:20px;font-weight:700;display:inline-block;margin-top:2px}
+.tx-st.pending{background:rgba(255,214,0,0.1);color:var(--gold);border:1px solid rgba(255,214,0,0.2)}
+.tx-st.approved{background:rgba(0,230,118,0.08);color:var(--green);border:1px solid rgba(0,230,118,0.2)}
+.tx-st.rejected{background:rgba(232,0,30,0.08);color:#ff7070;border:1px solid rgba(232,0,30,0.2)}
+
+/* ══ MODAL ══ */
+.modal-ov{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.88);backdrop-filter:blur(10px);display:flex;align-items:flex-end;justify-content:center;padding:12px;opacity:0;pointer-events:none;transition:opacity .3s}
+.modal-ov.open{opacity:1;pointer-events:all}
+.modal{background:var(--bg3);border:1px solid rgba(232,0,30,0.2);border-radius:20px 20px 14px 14px;width:100%;max-width:440px;max-height:88vh;overflow-y:auto;padding:22px;position:relative;transform:translateY(30px);transition:transform .3s}
+.modal-ov.open .modal{transform:translateY(0)}
+.m-title{font-family:'Orbitron',sans-serif;font-size:0.9rem;font-weight:700;color:#fff;margin-bottom:16px;letter-spacing:1px}
+.mc{position:absolute;top:13px;right:13px;background:rgba(255,255,255,0.05);border:none;color:var(--text2);width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:0.85rem;display:flex;align-items:center;justify-content:center;transition:all .3s}
+.mc:hover{background:rgba(232,0,30,0.15);color:#fff}
+.mf{margin-bottom:12px}
+.mf label{display:block;color:var(--text2);font-size:0.7rem;letter-spacing:1px;margin-bottom:4px;text-transform:uppercase}
+.mf input{width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:9px;padding:10px 12px;color:#fff;font-family:'Rajdhani',sans-serif;font-size:0.95rem;outline:none;transition:border-color .3s}
+.mf input:focus{border-color:var(--red)}
+.mf input::placeholder{color:var(--text3)}
+.qr-box{text-align:center;padding:14px;background:rgba(0,0,0,0.3);border-radius:12px;margin:12px 0}
+.qr-box img{width:140px;height:140px;border-radius:8px;background:#fff;padding:5px}
+.upi-txt{font-family:'Orbitron',sans-serif;font-size:0.72rem;color:var(--red);margin-top:5px;letter-spacing:1px}
+
+/* ══ CHAT ══ */
+.chat-fab{position:fixed;bottom:80px;right:14px;width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--red),var(--red2));border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.2rem;box-shadow:0 4px 18px rgba(232,0,30,0.5);z-index:150;transition:all .3s}
+.chat-fab:hover{transform:scale(1.1)}
+.chat-win{position:fixed;bottom:80px;right:12px;width:300px;height:400px;background:var(--bg3);border:1px solid rgba(232,0,30,0.2);border-radius:16px;display:none;flex-direction:column;z-index:160;box-shadow:0 8px 36px rgba(0,0,0,0.6)}
+.chat-win.open{display:flex}
+.ch{padding:11px 13px;background:rgba(232,0,30,0.08);border-bottom:1px solid rgba(232,0,30,0.12);display:flex;justify-content:space-between;align-items:center;border-radius:16px 16px 0 0}
+.ch-t{font-family:'Orbitron',sans-serif;font-size:0.75rem;font-weight:700;color:#fff}
+.chat-msgs{flex:1;overflow-y:auto;padding:9px;display:flex;flex-direction:column;gap:6px}
+.cmsg{max-width:78%;padding:7px 10px;border-radius:10px;font-size:0.8rem;line-height:1.4}
+.cmsg.cu{background:rgba(232,0,30,0.15);align-self:flex-end;border-bottom-right-radius:3px;color:#fff}
+.cmsg.ca{background:rgba(255,255,255,0.05);align-self:flex-start;border-bottom-left-radius:3px;color:#fff}
+.cmsg .ct{font-size:0.58rem;color:var(--text3);margin-top:2px;text-align:right}
+.ci{display:flex;gap:6px;padding:9px;border-top:1px solid rgba(255,255,255,0.05)}
+.ci input{flex:1;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);border-radius:8px;padding:7px 10px;color:#fff;font-family:'Rajdhani',sans-serif;font-size:0.84rem;outline:none}
+.ci input:focus{border-color:var(--red)}
+.ci button{background:var(--red);border:none;border-radius:8px;width:32px;height:32px;cursor:pointer;color:#fff;font-size:0.9rem;display:flex;align-items:center;justify-content:center}
+
+/* ══ EMPTY ══ */
+.empty{text-align:center;padding:32px 20px;color:var(--text3)}
+.empty .ei{font-size:2.5rem;margin-bottom:8px;opacity:0.5}
+.empty p{font-size:0.82rem}
+
+/* ══ MISC ══ */
+.loader{display:inline-block;width:15px;height:15px;border:2px solid rgba(232,0,30,0.2);border-top-color:var(--red);border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle;margin-right:5px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loader-full{display:flex;align-items:center;justify-content:center;padding:30px;color:var(--text2);font-size:0.85rem}
+
+@media(max-width:360px){.w-actions{grid-template-columns:1fr 1fr}.hh-install{flex-direction:column}}
+@media(min-width:600px){.stats-bar{justify-content:center}.ms-scroll{padding:0 20px 14px}}
+</style>
+</head>
+<body>
+
+<!-- ══════════ AUTH ══════════ -->
+<div id="auth-screen">
+  <div class="auth-wrap">
+    <div class="auth-brand">
+      <div class="auth-brand-ico"><span>S11</span></div>
+      <h1>SMART11</h1>
+      <p>Cricket Prediction Platform</p>
+    </div>
+    <div class="auth-card">
+      <div class="auth-tabs">
+        <button class="at active" onclick="switchTab('login')">Login</button>
+        <button class="at" onclick="switchTab('signup')">Sign Up</button>
+      </div>
+      <div id="login-form">
+        <div class="af"><label>Email</label><input type="email" id="li-e" placeholder="your@email.com" autocomplete="email"/></div>
+        <div class="af"><label>Password</label><input type="password" id="li-p" placeholder="••••••••" autocomplete="current-password"/></div>
+        <button class="btn-r" onclick="loginUser()">LOGIN</button>
+        <div class="or">YA</div>
+        <button class="btn-goo" onclick="googleLogin()"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G"/>Google se Login</button>
+        <div id="li-msg"></div>
+      </div>
+      <div id="signup-form" style="display:none">
+        <div class="af"><label>Email</label><input type="email" id="su-e" placeholder="your@email.com" autocomplete="email"/></div>
+        <div class="af"><label>Password (min 6)</label><input type="password" id="su-p" placeholder="••••••••" autocomplete="new-password"/></div>
+        <button class="btn-r" onclick="signupUser()">ACCOUNT BANAO</button>
+        <div class="or">YA</div>
+        <button class="btn-goo" onclick="googleLogin()"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G"/>Google se Signup</button>
+        <div id="su-msg"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ MAIN APP ══════════ -->
+<div id="main-app">
+  <div class="topbar">
+    <div class="tl">
+      <div class="tl-logo">S11</div>
+      <span class="tl-name">SMART11</span>
+    </div>
+    <div class="tr">
+      <div class="bal-chip">₹<span id="top-bal">0.00</span></div>
+      <button class="out-btn" onclick="logoutUser()">Logout</button>
+    </div>
+  </div>
+
+  <!-- INSTALL BANNER -->
+  <div id="inst-banner">
+    <div><span class="ibname">📲 Smart11 Install Karo</span><p>Home screen par add karo!</p></div>
+    <button class="ib-btn" onclick="doInstall()">INSTALL</button>
+  </div>
+
+  <!-- LIVE BONUS -->
+  <div id="lb-bar">
+    <div style="font-size:0.78rem;color:var(--gold)">📺 Live Bonus Active — har 5 min +0.1 pts</div>
+    <div style="font-family:'Orbitron',sans-serif;font-size:0.85rem;font-weight:700;color:var(--gold)">+<span id="lb-pts">0.0</span> pts</div>
+  </div>
+
+  <!-- ══ HOME PAGE ══ -->
+  <div id="page-home" class="page active">
+    <!-- Hero -->
+    <div class="home-hero">
+      <div class="hh-top">
+        <div>
+          <div class="hh-title">Predict & Win 🏏</div>
+          <div class="hh-subtitle">Live cricket prediction — real cash prizes</div>
+        </div>
+        <div class="hh-install" id="hero-inst">
+          <button class="hi-btn" onclick="doInstall()">📲 Install</button>
+          <button class="hi-btn2" onclick="showShortcutHelp()">🔗</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-bar">
+      <div class="sb-card"><div class="sb-val" id="h-matches">–</div><div class="sb-lbl">Matches</div></div>
+      <div class="sb-card"><div class="sb-val" id="h-pools">–</div><div class="sb-lbl">Pools</div></div>
+      <div class="sb-card"><div class="sb-val" id="h-players">–</div><div class="sb-lbl">Players</div></div>
+      <div class="sb-card"><div class="sb-val" id="h-prize">–</div><div class="sb-lbl">Prize Pool</div></div>
+    </div>
+
+    <!-- MATCH SLIDER -->
+    <div class="match-slider-wrap">
+      <div class="ms-header">
+        <div class="ms-title">⚡ Upcoming Matches</div>
+        <div class="ms-count" id="ms-count"></div>
+      </div>
+      <div class="ms-scroll" id="match-slider"></div>
+    </div>
+
+    <!-- MATCH DETAIL PANEL -->
+    <div style="padding:0 14px 14px" id="mp-wrap">
+      <div id="match-panel">
+        <div class="mp-header" id="mp-header"></div>
+        <div class="mp-tabs">
+          <button class="mp-tab active" onclick="switchMPTab('pools',this)">🏆 Pools</button>
+          <button class="mp-tab" onclick="switchMPTab('questions',this)">⚡ Questions</button>
+          <button class="mp-tab" onclick="switchMPTab('leaderboard',this)">🥇 Leaderboard</button>
+        </div>
+        <div id="mpt-pools" class="mp-tab-content active"></div>
+        <div id="mpt-questions" class="mp-tab-content"></div>
+        <div id="mpt-leaderboard" class="mp-tab-content"></div>
+      </div>
+    </div>
+
+    <!-- GLOBAL LIVE QUESTIONS (no pool) -->
+    <div class="sec">
+      <div class="stitle">🔴 Live Questions</div>
+      <div id="global-qs"></div>
+    </div>
+  </div>
+
+  <!-- ══ ALL MATCHES PAGE ══ -->
+  <div id="page-matches" class="page">
+    <div class="sec">
+      <div class="stitle">📅 All Matches</div>
+      <div id="all-matches-list"></div>
+    </div>
+  </div>
+
+  <!-- ══ LIVE PAGE ══ -->
+  <div id="page-live" class="page">
+    <div class="sec">
+      <div class="stitle">⚡ All Live Questions</div>
+      <div id="live-qs-page"></div>
+    </div>
+  </div>
+
+  <!-- ══ RANKS PAGE ══ -->
+  <div id="page-ranks" class="page">
+    <div class="sec">
+      <div class="stitle">🏆 Leaderboard</div>
+      <select id="lb-pool-sel" onchange="loadLeaderboard()" style="width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:9px;padding:10px 12px;color:#fff;font-family:'Rajdhani',sans-serif;font-size:0.92rem;outline:none;cursor:pointer;margin-bottom:12px">
+        <option value="">-- Pool choose karo --</option>
+      </select>
+      <div id="lb-list"></div>
+    </div>
+  </div>
+
+  <!-- ══ WALLET PAGE ══ -->
+  <div id="page-wallet" class="page">
+    <div class="w-hero">
+      <div class="w-lbl">Wallet Balance</div>
+      <div class="w-amt">₹<span id="w-bal">0.00</span></div>
+      <div class="w-chips">
+        <div class="w-chip g">🏆 <span id="w-pts">0</span> Pts</div>
+        <div class="w-chip g">📺 +<span id="w-live">0.0</span> Live</div>
+      </div>
+      <div class="w-actions">
+        <div class="wa" onclick="openModal('dep-modal')"><div class="wa-i">💳</div><div class="wa-l">Add Money</div></div>
+        <div class="wa" onclick="openModal('wd-modal')"><div class="wa-i">🏦</div><div class="wa-l">Withdraw</div></div>
+        <div class="wa" onclick="openModal('hist-modal')"><div class="wa-i">📋</div><div class="wa-l">History</div></div>
+      </div>
+    </div>
+    <div class="sec">
+      <div class="stitle">📊 Recent Transactions</div>
+      <div id="recent-tx"></div>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div class="bnav">
+    <button class="ni active" onclick="showPage('home',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>Home
+    </button>
+    <button class="ni" onclick="showPage('matches',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>Matches
+    </button>
+    <button class="ni" onclick="showPage('live',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>Live
+    </button>
+    <button class="ni" onclick="showPage('ranks',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Ranks
+    </button>
+    <button class="ni" onclick="showPage('wallet',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Wallet
+    </button>
+  </div>
+</div>
+
+<!-- ══ MODALS ══ -->
+<div class="modal-ov" id="dep-modal">
+  <div class="modal">
+    <button class="mc" onclick="closeModal('dep-modal')">✕</button>
+    <div class="m-title">💳 Add Money</div>
+    <div class="qr-box">
+      <img id="upi-qr" src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=upi://pay?pa=rishabhsisodiya1998@ybl&name=Smart11" alt="QR"/>
+      <div class="upi-txt" id="upi-txt">rishabhsisodiya1998@ybl</div>
+    </div>
+    <p style="font-size:0.78rem;color:var(--text2);margin-bottom:12px">Min deposit: <strong style="color:#fff">₹500</strong> — Pay karke UTR daalo</p>
+    <div class="mf"><label>Amount (₹)</label><input type="number" id="dep-amt" placeholder="Min ₹500"/></div>
+    <div class="mf"><label>UTR / Transaction ID</label><input type="text" id="dep-utr" placeholder="12-digit UTR"/></div>
+    <button class="btn-r" onclick="submitDeposit()">SUBMIT REQUEST</button>
+    <div id="dep-msg"></div>
+  </div>
+</div>
+
+<div class="modal-ov" id="wd-modal">
+  <div class="modal">
+    <button class="mc" onclick="closeModal('wd-modal')">✕</button>
+    <div class="m-title">🏦 Withdraw</div>
+    <div class="mf"><label>Amount (₹)</label><input type="number" id="wd-amt" placeholder="Enter amount"/></div>
+    <div class="mf"><label>Your UPI ID</label><input type="text" id="wd-upi" placeholder="yourname@upi"/></div>
+    <button class="btn-r" onclick="submitWithdraw()">REQUEST WITHDRAWAL</button>
+    <div id="wd-msg"></div>
+  </div>
+</div>
+
+<div class="modal-ov" id="hist-modal">
+  <div class="modal">
+    <button class="mc" onclick="closeModal('hist-modal')">✕</button>
+    <div class="m-title">📋 Transaction History</div>
+    <div id="tx-hist"></div>
+  </div>
+</div>
+
+<!-- CHAT -->
+<button class="chat-fab" onclick="toggleChat()">💬</button>
+<div class="chat-win" id="chat-win">
+  <div class="ch"><div class="ch-t">💬 Support Chat</div><button class="mc" style="position:static" onclick="toggleChat()">✕</button></div>
+  <div class="chat-msgs" id="chat-msgs"></div>
+  <div class="ci">
+    <input type="text" id="chat-inp" placeholder="Message likho…" onkeydown="if(event.key==='Enter')sendChat()"/>
+    <button onclick="sendChat()">➤</button>
+  </div>
+</div>
+
+<!-- ══ PWA SCRIPT (non-module) ══ -->
+<script>
+var _dp=null,_ins=window.matchMedia('(display-mode:standalone)').matches||navigator.standalone===true;
+window.addEventListener('beforeinstallprompt',function(e){
+  e.preventDefault();_dp=e;
+  var b=document.getElementById('inst-banner');if(b)b.classList.add('show');
+});
+window.addEventListener('appinstalled',function(){
+  _ins=true;_dp=null;
+  var b=document.getElementById('inst-banner');if(b)b.classList.remove('show');
+  var w=document.getElementById('hero-inst');if(w)w.style.display='none';
+});
+if(_ins){document.addEventListener('DOMContentLoaded',function(){
+  var w=document.getElementById('hero-inst');if(w)w.style.display='none';
+});}
+window.doInstall=async function(){
+  if(_ins){alert('✅ Smart11 already install hai!');return;}
+  if(_dp){try{_dp.prompt();var r=await _dp.userChoice;_dp=null;
+    if(r.outcome==='accepted'){var w=document.getElementById('hero-inst');if(w)w.style.display='none';
+    var b=document.getElementById('inst-banner');if(b)b.classList.remove('show');}return;}catch(e){}}
+  showShortcutHelp();
+};
+window.showShortcutHelp=function(){
+  var ua=navigator.userAgent.toLowerCase();
+  var ios=/iphone|ipad|ipod/.test(ua);
+  var t=ios?'📱 iPhone / iPad Install':'📱 Android Chrome Install';
+  var s=ios
+    ?'1️⃣  Neeche Share (⬆️) tap karo\n\n2️⃣  "Add to Home Screen" select karo\n\n3️⃣  "Add" tap karo\n\n✅  Done!'
+    :'1️⃣  Browser menu (⋮) tap karo\n\n2️⃣  "Add to Home screen" tap karo\n\n3️⃣  "Add" confirm karo\n\n✅  Home screen par Smart11 aayega!\n\n💡 "Cannot be installed" aaye to "Create shortcut" choose karo';
+  var d=document.createElement('div');
+  d.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.92);display:flex;align-items:flex-end;justify-content:center;padding:14px;backdrop-filter:blur(12px)';
+  d.innerHTML='<div style="background:#1a0005;border:1px solid rgba(232,0,30,0.3);border-radius:18px;padding:24px;width:100%;max-width:420px"><div style="font-family:Orbitron,sans-serif;font-size:0.9rem;color:#e8001e;margin-bottom:12px;font-weight:700">'+t+'</div><div style="font-size:0.88rem;color:#fff;line-height:1.9;white-space:pre-line">'+s+'</div><button onclick="this.closest(\'div[style]\').remove()" style="margin-top:18px;width:100%;padding:12px;background:linear-gradient(135deg,#e8001e,#c0001a);border:none;border-radius:11px;font-family:Orbitron,sans-serif;font-size:0.8rem;font-weight:700;color:#fff;cursor:pointer;letter-spacing:2px">SAMAJH GAYA ✓</button></div>';
+  document.body.appendChild(d);
+};
+if('serviceWorker'in navigator)window.addEventListener('load',function(){navigator.serviceWorker.register('./sw.js').catch(function(){});});
+</script>
+
+<!-- ══ FIREBASE MODULE ══ -->
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import{getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,onAuthStateChanged,GoogleAuthProvider,signInWithPopup}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import{getFirestore,doc,getDoc,setDoc,addDoc,collection,query,where,orderBy,onSnapshot,updateDoc,increment,serverTimestamp,getDocs}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const FB={apiKey:"AIzaSyBfSfeiOmyBSyYBTV87OKH6IqFU0YXemw0",authDomain:"ayur-620e7.firebaseapp.com",projectId:"ayur-620e7",storageBucket:"ayur-620e7.firebasestorage.app",messagingSenderId:"732502202884",appId:"1:732502202884:web:3863c7d829b54d79743351"};
+const app=initializeApp(FB),auth=getAuth(app),db=getFirestore(app);
+
+// ── UTILS ──
+function sM(el,txt,type){if(!el)return;el.innerHTML=`<div class="amsg ${type==='er'?'er':'ok'}">${txt}</div>`;setTimeout(()=>{if(el)el.innerHTML=''},4000)}
+window.sM=sM;
+function esc(s){return(s||'').replace(/'/g,"\\'").replace(/"/g,'&quot;')}
+function fmt(n){return(n||0).toFixed(2)}
+
+// ── STATE ──
+let CU=null,chatOpen=false,qTimers={},liveTimer=null,liveSecs=0,liveBonusActive=false;
+let activeMatchId=null,allPools=[],allQs=[];
+
+// ── AUTH STATE ──
+onAuthStateChanged(auth,async user=>{
+  try{
+    if(user){
+      CU=user;
+      document.getElementById('auth-screen').style.display='none';
+      document.getElementById('main-app').style.display='block';
+      await ensureUserDoc(user);
+      listenWallet(user.uid);
+      listenPools();
+      listenQuestions();
+      listenChat(user.uid);
+      loadUPI();
+      loadLBPoolsSel();
+    }else{
+      CU=null;stopLiveBonus();
+      document.getElementById('auth-screen').style.display='flex';
+      document.getElementById('main-app').style.display='none';
+    }
+  }catch(e){console.error(e);}
+});
+
+async function ensureUserDoc(u){
+  const r=doc(db,'users',u.uid),s=await getDoc(r);
+  if(!s.exists()){
+    await setDoc(r,{email:u.email,balance:50,points:0,liveSeconds:0,createdAt:serverTimestamp()});
+    await addDoc(collection(db,'transactions'),{uid:u.uid,type:'Signup Bonus',amount:50,credit:true,status:'approved',createdAt:serverTimestamp()});
+  }
+}
+function listenWallet(uid){
+  onSnapshot(doc(db,'users',uid),s=>{
+    const d=s.data()||{};
+    const b=fmt(d.balance||0);
+    document.getElementById('top-bal').textContent=b;
+    document.getElementById('w-bal').textContent=b;
+    document.getElementById('w-pts').textContent=(d.points||0).toFixed(1);
+  });
+}
+async function loadUPI(){
+  try{const s=await getDoc(doc(db,'settings','upi'));const u=s.exists()?s.data().upiId:'rishabhsisodiya1998@ybl';
+  document.getElementById('upi-txt').textContent=u;
+  document.getElementById('upi-qr').src=`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=upi://pay?pa=${encodeURIComponent(u)}&name=Smart11`;}catch(e){}
+}
+
+// ── AUTH ──
+window.switchTab=t=>{
+  document.querySelectorAll('.at').forEach((el,i)=>el.classList.toggle('active',t==='login'?i===0:i===1));
+  document.getElementById('login-form').style.display=t==='login'?'block':'none';
+  document.getElementById('signup-form').style.display=t==='signup'?'block':'none';
+};
+window.loginUser=async()=>{
+  const e=document.getElementById('li-e').value.trim(),p=document.getElementById('li-p').value,m=document.getElementById('li-msg');
+  if(!e||!p)return sM(m,'Email aur password dono bharo','er');
+  try{m.innerHTML='<div class="amsg ok"><span class="loader"></span>Login ho raha…</div>';await signInWithEmailAndPassword(auth,e,p);}
+  catch(er){sM(m,er.message.replace('Firebase: ','').replace(/\s*\(.*\)/,''),'er');}
+};
+window.signupUser=async()=>{
+  const e=document.getElementById('su-e').value.trim(),p=document.getElementById('su-p').value,m=document.getElementById('su-msg');
+  if(!e||!p)return sM(m,'Email aur password dono bharo','er');
+  if(p.length<6)return sM(m,'Password min 6 characters hona chahiye','er');
+  try{m.innerHTML='<div class="amsg ok"><span class="loader"></span>Account ban raha…</div>';await createUserWithEmailAndPassword(auth,e,p);sM(m,'🎉 Account bana! ₹50 bonus!','ok');}
+  catch(er){sM(m,er.message.replace('Firebase: ','').replace(/\s*\(.*\)/,''),'er');}
+};
+window.logoutUser=async()=>{stopLiveBonus();await signOut(auth);};
+window.googleLogin=async()=>{
+  const m=document.getElementById('li-msg')||document.getElementById('su-msg');
+  try{if(m)m.innerHTML='<div class="amsg ok"><span class="loader"></span>Google se login…</div>';await signInWithPopup(auth,new GoogleAuthProvider());}
+  catch(er){if(m)sM(m,er.code==='auth/popup-closed-by-user'?'Popup band kar diya.':er.message.replace('Firebase: ','').replace(/\s*\(.*\)/,''),'er');}
+};
+
+// ── NAV ──
+window.showPage=(name,el)=>{
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
+  el.classList.add('active');
+  if(name==='wallet')loadRecentTx();
+  if(name==='matches')renderAllMatches();
+  if(name==='live')renderQs(allQs,'live-qs-page');
+};
+window.openModal=id=>{document.getElementById(id).classList.add('open');if(id==='hist-modal')loadTxHistory();};
+window.closeModal=id=>document.getElementById(id).classList.remove('open');
+
+// ── POOL & MATCH SYSTEM ──
+const POOL_LIMIT=1000;
+function dispPlayers(p){
+  const real=p.joined||0,now=Date.now(),mTs=p.matchTime?.toDate?.()?.getTime?.()||Infinity;
+  if(now>=mTs||p.fakeEnabled===false||real>=(p.fakeRemoveAt??500))return real;
+  return Math.min((p.fakeStart??82)+real,p.maxPlayers||POOL_LIMIT);
+}
+function showCount(p){return p.fakeEnabled===false||(p.joined||0)>=(p.fakeHideBelow??50);}
+function poolSt(p){
+  const now=Date.now(),mTs=p.matchTime?.toDate?.()?.getTime?.()||Infinity,oTs=p.openTime?.toDate?.()?.getTime?.()||0;
+  if(now<oTs)return'upcoming';if(now>=mTs)return'closed';return'open';
+}
+
+// Group pools by match (using matchId field)
+function groupByMatch(pools){
+  const map={};
+  pools.forEach(p=>{
+    const key=p.matchId||p.id;
+    if(!map[key])map[key]={matchId:key,name:p.matchName||p.name,teamA:p.teamA||'TBA',teamB:p.teamB||'TBA',flagA:p.flagA||'🏏',flagB:p.flagB||'🏏',matchType:p.matchType||'T20',matchTime:p.matchTime,pools:[]};
+    map[key].pools.push(p);
+  });
+  return Object.values(map).sort((a,b)=>{
+    const at=a.matchTime?.toDate?.()?.getTime?.()||Infinity;
+    const bt=b.matchTime?.toDate?.()?.getTime?.()||Infinity;
+    return at-bt;
+  });
+}
+
+function listenPools(){
+  onSnapshot(collection(db,'pools'),snap=>{
+    allPools=snap.docs.map(d=>({id:d.id,...d.data()}));
+    renderMatchSlider();
+    renderAllMatches();
+    updateHomeStats();
+    checkLiveBonus(allPools);
+  });
+}
+
+function updateHomeStats(){
+  const matches=groupByMatch(allPools);
+  const activePools=allPools.filter(p=>poolSt(p)==='open');
+  const totalPlayers=activePools.reduce((s,p)=>s+dispPlayers(p),0);
+  const totalPrize=activePools.reduce((s,p)=>s+(p.prize||0),0);
+  document.getElementById('h-matches').textContent=matches.length||'–';
+  document.getElementById('h-pools').textContent=activePools.length||'–';
+  document.getElementById('h-players').textContent=totalPlayers||'–';
+  document.getElementById('h-prize').textContent=totalPrize>=1000?'₹'+(totalPrize/1000).toFixed(0)+'K':'₹'+totalPrize||'–';
+  document.getElementById('ms-count').textContent=matches.length+' match'+(matches.length!==1?'es':'');
+}
+
+// ── MATCH SLIDER ──
+function renderMatchSlider(){
+  const matches=groupByMatch(allPools);
+  const el=document.getElementById('match-slider');
+  if(!el)return;
+  if(!matches.length){
+    el.innerHTML='<div style="padding:20px;color:var(--text3);font-size:0.82rem">Koi match nahi abhi</div>';
+    document.getElementById('match-panel').classList.remove('show');
+    return;
+  }
+  el.innerHTML=matches.map(m=>{
+    const mTs=m.matchTime?.toDate?.();
+    const dateStr=mTs?mTs.toLocaleDateString('en-IN',{day:'2-digit',month:'short'}):'';
+    const timeStr=mTs?mTs.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}):'';
+    const activePools=m.pools.filter(p=>poolSt(p)==='open');
+    const totalPrize=m.pools.reduce((s,p)=>s+(p.prize||0),0);
+    const totalJoined=m.pools.reduce((s,p)=>s+dispPlayers(p),0);
+    const now=Date.now(),mTsMs=m.matchTime?.toDate?.()?.getTime?.()||Infinity;
+    const isLive=now>=(mTsMs-30*60*1000)&&now<mTsMs;
+    const isClosed=now>=mTsMs;
+    const st=isLive?'live':isClosed?'closed':activePools.length>0?'open':'upcoming';
+    const stBadge=st==='live'?'<span class="mc-status mcs-live">🔴 Live</span>':
+      st==='open'?'<span class="mc-status mcs-open">✅ Open</span>':
+      st==='closed'?'<span class="mc-status mcs-closed">Closed</span>':
+      '<span class="mc-status mcs-upcoming">⏳ Soon</span>';
+    const isActive=activeMatchId===m.matchId;
+    return`<div class="match-card ${isActive?'active-match':''}" id="mc-${m.matchId}" onclick="selectMatch('${m.matchId}')">
+      ${isActive?'<div class="mc-active-indicator"></div>':''}
+      <div class="mc-top">
+        <div class="mc-match-type">${m.matchType||'T20'} ${dateStr?'· '+dateStr:''}</div>
+        <div class="mc-teams">
+          <div class="mc-team">
+            <div class="mc-team-flag">${m.flagA||'🏏'}</div>
+            <div class="mc-team-name">${m.teamA||'TBA'}</div>
+          </div>
+          <div class="mc-vs">VS</div>
+          <div class="mc-team">
+            <div class="mc-team-flag">${m.flagB||'🏏'}</div>
+            <div class="mc-team-name">${m.teamB||'TBA'}</div>
+          </div>
+        </div>
+      </div>
+      <div class="mc-bottom">
+        <div class="mc-time">⏱ ${timeStr||'TBD'}</div>
+        <div class="mc-prize">
+          <span class="mc-prize-val">${totalPrize?'₹'+totalPrize.toLocaleString():'–'}</span>
+          ${stBadge}
+        </div>
+        <div class="mc-join-count">${totalJoined?'👥 '+totalJoined+' joined':m.pools.length+' pool'+( m.pools.length!==1?'s':'')}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Auto-select first match if none selected
+  if(!activeMatchId&&matches.length>0){
+    selectMatch(matches[0].matchId);
+  }
+}
+
+window.selectMatch=function(matchId){
+  activeMatchId=matchId;
+  // Update active state on cards
+  document.querySelectorAll('.match-card').forEach(c=>{
+    const isActive=c.id==='mc-'+matchId;
+    c.classList.toggle('active-match',isActive);
+    const ind=c.querySelector('.mc-active-indicator');
+    if(isActive&&!ind){const d=document.createElement('div');d.className='mc-active-indicator';c.prepend(d);}
+    if(!isActive&&ind)ind.remove();
+  });
+  renderMatchPanel(matchId);
+};
+
+window.switchMPTab=function(tab,el){
+  document.querySelectorAll('.mp-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.mp-tab-content').forEach(c=>c.classList.remove('active'));
+  document.getElementById('mpt-'+tab).classList.add('active');
+  if(tab==='leaderboard'&&activeMatchId)loadMatchLeaderboard(activeMatchId);
+};
+
+function renderMatchPanel(matchId){
+  const matches=groupByMatch(allPools);
+  const match=matches.find(m=>m.matchId===matchId);
+  if(!match){document.getElementById('match-panel').classList.remove('show');return;}
+
+  const mTs=match.matchTime?.toDate?.();
+  const dateStr=mTs?mTs.toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'TBD';
+
+  // Header
+  document.getElementById('mp-header').innerHTML=`
+    <div class="mp-teams">
+      <div class="mp-team">
+        <div class="mp-team-flag">${match.flagA||'🏏'}</div>
+        <div class="mp-team-name">${match.teamA||'Team A'}</div>
+      </div>
+      <div class="mp-vs">VS</div>
+      <div class="mp-team">
+        <div class="mp-team-flag">${match.flagB||'🏏'}</div>
+        <div class="mp-team-name">${match.teamB||'Team B'}</div>
+      </div>
+    </div>
+    <div class="mp-info">
+      <span>🏏 ${match.matchType||'T20'}</span>
+      <span>📅 ${dateStr}</span>
+      <span>🏆 ${match.pools.length} pool${match.pools.length!==1?'s':''}</span>
+    </div>`;
+
+  // Pools tab
+  const poolsEl=document.getElementById('mpt-pools');
+  if(!match.pools.length){
+    poolsEl.innerHTML='<div class="empty"><div class="ei">🏆</div><p>Is match ke liye koi pool nahi</p></div>';
+  }else{
+    poolsEl.innerHTML=match.pools.map(p=>{
+      const st=poolSt(p),shown=dispPlayers(p),real=p.joined||0,limit=p.maxPlayers||POOL_LIMIT;
+      const pct=Math.min(100,Math.round(shown/limit*100));
+      const sc=showCount(p);
+      const jBtn=st==='open'&&real<limit
+        ?`<button class="join-btn" onclick="joinPool('${p.id}',${p.entryFee||0},'${esc(p.name)}')">Join ₹${p.entryFee||0}</button>`
+        :`<button class="join-btn dis" disabled>${st==='closed'?'Closed':'Soon'}</button>`;
+      return`<div class="pool-join-card">
+        <div class="pjc-header">
+          <div class="pjc-name">🏆 ${p.name||'Pool'}</div>
+          <div class="pjc-fee">₹${p.entryFee||0} Entry</div>
+        </div>
+        <div class="pjc-meta">
+          <div class="pjc-m"><div class="pjc-ml">Prize</div><div class="pjc-mv gold">₹${(p.prize||0).toLocaleString()}</div></div>
+          <div class="pjc-m"><div class="pjc-ml">Max</div><div class="pjc-mv">${limit}</div></div>
+          <div class="pjc-m"><div class="pjc-ml">Status</div><div class="pjc-mv" style="color:${st==='open'?'var(--green)':st==='closed'?'#ff7070':'var(--gold)'}">${st==='open'?'Open':st==='closed'?'Closed':'Soon'}</div></div>
+        </div>
+        <div class="pjc-progress">
+          <div class="pjc-pinfo">
+            <span>${sc?'👥 '+shown+' joined':'Players joining...'}</span>
+            <span>${pct}% Full</span>
+          </div>
+          <div class="pbar"><div class="pfill" style="width:${pct}%"></div></div>
+        </div>
+        <div class="pjc-footer">
+          <span class="pjc-players">${sc?shown+'/'+limit:'–'} players</span>
+          ${jBtn}
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // Questions tab
+  const matchQs=allQs.filter(q=>q.matchId===matchId||(q.poolId&&match.pools.some(p=>p.id===q.poolId)));
+  renderQs(matchQs,'mpt-questions');
+
+  document.getElementById('match-panel').classList.add('show');
+}
+
+// Render all matches list page
+function renderAllMatches(){
+  const el=document.getElementById('all-matches-list');if(!el)return;
+  const matches=groupByMatch(allPools);
+  if(!matches.length){el.innerHTML='<div class="empty"><div class="ei">📅</div><p>Koi match scheduled nahi</p></div>';return;}
+  el.innerHTML=matches.map(m=>{
+    const mTs=m.matchTime?.toDate?.();
+    const dateStr=mTs?mTs.toLocaleString('en-IN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'TBD';
+    const activePools=m.pools.filter(p=>poolSt(p)==='open');
+    const totalPrize=m.pools.reduce((s,p)=>s+(p.prize||0),0);
+    const totalJoined=m.pools.reduce((s,p)=>s+dispPlayers(p),0);
+    return`<div class="match-list-card" onclick="goToMatch('${m.matchId}')">
+      <div class="mlc-teams">
+        <div class="mlc-team">
+          <div class="mlc-flag">${m.flagA||'🏏'}</div>
+          <div class="mlc-tname">${m.teamA||'Team A'}<small>${m.matchType||'T20'}</small></div>
+        </div>
+        <div class="mlc-vs">VS</div>
+        <div class="mlc-team">
+          <div class="mlc-flag">${m.flagB||'🏏'}</div>
+          <div class="mlc-tname">${m.teamB||'Team B'}<small>${dateStr}</small></div>
+        </div>
+      </div>
+      <div class="mlc-bottom">
+        <div class="mlc-meta">
+          <div class="mlc-m">Prize: <span>${totalPrize?'₹'+totalPrize.toLocaleString():'–'}</span></div>
+          <div class="mlc-m">Pools: <span>${m.pools.length}</span></div>
+          <div class="mlc-m">Players: <span>${totalJoined||'–'}</span></div>
+        </div>
+        <button class="view-btn">VIEW →</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+window.goToMatch=function(matchId){
+  // Switch to home, select match
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-home').classList.add('active');
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
+  document.querySelector('.ni').classList.add('active');
+  // Scroll to match in slider and select
+  selectMatch(matchId);
+  document.getElementById('ms-scroll')?.scrollIntoView({behavior:'smooth',block:'center'});
+};
+
+// Live bonus
+function checkLiveBonus(pools){
+  const now=Date.now();
+  const on=pools.some(p=>{const mTs=p.matchTime?.toDate?.()?.getTime?.()||Infinity;return now>=(mTs-30*60*1000)&&now<mTs;});
+  if(on&&!liveBonusActive)startLiveBonus();
+  else if(!on&&liveBonusActive)stopLiveBonus();
+}
+function startLiveBonus(){
+  liveBonusActive=true;document.getElementById('lb-bar').classList.add('show');
+  liveTimer=setInterval(async()=>{
+    liveSecs++;
+    if(liveSecs%300===0&&CU)await updateDoc(doc(db,'users',CU.uid),{points:increment(0.1),liveSeconds:increment(300)});
+    const t=(liveSecs/300*0.1).toFixed(1);
+    document.getElementById('lb-pts').textContent=t;
+    document.getElementById('w-live').textContent=t;
+  },1000);
+}
+function stopLiveBonus(){liveBonusActive=false;clearInterval(liveTimer);document.getElementById('lb-bar')?.classList.remove('show');}
+
+window.joinPool=async(poolId,fee,name)=>{
+  if(!CU)return;
+  const ps=await getDoc(doc(db,'pools',poolId)),p=ps.data();
+  if(poolSt(p)!=='open')return alert('Yeh pool abhi join nahi ho sakti!');
+  if((p.joined||0)>=(p.maxPlayers||POOL_LIMIT))return alert('Pool full ho gayi!');
+  const us=await getDoc(doc(db,'users',CU.uid));
+  if((us.data()?.balance||0)<fee)return alert('Balance kam hai! Pehle Add Money karo.');
+  if(!confirm(`"${name}"\nEntry Fee: ₹${fee}\n\nJoin karein?`))return;
+  const ex=await getDocs(query(collection(db,'pool_members'),where('uid','==',CU.uid),where('poolId','==',poolId)));
+  if(!ex.empty)return alert('Aap pehle hi is pool mein hain!');
+  await updateDoc(doc(db,'users',CU.uid),{balance:increment(-fee)});
+  await updateDoc(doc(db,'pools',poolId),{joined:increment(1)});
+  await addDoc(collection(db,'pool_members'),{uid:CU.uid,email:CU.email,poolId,points:0,joinedAt:serverTimestamp()});
+  await addDoc(collection(db,'transactions'),{uid:CU.uid,type:`Pool Join: ${name}`,amount:fee,credit:false,status:'approved',createdAt:serverTimestamp()});
+  alert('✅ Pool join ho gayi!');
+  if(activeMatchId)renderMatchPanel(activeMatchId);
+};
+
+// ── QUESTIONS ──
+function listenQuestions(){
+  onSnapshot(query(collection(db,'questions'),where('active','==',true)),snap=>{
+    allQs=snap.docs.map(d=>({id:d.id,...d.data()}));
+    // Global qs (no matchId, no poolId)
+    const globalQs=allQs.filter(q=>!q.matchId&&!q.poolId);
+    renderQs(globalQs,'global-qs');
+    // Update active match panel questions
+    if(activeMatchId)renderMatchPanel(activeMatchId);
+    renderQs(allQs,'live-qs-page');
+  });
+}
+
+function calcBonusPts(s){
+  if(s<=10)return 5.0;if(s<=20)return 4.5;if(s<=30)return 4.0;if(s<=40)return 3.5;
+  if(s<=50)return 3.0;if(s<=60)return 2.5;if(s<=70)return 2.0;if(s<=80)return 1.5;
+  if(s<=90)return 1.0;if(s<=100)return 0.5;if(s<=120)return 0.1;return 0;
+}
+
+function renderQs(qs,elId){
+  const el=document.getElementById(elId);if(!el)return;
+  if(!qs.length){el.innerHTML='<div class="empty"><div class="ei">⚡</div><p>Abhi koi live question nahi</p></div>';return;}
+  const vcls=['v0','v1','v2','v3'];
+  el.innerHTML=qs.map(q=>{
+    const isB=q.qType==='bonus',isE=q.qType==='exact';
+    const cardCls=isB?'qbonus':isE?'qexact':'';
+    const badge=isB?'<span class="q-badge qb-bonus"><span class="qb-dot"></span>⚡ Bonus</span>'
+      :isE?'<span class="q-badge qb-exact">🎯 Exact</span>'
+      :'<span class="q-badge qb-live"><span class="qb-dot"></span>🔴 Live</span>';
+    const pts=isB?'<span class="q-pt o">0-10s=+5pts</span><span class="q-pt o">time ke saath ghatta hai</span>'
+      :isE?'<span class="q-pt w">Exact=+50</span><span class="q-pt w">±2=+30</span><span class="q-pt w">±5=+15</span>'
+      :'<span class="q-pt r">Sahi=+10pts</span><span class="q-pt r">Rare bonus extra</span>';
+    let ans='';
+    if(isE){
+      ans=`<div class="exact-row"><input class="exact-inp" type="number" id="ei-${q.id}" placeholder="${q.minVal||0}–${q.maxVal||999} ${q.unit||''}"/><button class="exact-sub" onclick="submitExact('${q.id}',${q.minVal||0},${q.maxVal||999})">SUBMIT</button></div>`;
+    }else{
+      const opts=q.options||['YES','NO'];
+      const isYN=opts.length===2&&opts[0]==='YES'&&opts[1]==='NO';
+      ans=`<div class="vote-grid" style="grid-template-columns:repeat(${Math.min(opts.length,2)},1fr)">${opts.map((o,i)=>{
+        const c=isYN?(i===0?'vy':'vn'):vcls[i%4];
+        return`<button class="vbtn ${c}" id="vb-${q.id}-${i}" data-qid="${q.id}" data-ans="${o.replace(/"/g,'&quot;')}" data-ts="${Date.now()}" onclick="submitVote(this)">${o}</button>`;
+      }).join('')}</div>`;
+    }
+    return`<div class="q-card ${cardCls}" id="qc-${q.id}">
+      <div class="q-hdr">${badge}<div class="q-timer" id="cd-${q.id}">⏱ --:--</div></div>
+      <div class="q-pts">${pts}</div>
+      <div class="q-txt">${q.text}</div>
+      ${ans}
+      <div id="vd-${q.id}"></div>
+    </div>`;
+  }).join('');
+  qs.forEach(q=>{
+    startCd(q.id,q.endsAt?.toDate?.()||new Date(Date.now()+120000));
+    checkVoted(q.id);
+  });
+}
+
+function startCd(qId,endsAt){
+  if(qTimers[qId])clearInterval(qTimers[qId]);
+  qTimers[qId]=setInterval(()=>{
+    const el=document.getElementById('cd-'+qId);if(!el){clearInterval(qTimers[qId]);return;}
+    const s=Math.max(0,Math.floor((endsAt-Date.now())/1000));
+    el.textContent=`⏱ ${Math.floor(s/60).toString().padStart(2,'0')}:${(s%60).toString().padStart(2,'0')}`;
+    el.className='q-timer'+(s<=15?' urg':'');
+  },1000);
+}
+
+async function checkVoted(qId){
+  if(!CU)return;
+  try{const s=await getDoc(doc(db,'votes',`${CU.uid}_${qId}`));if(s.exists())markVoted(qId,s.data().answer);}catch(e){}
+}
+function markVoted(qId,ans){
+  const vd=document.getElementById('vd-'+qId);
+  if(vd)vd.innerHTML=`<div class="vote-result">✅ Aapka jawab: <strong>"${ans}"</strong></div>`;
+  document.querySelectorAll(`[id^="vb-${qId}-"]`).forEach(b=>{
+    const p=b.dataset.ans===ans;b.classList.toggle('picked',p);b.classList.toggle('faded',!p);
+  });
+}
+window.submitVote=async btn=>{
+  if(!CU)return;
+  const qId=btn.dataset.qid,answer=btn.dataset.ans,secs=Math.floor((Date.now()-parseInt(btn.dataset.ts||Date.now()))/1000);
+  const vr=doc(db,'votes',`${CU.uid}_${qId}`);
+  const ex=await getDoc(vr);if(ex.exists()){markVoted(qId,ex.data().answer);return;}
+  let bPts=0;
+  try{const qs=await getDoc(doc(db,'questions',qId));if(qs.data()?.qType==='bonus')bPts=calcBonusPts(secs);}catch(e){}
+  await setDoc(vr,{uid:CU.uid,qId,answer,secsTaken:secs,bonusPts:bPts,answeredAt:serverTimestamp()});
+  markVoted(qId,answer);
+  if(bPts>0){const vd=document.getElementById('vd-'+qId);if(vd)vd.innerHTML=`<div class="vote-result">✅ "${answer}" — <strong>+${bPts} pts</strong> (${secs}s mein!)</div>`;}
+};
+window.submitExact=async(qId,minV,maxV)=>{
+  if(!CU)return;
+  const inp=document.getElementById('ei-'+qId),val=parseInt(inp.value);
+  if(isNaN(val)||val<minV||val>maxV){alert(`${minV} aur ${maxV} ke beech number daalo`);return;}
+  const vr=doc(db,'votes',`${CU.uid}_${qId}`);
+  const ex=await getDoc(vr);if(ex.exists()){alert('Pehle hi jawab de chuke: '+ex.data().answer);return;}
+  await setDoc(vr,{uid:CU.uid,qId,answer:String(val),exactValue:val,answeredAt:serverTimestamp()});
+  const vd=document.getElementById('vd-'+qId);if(vd)vd.innerHTML=`<div class="vote-result">✅ ${val} submit! Admin result set karega.</div>`;
+  inp.disabled=true;inp.style.opacity='0.5';
+};
+
+// ── LEADERBOARD ──
+function loadLBPoolsSel(){
+  onSnapshot(collection(db,'pools'),snap=>{
+    const sel=document.getElementById('lb-pool-sel');if(!sel)return;
+    const curr=sel.value;sel.innerHTML='<option value="">-- Pool choose karo --</option>';
+    snap.docs.forEach(d=>{const o=document.createElement('option');o.value=d.id;o.textContent=d.data().name||d.id;if(d.id===curr)o.selected=true;sel.appendChild(o);});
+  });
+}
+window.loadLeaderboard=async()=>{
+  const poolId=document.getElementById('lb-pool-sel').value,el=document.getElementById('lb-list');
+  if(!poolId){el.innerHTML='';return;}
+  el.innerHTML='<div class="loader-full"><span class="loader"></span>Loading…</div>';
+  try{
+    const ms=await getDocs(query(collection(db,'pool_members'),where('poolId','==',poolId)));
+    if(ms.empty){el.innerHTML='<div class="empty"><div class="ei">👥</div><p>Koi member nahi</p></div>';return;}
+    const members=ms.docs.map(d=>d.data()).sort((a,b)=>(b.points||0)-(a.points||0));
+    const prizes={0:40000,1:10000,2:3000},emojis=['🥇','🥈','🥉'];
+    el.innerHTML=members.map((m,i)=>{
+      const isMe=m.uid===CU?.uid,prize=i<3?prizes[i]:(i<10?1000:0);
+      const cls=i===0?'r1':i===1?'r2':i===2?'r3':isMe?'me':'';
+      return`<div class="lb-row ${cls}">
+        <div class="lb-rank">${i<3?emojis[i]:`#${i+1}`}</div>
+        <div style="flex:1"><div style="font-weight:700;font-size:0.85rem;color:#fff">${isMe?'👤 Aap':m.email?.split('@')[0]||'User'}</div><div style="font-size:0.68rem;color:var(--text3);margin-top:1px">🏆 ${(m.points||0).toFixed(1)} pts</div></div>
+        ${prize?`<div style="font-family:'Orbitron',sans-serif;font-size:0.78rem;font-weight:700;color:var(--gold)">₹${prize.toLocaleString()}</div>`:''}
+      </div>`;
+    }).join('');
+  }catch(e){el.innerHTML='<div class="empty"><div class="ei">⚠️</div><p>Firestore index banao</p></div>';}
+};
+
+async function loadMatchLeaderboard(matchId){
+  const match=groupByMatch(allPools).find(m=>m.matchId===matchId);
+  const el=document.getElementById('mpt-leaderboard');if(!el)return;
+  if(!match?.pools.length){el.innerHTML='<div class="empty"><div class="ei">👥</div><p>Koi pool nahi</p></div>';return;}
+  // Show first pool's leaderboard
+  const poolId=match.pools[0].id;
+  el.innerHTML='<div class="loader-full"><span class="loader"></span>Loading…</div>';
+  try{
+    const ms=await getDocs(query(collection(db,'pool_members'),where('poolId','==',poolId)));
+    if(ms.empty){el.innerHTML='<div class="empty"><div class="ei">👥</div><p>Koi member nahi</p></div>';return;}
+    const members=ms.docs.map(d=>d.data()).sort((a,b)=>(b.points||0)-(a.points||0));
+    const emojis=['🥇','🥈','🥉'];
+    el.innerHTML=members.slice(0,20).map((m,i)=>{
+      const isMe=m.uid===CU?.uid,cls=i===0?'r1':i===1?'r2':i===2?'r3':isMe?'me':'';
+      return`<div class="lb-row ${cls}">
+        <div class="lb-rank">${i<3?emojis[i]:`#${i+1}`}</div>
+        <div style="flex:1"><div style="font-weight:700;font-size:0.84rem;color:#fff">${isMe?'👤 Aap':m.email?.split('@')[0]||'User'}</div><div style="font-size:0.67rem;color:var(--text3);margin-top:1px">🏆 ${(m.points||0).toFixed(1)} pts</div></div>
+      </div>`;
+    }).join('');
+  }catch(e){el.innerHTML='<div class="empty"><div class="ei">⚠️</div><p>Load nahi hua</p></div>';}
+}
+
+// ── DEPOSIT / WITHDRAW ──
+window.submitDeposit=async()=>{
+  const amt=parseFloat(document.getElementById('dep-amt').value),utr=document.getElementById('dep-utr').value.trim(),msg=document.getElementById('dep-msg');
+  if(!amt||!utr)return sM(msg,'Amount aur UTR dono bharo','er');
+  if(amt<500)return sM(msg,'Minimum ₹500 chahiye','er');
+  try{
+    await addDoc(collection(db,'deposit_requests'),{uid:CU.uid,email:CU.email,amount:amt,utr,status:'pending',createdAt:serverTimestamp()});
+    await addDoc(collection(db,'transactions'),{uid:CU.uid,type:'Deposit Request',amount:amt,credit:true,status:'pending',createdAt:serverTimestamp()});
+    sM(msg,'✅ Request submit! Admin approve karega.','ok');
+    document.getElementById('dep-amt').value='';document.getElementById('dep-utr').value='';
+  }catch(e){sM(msg,'Error: '+e.message,'er');}
+};
+window.submitWithdraw=async()=>{
+  const amt=parseFloat(document.getElementById('wd-amt').value),upi=document.getElementById('wd-upi').value.trim(),msg=document.getElementById('wd-msg');
+  if(!amt||!upi)return sM(msg,'Amount aur UPI ID dono bharo','er');
+  if(amt<100)return sM(msg,'Minimum ₹100 withdraw kar sakte ho','er');
+  const us=await getDoc(doc(db,'users',CU.uid));
+  if(amt>(us.data()?.balance||0))return sM(msg,'Balance kam hai','er');
+  try{
+    await addDoc(collection(db,'withdraw_requests'),{uid:CU.uid,email:CU.email,amount:amt,upiId:upi,status:'pending',createdAt:serverTimestamp()});
+    await addDoc(collection(db,'transactions'),{uid:CU.uid,type:'Withdrawal Request',amount:amt,credit:false,status:'pending',createdAt:serverTimestamp()});
+    sM(msg,'✅ Withdrawal request submit!','ok');
+    document.getElementById('wd-amt').value='';document.getElementById('wd-upi').value='';
+  }catch(e){sM(msg,'Error: '+e.message,'er');}
+};
+
+// ── TRANSACTIONS ──
+function txRow(t){
+  const date=t.createdAt?.toDate?.()?.toLocaleDateString('en-IN')||'–';
+  return`<div class="tx-item"><div><div class="tx-type">${t.type}</div><div class="tx-date">${date}</div></div><div style="text-align:right"><div class="tx-amt ${t.credit?'cr':'dr'}">${t.credit?'+':'-'}₹${t.amount}</div><div class="tx-st ${t.status||'pending'}">${(t.status||'pending').toUpperCase()}</div></div></div>`;
+}
+async function loadTxHistory(){
+  const el=document.getElementById('tx-hist');el.innerHTML='<div class="loader-full"><span class="loader"></span>Loading…</div>';
+  try{const s=await getDocs(query(collection(db,'transactions'),where('uid','==',CU.uid),orderBy('createdAt','desc')));
+  if(s.empty){el.innerHTML='<div class="empty"><div class="ei">📋</div><p>Koi transaction nahi</p></div>';return;}
+  el.innerHTML=s.docs.map(d=>txRow(d.data())).join('');}
+  catch(e){el.innerHTML='<div class="empty"><div class="ei">⚠️</div><p style="font-size:0.75rem">Firestore composite index banao:<br/>transactions → uid + createdAt</p></div>';}
+}
+async function loadRecentTx(){
+  const el=document.getElementById('recent-tx');if(!el)return;
+  try{const s=await getDocs(query(collection(db,'transactions'),where('uid','==',CU.uid),orderBy('createdAt','desc')));
+  if(s.empty){el.innerHTML='<div class="empty"><div class="ei">📋</div><p>Koi transaction nahi</p></div>';return;}
+  el.innerHTML=s.docs.slice(0,5).map(d=>txRow(d.data())).join('');}catch(e){}
+}
+
+// ── CHAT ──
+function listenChat(uid){
+  onSnapshot(collection(db,'chats'),snap=>{
+    const msgs=snap.docs.map(d=>d.data()).filter(m=>m.uid===uid||m.toUid===uid).sort((a,b)=>(a.createdAt?.seconds||0)-(b.createdAt?.seconds||0));
+    const el=document.getElementById('chat-msgs');if(!el)return;
+    if(!msgs.length){el.innerHTML='<div style="text-align:center;padding:18px;color:var(--text3);font-size:0.8rem">Koi bhi sawaal poochho 👇</div>';return;}
+    el.innerHTML=msgs.map(m=>{const t=m.createdAt?.toDate?.()?.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})||'';return`<div class="cmsg ${m.role==='admin'?'ca':'cu'}">${m.text}<div class="ct">${m.role==='admin'?'Support':'Aap'} · ${t}</div></div>`;}).join('');
+    el.scrollTop=el.scrollHeight;
+  });
+}
+window.toggleChat=()=>{chatOpen=!chatOpen;document.getElementById('chat-win').classList.toggle('open',chatOpen);};
+window.sendChat=async()=>{
+  const inp=document.getElementById('chat-inp'),txt=inp.value.trim();if(!txt||!CU)return;
+  await addDoc(collection(db,'chats'),{uid:CU.uid,email:CU.email,text:txt,role:'user',createdAt:serverTimestamp()});inp.value='';
+};
+</script>
+</body>
+</html>
