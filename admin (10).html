@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Smart11 – Admin Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#080c18;--bg3:#111827;--sb:#0a0e1a;--card:rgba(255,255,255,0.04);--cb:rgba(0,212,255,0.15);--neon:#00d4ff;--neon2:#0099bb;--gold:#ffd700;--green:#00ff9d;--red:#ff4757;--text:#e8f4f8;--text2:#8899aa;--r:14px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh;display:flex}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:var(--neon2);border-radius:2px}
+/* AUTH */
+#admin-auth{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:var(--bg);padding:20px}
+.abox{background:rgba(255,255,255,0.03);border:1px solid var(--cb);border-radius:20px;padding:40px;width:100%;max-width:380px;text-align:center}
+.abox h1{font-family:'Orbitron',sans-serif;font-size:1.8rem;font-weight:900;background:linear-gradient(135deg,var(--neon),#fff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:6px}
+.abox p{color:var(--text2);font-size:0.83rem;margin-bottom:20px}
+.abox input{width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(0,212,255,0.2);border-radius:12px;padding:12px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:1rem;outline:none;text-align:center;letter-spacing:4px;margin-bottom:12px}
+/* SIDEBAR */
+.sidebar{width:220px;min-height:100vh;background:var(--sb);border-right:1px solid var(--cb);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:50}
+.sb-logo{padding:22px 18px;border-bottom:1px solid var(--cb)}
+.sb-logo h1{font-family:'Orbitron',sans-serif;font-size:1.2rem;font-weight:900;background:linear-gradient(135deg,var(--neon),#fff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:3px}
+.sb-logo p{color:var(--red);font-size:0.68rem;letter-spacing:2px;margin-top:2px}
+.sb-nav{flex:1;padding:14px 0;overflow-y:auto}
+.sb-sec{padding:8px 16px 3px;font-size:0.62rem;color:var(--text2);letter-spacing:2px;text-transform:uppercase;margin-top:4px}
+.nl{display:flex;align-items:center;gap:10px;padding:10px 18px;color:var(--text2);cursor:pointer;transition:all .3s;border-left:3px solid transparent;font-size:0.88rem;font-weight:600;letter-spacing:1px}
+.nl:hover{color:var(--text);background:rgba(0,212,255,0.04)}
+.nl.active{color:var(--neon);border-left-color:var(--neon);background:rgba(0,212,255,0.06)}
+.nl .ico{font-size:1rem;width:20px;text-align:center}
+.nbadge{background:var(--red);color:#fff;font-size:0.62rem;padding:1px 6px;border-radius:10px;font-weight:700;margin-left:auto}
+/* MAIN */
+.main{margin-left:220px;flex:1;min-height:100vh;overflow-x:hidden}
+.topbar{background:rgba(8,12,24,0.98);border-bottom:1px solid var(--cb);padding:13px 22px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:40;backdrop-filter:blur(20px)}
+.topbar h2{font-family:'Orbitron',sans-serif;font-size:0.95rem;font-weight:700;letter-spacing:2px}
+.abadge{background:rgba(255,71,87,0.15);border:1px solid rgba(255,71,87,0.3);color:#ff4757;padding:5px 12px;border-radius:20px;font-size:0.75rem;font-weight:600;letter-spacing:1px}
+/* SECTIONS */
+.sec{display:none;padding:22px}.sec.active{display:block}
+/* STATS */
+.sg{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:22px}
+.sc{background:var(--card);border:1px solid var(--cb);border-radius:var(--r);padding:18px;position:relative;overflow:hidden}
+.sc::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(to right,var(--neon),var(--neon2))}
+.sc .sv{font-family:'Orbitron',sans-serif;font-size:1.8rem;font-weight:900;color:var(--neon);margin-bottom:3px}
+.sc .sl{font-size:0.76rem;color:var(--text2);letter-spacing:1px;text-transform:uppercase}
+.sc .si{position:absolute;top:14px;right:14px;font-size:1.8rem;opacity:0.15}
+/* FORM */
+.fc{background:var(--card);border:1px solid var(--cb);border-radius:var(--r);padding:22px;margin-bottom:20px}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.fg{margin-bottom:0}
+.fg label{display:block;color:var(--text2);font-size:0.75rem;letter-spacing:1px;margin-bottom:5px;text-transform:uppercase}
+.fg input,.fg textarea,.fg select{width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(0,212,255,0.15);border-radius:10px;padding:10px 12px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:0.92rem;outline:none;transition:border-color .3s}
+.fg input:focus,.fg textarea:focus,.fg select:focus{border-color:var(--neon)}
+.fg textarea{min-height:70px;resize:vertical}
+.fg select option{background:var(--bg3)}
+.stitle{font-family:'Orbitron',sans-serif;font-size:0.82rem;font-weight:700;color:var(--neon);letter-spacing:2px;margin-bottom:14px;text-transform:uppercase;display:flex;align-items:center;gap:8px}
+.stitle::after{content:'';flex:1;height:1px;background:linear-gradient(to right,var(--cb),transparent)}
+/* BTNS */
+.btn{padding:8px 16px;border:none;border-radius:8px;font-family:'Rajdhani',sans-serif;font-size:0.82rem;font-weight:700;cursor:pointer;transition:all .3s;letter-spacing:1px}
+.btn-n{background:var(--neon);color:#000}.btn-n:hover{box-shadow:0 4px 15px rgba(0,212,255,0.4);transform:translateY(-1px)}
+.btn-g{background:var(--green);color:#000}.btn-g:hover{box-shadow:0 4px 15px rgba(0,255,157,0.3)}
+.btn-r{background:var(--red);color:#fff}.btn-r:hover{box-shadow:0 4px 15px rgba(255,71,87,0.3)}
+.btn-o{background:transparent;border:1px solid var(--cb);color:var(--text2)}.btn-o:hover{border-color:var(--neon);color:var(--neon)}
+.btn-gold{background:var(--gold);color:#000}
+.btn-gap{display:flex;gap:6px;flex-wrap:wrap}
+/* TABLE */
+.tw{overflow-x:auto;border-radius:var(--r);border:1px solid var(--cb)}
+table{width:100%;border-collapse:collapse;min-width:580px}
+thead tr{background:rgba(0,212,255,0.06);border-bottom:1px solid var(--cb)}
+thead th{padding:11px 13px;text-align:left;font-size:0.72rem;color:var(--text2);letter-spacing:1px;text-transform:uppercase;font-weight:700}
+tbody tr{border-bottom:1px solid rgba(255,255,255,0.03);transition:background .2s}
+tbody tr:hover{background:rgba(0,212,255,0.03)}
+tbody td{padding:11px 13px;font-size:0.88rem}
+.sb{font-size:0.68rem;padding:3px 9px;border-radius:20px;font-weight:700;letter-spacing:1px;display:inline-block}
+.sb.pending{background:rgba(255,215,0,0.15);color:var(--gold);border:1px solid rgba(255,215,0,0.3)}
+.sb.approved{background:rgba(0,255,157,0.1);color:var(--green);border:1px solid rgba(0,255,157,0.3)}
+.sb.rejected{background:rgba(255,71,87,0.1);color:#ff4757;border:1px solid rgba(255,71,87,0.3)}
+/* SEARCH */
+.search-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.search-inp{background:rgba(255,255,255,0.05);border:1px solid rgba(0,212,255,0.2);border-radius:10px;padding:8px 14px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:0.88rem;outline:none;width:230px}
+.search-inp:focus{border-color:var(--neon)}
+.sf-sel{background:rgba(255,255,255,0.04);border:1px solid var(--cb);border-radius:10px;padding:8px 12px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:0.83rem;outline:none}
+.sf-sel option{background:var(--bg3)}
+/* Q CARD */
+.qc{background:var(--card);border:1px solid var(--cb);border-radius:var(--r);padding:16px;margin-bottom:12px;display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.qc .qt{font-size:0.98rem;font-weight:600;flex:1}
+.qc .qa{display:flex;flex-direction:column;gap:6px;min-width:150px}
+/* POOL ITEM */
+.pi{background:var(--card);border:1px solid var(--cb);border-radius:var(--r);padding:15px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.pi h3{font-family:'Orbitron',sans-serif;font-size:0.86rem;margin-bottom:4px}
+.pi p{font-size:0.76rem;color:var(--text2)}
+/* PRESET Q CARDS */
+.preset-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-bottom:16px}
+.pq-card{background:rgba(0,212,255,0.04);border:1px solid rgba(0,212,255,0.15);border-radius:12px;padding:12px;cursor:pointer;transition:all .3s;position:relative}
+.pq-card:hover{border-color:var(--neon);background:rgba(0,212,255,0.08);transform:translateY(-2px)}
+.pq-card.selected{border-color:var(--neon);background:rgba(0,212,255,0.12)}
+.pq-card.selected::after{content:'✓';position:absolute;top:8px;right:10px;color:var(--neon);font-weight:700;font-size:1rem}
+.pq-cat{font-size:0.65rem;color:var(--text2);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px}
+.pq-text{font-size:0.85rem;font-weight:600;line-height:1.3;color:var(--text)}
+.pq-pts{font-size:0.7rem;color:var(--green);margin-top:5px}
+/* CHAT */
+.chat-grid{display:grid;grid-template-columns:230px 1fr;gap:0;border:1px solid var(--cb);border-radius:var(--r);overflow:hidden;height:480px}
+.cu-list{background:rgba(0,0,0,0.3);border-right:1px solid var(--cb);overflow-y:auto}
+.cui{padding:11px 13px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,0.03);transition:all .2s;font-size:0.83rem}
+.cui:hover,.cui.active{background:rgba(0,212,255,0.06);color:var(--neon)}
+.cui .ue{font-size:0.72rem;color:var(--text2);margin-top:2px}
+.chat-panel{display:flex;flex-direction:column}
+.chat-msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:7px}
+.cmsg{max-width:74%;padding:8px 11px;border-radius:12px;font-size:0.86rem;line-height:1.4}
+.cmsg.u{background:rgba(0,212,255,0.1);align-self:flex-start}
+.cmsg.a{background:rgba(0,255,157,0.07);align-self:flex-end;border:1px solid rgba(0,255,157,0.15)}
+.cmsg .ct{font-size:0.62rem;color:var(--text2);margin-top:3px}
+.chat-rep{display:flex;gap:8px;padding:11px;border-top:1px solid var(--cb)}
+.chat-rep input{flex:1;background:rgba(255,255,255,0.04);border:1px solid var(--cb);border-radius:8px;padding:8px 11px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:0.88rem;outline:none}
+/* TOGGLE */
+.tog{position:relative;width:44px;height:24px;cursor:pointer;display:inline-block}
+.tog-track{position:absolute;inset:0;border-radius:12px;transition:background .3s}
+.tog-thumb{position:absolute;top:3px;width:18px;height:18px;background:#000;border-radius:50%;transition:transform .3s}
+/* MSG */
+.mbox{padding:8px 12px;border-radius:8px;font-size:0.83rem;margin-top:8px;display:inline-block}
+.mbox.err{background:rgba(255,71,87,0.15);color:#ff6b7a}
+.mbox.ok{background:rgba(0,255,157,0.1);color:var(--green)}
+.loader{display:inline-block;width:14px;height:14px;border:2px solid rgba(0,212,255,0.2);border-top-color:var(--neon);border-radius:50%;animation:spin .8s linear infinite;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty{text-align:center;padding:36px;color:var(--text2)}.empty .ei{font-size:2.2rem;margin-bottom:8px}
+@keyframes pulse-btn{0%,100%{box-shadow:0 0 0 0 rgba(255,71,87,0.4)}50%{box-shadow:0 0 0 8px rgba(255,71,87,0)}}
+@media(max-width:768px){.sidebar{display:none}.main{margin-left:0}.fg2{grid-template-columns:1fr}.chat-grid{grid-template-columns:1fr}.preset-grid{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+
+<!-- ADMIN AUTH -->
+<div id="admin-auth">
+  <div class="abox">
+    <h1>SMART11</h1>
+    <p>🔐 ADMIN PANEL ACCESS</p>
+    <input type="password" id="ap-inp" placeholder="Password" onkeydown="if(event.key==='Enter')doCheckPass()"/>
+    <button class="btn btn-n" style="width:100%;padding:12px;font-family:'Orbitron',sans-serif;letter-spacing:2px;font-size:0.85rem" onclick="doCheckPass()">ENTER PANEL</button>
+    <div id="ap-err" style="color:var(--red);font-size:0.83rem;margin-top:8px"></div>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+  <div class="sb-logo"><h1>SMART11</h1><p>ADMIN PANEL</p></div>
+  <div class="sb-nav">
+    <div class="sb-sec">OVERVIEW</div>
+    <div class="nl active" onclick="showSec('dashboard',this)"><span class="ico">📊</span>Dashboard</div>
+    <div class="sb-sec">POOLS & QUESTIONS</div>
+    <div class="nl" onclick="showSec('pools',this)"><span class="ico">🏆</span>Pool Manager</div>
+    <div class="nl" onclick="showSec('questions',this)"><span class="ico">✅</span>Normal Questions</div>
+    <div class="nl" onclick="showSec('exact',this)"><span class="ico">🎯</span>Exact Questions</div>
+    <div class="nl" onclick="showSec('bonus',this)"><span class="ico">⚡</span>Bonus Questions</div>
+    <div class="sb-sec">RESULTS</div>
+    <div class="nl" onclick="showSec('results',this)"><span class="ico">🏅</span>Set Results & Points</div>
+    <div class="nl" onclick="showSec('leaderboard',this)"><span class="ico">🏆</span>Leaderboard & Prize</div>
+    <div class="sb-sec">FINANCE</div>
+    <div class="nl" onclick="showSec('deposits',this)"><span class="ico">💳</span>Deposits <span class="nbadge" id="dep-badge">0</span></div>
+    <div class="nl" onclick="showSec('withdrawals',this)"><span class="ico">🏦</span>Withdrawals <span class="nbadge" id="wd-badge">0</span></div>
+    <div class="sb-sec">SETTINGS</div>
+    <div class="nl" onclick="showSec('settings',this)"><span class="ico">⚙️</span>Settings</div>
+    <div class="nl" onclick="showSec('chat',this)"><span class="ico">💬</span>Live Chat</div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <h2 id="tb-title">DASHBOARD</h2>
+    <div class="abadge">🔐 ADMIN</div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="sec active" id="sec-dashboard">
+    <div class="sg">
+      <div class="sc"><div class="si">👥</div><div class="sv" id="st-users">–</div><div class="sl">Total Users</div></div>
+      <div class="sc"><div class="si">💳</div><div class="sv" id="st-deps">–</div><div class="sl">Total Deposits</div></div>
+      <div class="sc"><div class="si">🏦</div><div class="sv" id="st-wds">–</div><div class="sl">Withdrawals</div></div>
+      <div class="sc"><div class="si">🏆</div><div class="sv" id="st-pools">–</div><div class="sl">Active Pools</div></div>
+      <div class="sc"><div class="si">❓</div><div class="sv" id="st-qs">–</div><div class="sl">Live Questions</div></div>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--cb);border-radius:var(--r);padding:18px">
+      <div class="stitle">📡 SYSTEM STATUS</div>
+      <p style="color:var(--green);font-size:0.88rem">✅ Firebase Connected &nbsp;|&nbsp; <span style="color:var(--neon)">Real-time Sync Active</span></p>
+    </div>
+  </div>
+
+  <!-- POOLS -->
+  <div class="sec" id="sec-pools">
+    <div class="fc">
+      <div class="stitle">➕ CREATE / EDIT POOL</div>
+      <div class="fg2">
+        <div class="fg"><label>Pool Name</label><input type="text" id="pn" placeholder="IND vs AUS Final"/></div>
+        <div class="fg"><label>Entry Fee (₹)</label><input type="number" id="pf" placeholder="100"/></div>
+        <div class="fg"><label>Prize Pool (₹)</label><input type="number" id="pp" placeholder="5000"/></div>
+        <div class="fg"><label>Max Players</label><input type="number" id="pm" value="1000"/></div>
+        <div class="fg"><label>📅 Match Date & Time</label><input type="datetime-local" id="pmt"/></div>
+        <div class="fg"><label>🔓 Pool Open Time (blank = 1 din pehle auto)</label><input type="datetime-local" id="pot"/></div>
+        <div class="fg" style="grid-column:1/-1"><label>Description</label><input type="text" id="pd" placeholder="Short description"/></div>
+      </div>
+
+      <!-- FAKE USER SETTINGS -->
+      <div style="background:rgba(0,212,255,0.04);border:1px solid rgba(0,212,255,0.12);border-radius:12px;padding:16px;margin-top:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div><div style="font-family:'Orbitron',sans-serif;font-size:0.78rem;color:var(--neon)">🤖 FAKE USERS SETTING</div><div style="font-size:0.73rem;color:var(--text2);margin-top:2px">Pool mein fake players ka control</div></div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:0.8rem;color:var(--text2)">Enable</span>
+            <div class="tog" onclick="toggleFake()">
+              <div class="tog-track" id="ft-track" style="background:var(--neon)"></div>
+              <div class="tog-thumb" id="ft-thumb" style="transform:translateX(20px)"></div>
+            </div>
+            <input type="checkbox" id="fake-enabled" checked style="display:none"/>
+          </div>
+        </div>
+        <div id="fake-body">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+            <div class="fg"><label>Starting Fake</label><input type="number" id="fake-start" value="82" oninput="updateFakePreview()"/></div>
+            <div class="fg"><label>Hide Count Below (real)</label><input type="number" id="fake-hide" value="50" oninput="updateFakePreview()"/></div>
+            <div class="fg"><label>Remove Fake After (real)</label><input type="number" id="fake-remove" value="500" oninput="updateFakePreview()"/></div>
+          </div>
+          <div style="margin-top:10px;padding:8px 12px;background:rgba(0,0,0,0.3);border-radius:8px;font-size:0.76rem;color:var(--text2)">
+            💡 Pool start: <span id="fp1" style="color:var(--neon)">82</span> fake | Count hide below <span id="fp2" style="color:var(--gold)">50</span> real | Fake remove after <span id="fp3" style="color:var(--green)">500</span> real
+          </div>
+        </div>
+        <div id="fake-off" style="display:none;font-size:0.83rem;color:var(--text2)">❌ Fake disabled — sirf real count</div>
+      </div>
+
+      <!-- PRESET QUESTIONS — auto push when pool is created -->
+      <div style="background:rgba(0,255,157,0.03);border:1px solid rgba(0,255,157,0.15);border-radius:12px;padding:16px;margin-top:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <div style="font-family:'Orbitron',sans-serif;font-size:0.78rem;color:var(--green)">📋 PRESET QUESTIONS (Pool ke saath auto push)</div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-o" style="font-size:0.7rem;padding:4px 10px" onclick="selectAllPresets()">SELECT ALL</button>
+            <button class="btn btn-o" style="font-size:0.7rem;padding:4px 10px" onclick="clearAllPresets()">CLEAR ALL</button>
+          </div>
+        </div>
+        <p style="font-size:0.74rem;color:var(--text2);margin-bottom:12px">Jo questions tick karoge, pool create hote hi automatically live push ho jayenge. Team name fill karo neeche:</p>
+        <div class="fg2" style="margin-bottom:12px">
+          <div class="fg"><label>Team A Name</label><input type="text" id="team-a" placeholder="India"/></div>
+          <div class="fg"><label>Team B Name</label><input type="text" id="team-b" placeholder="Australia"/></div>
+          <div class="fg"><label>Star Player 1</label><input type="text" id="player1" placeholder="Kohli"/></div>
+          <div class="fg"><label>Star Player 2</label><input type="text" id="player2" placeholder="Rohit"/></div>
+        </div>
+        <div class="preset-grid" id="preset-grid">
+          <!-- Rendered by JS -->
+        </div>
+        <div style="font-size:0.74rem;color:var(--text2);margin-top:8px"><span id="preset-count" style="color:var(--neon);font-weight:700">0</span> questions select kiye hain</div>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;align-items:center">
+        <button class="btn btn-n" onclick="savePool()">💾 SAVE POOL</button>
+        <button class="btn btn-o" onclick="clearPool()">CLEAR</button>
+        <span id="pm-msg" style="font-size:0.83rem"></span>
+      </div>
+      <input type="hidden" id="p-edit-id"/>
+    </div>
+    <div class="stitle">🏆 EXISTING POOLS</div>
+    <div id="pools-list"></div>
+  </div>
+
+  <!-- NORMAL QUESTIONS -->
+  <div class="sec" id="sec-questions">
+    <div class="fc">
+      <div class="stitle">✅ NORMAL YES/NO QUESTION</div>
+      <p style="font-size:0.78rem;color:var(--text2);margin-bottom:14px">Sahi jawab = <strong style="color:var(--green)">+10 pts base</strong> + Rare pick bonus auto</p>
+      <div class="fg2">
+        <div class="fg" style="grid-column:1/-1"><label>Question</label><input type="text" id="nq-text" placeholder="Kya India toss jitegi?"/></div>
+        <div class="fg">
+          <label>Template (optional)</label>
+          <select id="nq-tmpl" onchange="applyTmpl()">
+            <option value="">-- Template --</option>
+            <option value="Kya [TeamA] toss jitegi?">🪙 Toss</option>
+            <option value="Kya [TeamA] match jitegi?">🏆 Match Winner</option>
+            <option value="Kya [Player] 50+ score karega?">🏏 50+ Score</option>
+            <option value="Kya [Player] century marega?">💯 Century</option>
+            <option value="Kya [TeamA] 180+ runs banayegi?">📊 180+ Runs</option>
+            <option value="Kya [TeamA] 150 se kam runs banayegi?">📊 150 se Kam</option>
+            <option value="Kya [Player] Man of Match hoga?">🌟 MOTM</option>
+            <option value="Kya [TeamA] 5+ wickets legi?">🎯 5+ Wickets</option>
+            <option value="Kya [TeamA] 3 se kam wickets legi?">🎯 3 kam Wickets</option>
+          </select>
+        </div>
+        <div class="fg"><label>Base Points (sahi=)</label><input type="number" id="nq-pts" value="10"/></div>
+        <div class="fg"><label>Pool (optional)</label><select id="nq-pool"><option value="">-- Koi pool --</option></select></div>
+      </div>
+      <div style="margin-top:14px;padding:11px;background:rgba(0,255,157,0.04);border:1px solid rgba(0,255,157,0.12);border-radius:10px;font-size:0.77rem;color:var(--text2)">
+        🎯 Rare Pick Bonus auto: sirf 20% sahi → +15pts | 50% sahi → +5pts | 80%+ → +1pt
+      </div>
+      <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn btn-n" onclick="pushNormalQ()">🚀 PUSH LIVE</button>
+        <span id="nq-msg" style="font-size:0.83rem"></span>
+      </div>
+    </div>
+    <div class="stitle">📋 ACTIVE NORMAL QUESTIONS</div>
+    <div id="normal-qs-list"></div>
+  </div>
+
+  <!-- EXACT QUESTIONS -->
+  <div class="sec" id="sec-exact">
+    <div class="fc">
+      <div class="stitle">🎯 EXACT PREDICTION QUESTION</div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px;padding:12px;background:rgba(0,212,255,0.04);border:1px solid rgba(0,212,255,0.1);border-radius:10px;text-align:center">
+        <div><div style="font-size:0.95rem">🎯</div><div style="font-size:0.7rem;color:var(--neon)">Exact</div><div style="font-size:0.68rem;color:var(--text2)">+50</div></div>
+        <div><div style="font-size:0.95rem">🔥</div><div style="font-size:0.7rem;color:var(--gold)">±2</div><div style="font-size:0.68rem;color:var(--text2)">+30</div></div>
+        <div><div style="font-size:0.95rem">✅</div><div style="font-size:0.7rem;color:var(--green)">±5</div><div style="font-size:0.68rem;color:var(--text2)">+15</div></div>
+        <div><div style="font-size:0.95rem">👍</div><div style="font-size:0.7rem;color:var(--text2)">±10</div><div style="font-size:0.68rem;color:var(--text2)">+5</div></div>
+        <div><div style="font-size:0.95rem">❌</div><div style="font-size:0.7rem;color:var(--red)">Miss</div><div style="font-size:0.68rem;color:var(--text2)">0</div></div>
+      </div>
+      <div class="fg2">
+        <div class="fg" style="grid-column:1/-1"><label>Question</label><input type="text" id="eq-text" placeholder="India aaj kitne runs banayegi?"/></div>
+        <div class="fg"><label>Min Value</label><input type="number" id="eq-min" placeholder="100"/></div>
+        <div class="fg"><label>Max Value</label><input type="number" id="eq-max" placeholder="300"/></div>
+        <div class="fg"><label>Unit</label><input type="text" id="eq-unit" value="runs"/></div>
+        <div class="fg"><label>Pool (optional)</label><select id="eq-pool"><option value="">-- Koi pool --</option></select></div>
+      </div>
+      <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn btn-n" onclick="pushExactQ()">🚀 PUSH LIVE</button>
+        <span id="eq-msg" style="font-size:0.83rem"></span>
+      </div>
+    </div>
+    <div class="stitle">📋 ACTIVE EXACT QUESTIONS</div>
+    <div id="exact-qs-list"></div>
+  </div>
+
+  <!-- BONUS QUESTIONS -->
+  <div class="sec" id="sec-bonus">
+    <div style="background:rgba(255,165,0,0.06);border:1px solid rgba(255,165,0,0.25);border-radius:var(--r);padding:14px;margin-bottom:16px">
+      <div style="font-family:'Orbitron',sans-serif;font-size:0.82rem;color:#ffa500;margin-bottom:8px">⚡ BONUS QUESTION — POINT SCALE</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;font-size:0.72rem;text-align:center">
+        <div style="background:rgba(255,165,0,0.1);border-radius:6px;padding:6px"><div style="color:#ffa500;font-weight:700">0-10s</div><div>+5.0 pts</div></div>
+        <div style="background:rgba(255,165,0,0.08);border-radius:6px;padding:6px"><div style="color:#ffa500;font-weight:700">11-20s</div><div>+4.5 pts</div></div>
+        <div style="background:rgba(255,165,0,0.07);border-radius:6px;padding:6px"><div style="color:#ffa500;font-weight:700">21-30s</div><div>+4.0 pts</div></div>
+        <div style="background:rgba(255,165,0,0.06);border-radius:6px;padding:6px"><div style="color:#ffa500;font-weight:700">31-40s</div><div>+3.5 pts</div></div>
+        <div style="background:rgba(255,165,0,0.05);border-radius:6px;padding:6px"><div style="color:#ffa500;font-weight:700">41-50s</div><div>+3.0 pts</div></div>
+        <div style="background:rgba(255,165,0,0.04);border-radius:6px;padding:6px"><div style="color:#ffa500;font-weight:700">51-60s</div><div>+2.5 pts</div></div>
+        <div style="background:rgba(255,165,0,0.04);border-radius:6px;padding:6px"><div style="color:#ffa500;font-weight:700">61-90s</div><div>+2.0–1.0</div></div>
+        <div style="background:rgba(255,165,0,0.03);border-radius:6px;padding:6px"><div style="color:#ffa500;font-weight:700">91-120s</div><div>+0.5–0.1</div></div>
+      </div>
+      <div style="margin-top:8px;font-size:0.72rem;color:var(--text2)">⏱ Duration: <strong style="color:#ffa500">2 MINUTES (120 seconds)</strong> — us ke baad locked</div>
+    </div>
+    <div class="fc">
+      <div class="stitle">⚡ BONUS QUESTION BANAO</div>
+      <div class="fg2">
+        <div class="fg" style="grid-column:1/-1"><label>Question Text</label><input type="text" id="bq-text" placeholder="Is over mein kitne runs banenge? / Kya wicket giregi?"/></div>
+        <div class="fg">
+          <label>Type</label>
+          <select id="bq-type" onchange="toggleBqOpts()">
+            <option value="yesno">YES / NO</option>
+            <option value="custom">Custom Options</option>
+          </select>
+        </div>
+        <div class="fg"><label>Pool (optional)</label><select id="bq-pool"><option value="">-- Koi pool --</option></select></div>
+        <div class="fg" id="bq-opts-row" style="display:none;grid-column:1/-1"><label>Custom Options (comma se)</label><input type="text" id="bq-opts" placeholder="0-6 runs, 7-12 runs, 13-18 runs, 19+ runs"/></div>
+      </div>
+      <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn btn-n" style="background:linear-gradient(135deg,#ffa500,#ff6b00);color:#000" onclick="pushBonusQ()">⚡ PUSH BONUS LIVE</button>
+        <span id="bq-msg" style="font-size:0.83rem"></span>
+      </div>
+    </div>
+    <div class="stitle">⚡ ACTIVE BONUS QUESTIONS</div>
+    <div id="bonus-qs-list"></div>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="sec" id="sec-results">
+    <div style="background:rgba(255,215,0,0.05);border:1px solid rgba(255,215,0,0.2);border-radius:var(--r);padding:14px;margin-bottom:16px;font-size:0.8rem;color:var(--text2)">
+      💡 <strong style="color:var(--text)">Result set karne ke baad:</strong> Sahi jawab wale users ke points auto-calculate honge. Exact questions mein ±2/±5/±10 range check hoga. Rare pick bonus bhi auto milega.
+    </div>
+    <div class="stitle">🏅 SAHI JAWAB SET KARO</div>
+    <div id="results-list"></div>
+  </div>
+
+  <!-- LEADERBOARD -->
+  <div class="sec" id="sec-leaderboard">
+    <div class="fc">
+      <div class="stitle">🏆 POOL LEADERBOARD & PRIZE</div>
+      <div class="fg2">
+        <div class="fg"><label>Pool Choose Karo</label><select id="lb-pool" onchange="loadAdminLB()"><option value="">-- Pool --</option></select></div>
+        <div class="fg">
+          <label>Prize Mode</label>
+          <select id="lb-prize-mode" onchange="onPrizeModeChange()">
+            <option value="percentage">📊 Percentage (Entry fees se auto)</option>
+            <option value="fixed">💰 Fixed: 1st=40k 2nd=10k 3rd=3k 4-10=1k</option>
+            <option value="custom">✏️ Custom (manual ₹ amounts)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- PERCENTAGE MODE -->
+      <div id="pct-row" style="background:rgba(0,255,157,0.04);border:1px solid rgba(0,255,157,0.15);border-radius:12px;padding:16px;margin-top:14px">
+        <div style="font-family:'Orbitron',sans-serif;font-size:0.78rem;color:var(--green);margin-bottom:10px">📊 PERCENTAGE MODE — Entry fees se auto calculate</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+          <div class="fg"><label>App Cut (%)</label><input type="number" id="pct-app" value="20" min="0" max="60" oninput="updatePctPreview()"/></div>
+          <div class="fg"><label>Winners Pool (%)</label><input type="number" id="pct-winners" value="80" readonly style="background:rgba(0,255,157,0.05);border-color:rgba(0,255,157,0.2);color:var(--green)"/></div>
+        </div>
+        <div style="font-size:0.76rem;color:var(--text2);margin-bottom:10px">Winner distribution (winners pool ka %):</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+          <div class="fg"><label>🥇 1st</label><input type="number" id="pw-1" value="50" oninput="updatePctPreview()"/></div>
+          <div class="fg"><label>🥈 2nd</label><input type="number" id="pw-2" value="25" oninput="updatePctPreview()"/></div>
+          <div class="fg"><label>🥉 3rd</label><input type="number" id="pw-3" value="15" oninput="updatePctPreview()"/></div>
+          <div class="fg"><label>4th-10th each</label><input type="number" id="pw-rest" value="10" oninput="updatePctPreview()"/></div>
+        </div>
+        <div id="pct-preview" style="margin-top:12px;padding:12px;background:rgba(0,0,0,0.3);border-radius:10px;font-size:0.8rem;color:var(--text2)">
+          Pool select karo to preview dekhein
+        </div>
+      </div>
+
+      <!-- CUSTOM MODE -->
+      <div id="lb-custom-row" style="display:none;margin-top:14px">
+        <div class="fg"><label>Custom Prizes (₹, comma separated — rank 1,2,3...)</label>
+          <input type="text" id="lb-custom-prizes" placeholder="40000,10000,3000,1000,1000,1000"/>
+        </div>
+      </div>
+
+      <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <button class="btn btn-n" onclick="loadAdminLB()">📊 LOAD LEADERBOARD</button>
+        <button class="btn btn-gold" onclick="distributePrizes()">💰 DISTRIBUTE PRIZES</button>
+        <span id="lb-msg" style="font-size:0.83rem"></span>
+      </div>
+    </div>
+
+    <!-- SUMMARY CARD -->
+    <div id="pool-summary-card" style="display:none;background:rgba(0,212,255,0.04);border:1px solid rgba(0,212,255,0.15);border-radius:var(--r);padding:16px;margin-bottom:16px">
+      <div style="font-family:'Orbitron',sans-serif;font-size:0.78rem;color:var(--neon);margin-bottom:10px">💰 POOL FINANCIAL SUMMARY</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:center">
+        <div style="background:rgba(0,0,0,0.2);border-radius:8px;padding:10px">
+          <div style="font-size:0.7rem;color:var(--text2)">TOTAL COLLECTED</div>
+          <div style="font-family:'Orbitron',sans-serif;font-size:1.1rem;color:var(--neon);margin-top:3px">₹<span id="sum-total">0</span></div>
+        </div>
+        <div style="background:rgba(0,255,157,0.05);border-radius:8px;padding:10px">
+          <div style="font-size:0.7rem;color:var(--text2)">WINNERS POOL</div>
+          <div style="font-family:'Orbitron',sans-serif;font-size:1.1rem;color:var(--green);margin-top:3px">₹<span id="sum-winners">0</span></div>
+        </div>
+        <div style="background:rgba(255,215,0,0.05);border-radius:8px;padding:10px">
+          <div style="font-size:0.7rem;color:var(--text2)">APP PROFIT</div>
+          <div style="font-family:'Orbitron',sans-serif;font-size:1.1rem;color:var(--gold);margin-top:3px">₹<span id="sum-profit">0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="admin-lb-list"></div>
+  </div>
+
+  <!-- DEPOSITS -->
+  <div class="sec" id="sec-deposits">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px">
+      <div class="stitle" style="margin:0">💳 DEPOSIT REQUESTS</div>
+      <div class="search-row" style="margin:0">
+        <input class="search-inp" id="dep-search" placeholder="🔍 UTR / Email…" oninput="filterDeps()"/>
+        <select class="sf-sel" id="dep-sf" onchange="filterDeps()">
+          <option value="all">All</option><option value="pending">Pending</option>
+          <option value="approved">Approved</option><option value="rejected">Rejected</option>
+        </select>
+      </div>
+    </div>
+    <div id="dep-count" style="font-size:0.76rem;color:var(--text2);margin-bottom:8px"></div>
+    <div class="tw"><table><thead><tr><th>Email</th><th>Amount</th><th>UTR</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead><tbody id="dep-tbody"></tbody></table></div>
+  </div>
+
+  <!-- WITHDRAWALS -->
+  <div class="sec" id="sec-withdrawals">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px">
+      <div class="stitle" style="margin:0">🏦 WITHDRAWAL REQUESTS</div>
+      <div class="search-row" style="margin:0">
+        <input class="search-inp" id="wd-search" placeholder="🔍 UPI ID / Email…" oninput="filterWds()"/>
+        <select class="sf-sel" id="wd-sf" onchange="filterWds()">
+          <option value="all">All</option><option value="pending">Pending</option>
+          <option value="approved">Approved</option><option value="rejected">Rejected</option>
+        </select>
+      </div>
+    </div>
+    <div id="wd-count" style="font-size:0.76rem;color:var(--text2);margin-bottom:8px"></div>
+    <div class="tw"><table><thead><tr><th>Email</th><th>Amount</th><th>UPI ID</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead><tbody id="wd-tbody"></tbody></table></div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="sec" id="sec-settings">
+    <div class="fc" style="margin-bottom:20px">
+      <div class="stitle">🔐 ADMIN PASSWORD CHANGE</div>
+      <div class="fg2">
+        <div class="fg"><label>Current Password</label><input type="password" id="s-curr-pass" placeholder="Current password"/></div>
+        <div class="fg"><label>New Password</label><input type="password" id="s-new-pass" placeholder="New password (min 4 char)"/></div>
+      </div>
+      <div style="margin-top:14px;display:flex;gap:10px;align-items:center">
+        <button class="btn btn-n" onclick="changePassword()">SAVE PASSWORD</button>
+        <span id="pass-msg" style="font-size:0.83rem"></span>
+      </div>
+    </div>
+    <div class="fc" style="margin-bottom:20px">
+      <div class="stitle">💳 UPI ID CHANGE KARO</div>
+      <div class="fg2">
+        <div class="fg"><label>UPI ID</label><input type="text" id="s-upi" placeholder="yourname@ybl"/></div>
+        <div class="fg"><label>Display Name</label><input type="text" id="s-upi-name" placeholder="Smart11"/></div>
+      </div>
+      <div style="margin-top:14px;display:flex;gap:10px;align-items:center">
+        <button class="btn btn-n" onclick="saveUPI()">SAVE UPI</button>
+        <span id="upi-msg" style="font-size:0.83rem"></span>
+      </div>
+      <div id="upi-preview" style="margin-top:12px;padding:10px;background:rgba(0,0,0,0.2);border-radius:8px;font-size:0.78rem;color:var(--text2)">Loading UPI...</div>
+    </div>
+    <div class="fc">
+      <div class="stitle">🎁 SIGNUP BONUS AMOUNT</div>
+      <div class="fg2">
+        <div class="fg"><label>Bonus Amount (₹)</label><input type="number" id="s-bonus" value="50"/></div>
+      </div>
+      <div style="margin-top:14px;display:flex;gap:10px;align-items:center">
+        <button class="btn btn-n" onclick="saveBonus()">SAVE BONUS</button>
+        <span id="bonus-msg" style="font-size:0.83rem"></span>
+      </div>
+    </div>
+
+    <!-- PROFIT % SETTINGS -->
+    <div class="fc">
+      <div class="stitle">💰 APP PROFIT CUT %</div>
+      <p style="font-size:0.78rem;color:var(--text2);margin-bottom:16px">
+        Pool ki total entry fees mein se aapka profit kitna % hoga. Baaki sab winners mein auto divide hoga.
+      </p>
+
+      <!-- QUICK SELECT BUTTONS -->
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">
+        <button onclick="setProfitPct(10)" class="pct-btn" id="pct-btn-10" style="flex:1;padding:12px;border:2px solid rgba(0,212,255,0.2);border-radius:12px;background:rgba(0,212,255,0.04);color:var(--text2);font-family:'Orbitron',sans-serif;font-size:0.85rem;font-weight:700;cursor:pointer;transition:all .3s">10%</button>
+        <button onclick="setProfitPct(20)" class="pct-btn" id="pct-btn-20" style="flex:1;padding:12px;border:2px solid var(--neon);border-radius:12px;background:rgba(0,212,255,0.1);color:var(--neon);font-family:'Orbitron',sans-serif;font-size:0.85rem;font-weight:700;cursor:pointer;transition:all .3s">20%</button>
+        <button onclick="setProfitPct(30)" class="pct-btn" id="pct-btn-30" style="flex:1;padding:12px;border:2px solid rgba(0,212,255,0.2);border-radius:12px;background:rgba(0,212,255,0.04);color:var(--text2);font-family:'Orbitron',sans-serif;font-size:0.85rem;font-weight:700;cursor:pointer;transition:all .3s">30%</button>
+        <button onclick="setProfitPct(40)" class="pct-btn" id="pct-btn-40" style="flex:1;padding:12px;border:2px solid rgba(0,212,255,0.2);border-radius:12px;background:rgba(0,212,255,0.04);color:var(--text2);font-family:'Orbitron',sans-serif;font-size:0.85rem;font-weight:700;cursor:pointer;transition:all .3s">40%</button>
+        <button onclick="setProfitPct(50)" class="pct-btn" id="pct-btn-50" style="flex:1;padding:12px;border:2px solid rgba(0,212,255,0.2);border-radius:12px;background:rgba(0,212,255,0.04);color:var(--text2);font-family:'Orbitron',sans-serif;font-size:0.85rem;font-weight:700;cursor:pointer;transition:all .3s">50%</button>
+      </div>
+
+      <!-- CUSTOM INPUT -->
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px">
+        <div style="flex:1">
+          <div style="font-size:0.75rem;color:var(--text2);letter-spacing:1px;margin-bottom:5px;text-transform:uppercase">Ya Custom % Likho</div>
+          <input type="number" id="s-profit-pct" value="20" min="1" max="90"
+            style="width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(0,212,255,0.15);border-radius:10px;padding:10px 12px;color:var(--text);font-family:'Orbitron',sans-serif;font-size:1.1rem;font-weight:700;outline:none;text-align:center"
+            oninput="onCustomPctInput()"/>
+        </div>
+      </div>
+
+      <!-- LIVE PREVIEW BOX -->
+      <div id="profit-live-box" style="background:rgba(0,0,0,0.3);border-radius:12px;padding:16px">
+        <div style="font-size:0.74rem;color:var(--text2);margin-bottom:10px">📊 LIVE PREVIEW — 100 users × ₹100 entry = ₹10,000</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;text-align:center">
+          <div style="background:rgba(255,215,0,0.08);border-radius:8px;padding:10px">
+            <div style="font-size:0.7rem;color:var(--text2);margin-bottom:4px">AAPKA PROFIT</div>
+            <div style="font-family:'Orbitron',sans-serif;font-size:1.1rem;font-weight:700;color:var(--gold)" id="prev-profit">₹2,000</div>
+            <div style="font-size:0.7rem;color:var(--text2);margin-top:2px" id="prev-pct-lbl">20%</div>
+          </div>
+          <div style="background:rgba(0,255,157,0.06);border-radius:8px;padding:10px">
+            <div style="font-size:0.7rem;color:var(--text2);margin-bottom:4px">WINNERS POOL</div>
+            <div style="font-family:'Orbitron',sans-serif;font-size:1.1rem;font-weight:700;color:var(--green)" id="prev-winners">₹8,000</div>
+            <div style="font-size:0.7rem;color:var(--text2);margin-top:2px" id="prev-wpct-lbl">80%</div>
+          </div>
+          <div style="background:rgba(0,212,255,0.06);border-radius:8px;padding:10px">
+            <div style="font-size:0.7rem;color:var(--text2);margin-bottom:4px">🥇 1ST PRIZE</div>
+            <div style="font-family:'Orbitron',sans-serif;font-size:1.1rem;font-weight:700;color:var(--neon)" id="prev-1st">₹4,000</div>
+            <div style="font-size:0.7rem;color:var(--text2);margin-top:2px">50% of pool</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:14px;display:flex;gap:10px;align-items:center">
+        <button class="btn btn-n" onclick="saveProfitSettings()">💾 SAVE</button>
+        <span id="profit-msg" style="font-size:0.83rem"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHAT -->
+  <div class="sec" id="sec-chat">
+    <div class="stitle">💬 LIVE SUPPORT CHAT</div>
+    <div class="chat-grid">
+      <div class="cu-list" id="cu-list"></div>
+      <div class="chat-panel">
+        <div class="chat-msgs" id="adm-msgs"><div class="empty"><div class="ei">💬</div><p>User select karo</p></div></div>
+        <div class="chat-rep">
+          <input type="text" id="adm-inp" placeholder="Reply likho…" onkeydown="if(event.key==='Enter')sendAdminMsg()"/>
+          <button class="btn btn-n" onclick="sendAdminMsg()">SEND</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- NON-MODULE AUTH SCRIPT — runs immediately, no async issues -->
+<script>
+var _adminReady = false;
+var _adminPass = '123456';
+
+function doCheckPass() {
+  var p = document.getElementById('ap-inp').value;
+  var errEl = document.getElementById('ap-err');
+  if (!p) { errEl.textContent = 'Password daalo'; return; }
+  if (p === _adminPass) {
+    document.getElementById('admin-auth').style.display = 'none';
+    errEl.textContent = '';
+    if (_adminReady) {
+      window._initAdmin && window._initAdmin();
+    } else {
+      document.addEventListener('adminModuleReady', function() {
+        window._initAdmin && window._initAdmin();
+      });
+    }
+  } else {
+    errEl.textContent = '❌ Wrong password! Default: 123456';
+    document.getElementById('ap-inp').value = '';
+  }
+}
+</script>
+
+<!-- FIREBASE MODULE -->
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import{getFirestore,collection,doc,onSnapshot,getDocs,getDoc,addDoc,updateDoc,deleteDoc,setDoc,increment,serverTimestamp,query,orderBy,where}from"https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const FB={apiKey:"AIzaSyBfSfeiOmyBSyYBTV87OKH6IqFU0YXemw0",authDomain:"ayur-620e7.firebaseapp.com",projectId:"ayur-620e7",storageBucket:"ayur-620e7.firebasestorage.app",messagingSenderId:"732502202884",appId:"1:732502202884:web:3863c7d829b54d79743351"};
+const app=initializeApp(FB),db=getFirestore(app);
+
+// UTIL
+let adminPass='123456';
+function sMsg(el,txt,type){if(!el)return;el.innerHTML=`<span class="mbox ${type}">${txt}</span>`;setTimeout(()=>{if(el)el.innerHTML='';},3500);}
+window.sMsg=sMsg;
+function hl(s,q){if(!q)return s||'';return(s||'').replace(new RegExp(q,'gi'),m=>`<mark style="background:rgba(0,212,255,0.3);color:#fff;border-radius:2px">${m}</mark>`);}
+function esc(s){return(s||'').replace(/'/g,"\\'")}
+function syncPass(np){adminPass=np;_adminPass=np;}
+
+// EXPOSE initAdmin to global scope
+function initAdmin(){
+  loadDashboard();loadPools();loadAllQs();loadDeposits();loadWithdrawals();loadChatUsers();loadSettingsData();loadPoolSelects();loadLBPools();renderPresetGrid();
+}
+window._initAdmin=initAdmin;
+_adminReady=true;
+document.dispatchEvent(new CustomEvent('adminModuleReady'));
+
+// NAV
+const secTitles={dashboard:'DASHBOARD',pools:'POOL MANAGER',questions:'NORMAL QUESTIONS',exact:'EXACT QUESTIONS',bonus:'BONUS QUESTIONS',results:'SET RESULTS',leaderboard:'LEADERBOARD & PRIZES',deposits:'DEPOSITS',withdrawals:'WITHDRAWALS',settings:'SETTINGS',chat:'LIVE CHAT'};
+window.showSec=(name,el)=>{
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));
+  document.getElementById('sec-'+name).classList.add('active');
+  document.querySelectorAll('.nl').forEach(n=>n.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tb-title').textContent=secTitles[name]||name.toUpperCase();
+};
+
+// DASHBOARD
+function loadDashboard(){
+  onSnapshot(collection(db,'users'),s=>document.getElementById('st-users').textContent=s.size);
+  onSnapshot(collection(db,'deposit_requests'),s=>{document.getElementById('st-deps').textContent=s.size;document.getElementById('dep-badge').textContent=s.docs.filter(d=>d.data().status==='pending').length;});
+  onSnapshot(collection(db,'withdraw_requests'),s=>{document.getElementById('st-wds').textContent=s.size;document.getElementById('wd-badge').textContent=s.docs.filter(d=>d.data().status==='pending').length;});
+  onSnapshot(collection(db,'pools'),s=>document.getElementById('st-pools').textContent=s.size);
+  onSnapshot(query(collection(db,'questions'),where('active','==',true)),s=>document.getElementById('st-qs').textContent=s.size);
+}
+
+// ── PRESET QUESTIONS ────────────────────────────────────────────
+const PRESETS = [
+  {id:'toss',   cat:'🪙 TOSS',     text:'Kya {A} toss jitegi?',                pts:10},
+  {id:'winner', cat:'🏆 WINNER',   text:'Kya {A} match jitegi?',               pts:10},
+  {id:'p1_50',  cat:'🏏 BATTING',  text:'Kya {P1} 50+ score karega?',          pts:10},
+  {id:'p2_50',  cat:'🏏 BATTING',  text:'Kya {P2} 50+ score karega?',          pts:10},
+  {id:'p1_100', cat:'💯 CENTURY',  text:'Kya {P1} century marega?',            pts:10},
+  {id:'p2_100', cat:'💯 CENTURY',  text:'Kya {P2} century marega?',            pts:10},
+  {id:'a_180',  cat:'📊 RUNS',     text:'Kya {A} 180+ runs banayegi?',         pts:10},
+  {id:'a_150',  cat:'📊 RUNS',     text:'Kya {A} 150 se kam runs banayegi?',   pts:10},
+  {id:'b_180',  cat:'📊 RUNS',     text:'Kya {B} 180+ runs banayegi?',         pts:10},
+  {id:'b_150',  cat:'📊 RUNS',     text:'Kya {B} 150 se kam runs banayegi?',   pts:10},
+  {id:'a_5wk',  cat:'🎯 WICKETS',  text:'Kya {A} 5+ wickets legi?',           pts:10},
+  {id:'b_5wk',  cat:'🎯 WICKETS',  text:'Kya {B} 5+ wickets legi?',           pts:10},
+  {id:'p1_motm',cat:'🌟 MOTM',     text:'Kya {P1} Man of the Match hoga?',     pts:10},
+  {id:'p2_motm',cat:'🌟 MOTM',     text:'Kya {P2} Man of the Match hoga?',     pts:10},
+  {id:'a_ex',   cat:'🎯 EXACT',    text:'{A} aaj kitne runs banayegi?',        pts:50, type:'exact', min:100, max:300, unit:'runs'},
+  {id:'b_ex',   cat:'🎯 EXACT',    text:'{B} aaj kitne runs banayegi?',        pts:50, type:'exact', min:100, max:300, unit:'runs'},
+  {id:'total_wk',cat:'🎯 EXACT',   text:'Aaj pure match mein kitni wickets?',  pts:50, type:'exact', min:0, max:20, unit:'wickets'},
+];
+
+let selectedPresets = new Set(['toss','winner','p1_50','p2_50','a_180','b_180','a_5wk','b_5wk','p1_motm']);
+
+function renderPresetGrid(){
+  const grid = document.getElementById('preset-grid');
+  if(!grid) return;
+  grid.innerHTML = PRESETS.map(p=>`
+    <div class="pq-card ${selectedPresets.has(p.id)?'selected':''}" id="pqc-${p.id}" onclick="togglePreset('${p.id}')">
+      <div class="pq-cat">${p.cat}</div>
+      <div class="pq-text">${p.text.replace(/{A}/g,'TeamA').replace(/{B}/g,'TeamB').replace(/{P1}/g,'Player1').replace(/{P2}/g,'Player2')}</div>
+      <div class="pq-pts">${p.type==='exact'?'🎯 Exact: +50pts':'✅ YES/NO: +'+p.pts+'pts'}</div>
+    </div>`).join('');
+  updatePresetCount();
+}
+
+window.togglePreset=(id)=>{
+  if(selectedPresets.has(id))selectedPresets.delete(id);else selectedPresets.add(id);
+  const card=document.getElementById('pqc-'+id);
+  if(card)card.classList.toggle('selected',selectedPresets.has(id));
+  updatePresetCount();
+};
+window.selectAllPresets=()=>{PRESETS.forEach(p=>selectedPresets.add(p.id));renderPresetGrid();};
+window.clearAllPresets=()=>{selectedPresets.clear();renderPresetGrid();};
+function updatePresetCount(){
+  const el=document.getElementById('preset-count');
+  if(el)el.textContent=selectedPresets.size;
+}
+
+function fillPresetText(tmpl){
+  const a=document.getElementById('team-a').value||'Team A';
+  const b=document.getElementById('team-b').value||'Team B';
+  const p1=document.getElementById('player1').value||'Player 1';
+  const p2=document.getElementById('player2').value||'Player 2';
+  return tmpl.replace(/{A}/g,a).replace(/{B}/g,b).replace(/{P1}/g,p1).replace(/{P2}/g,p2);
+}
+
+async function pushPresetQuestions(poolId){
+  const selected=PRESETS.filter(p=>selectedPresets.has(p.id));
+  for(const p of selected){
+    const text=fillPresetText(p.text);
+    if(p.type==='exact'){
+      await addDoc(collection(db,'questions'),{text,active:true,qType:'exact',minVal:p.min,maxVal:p.max,unit:p.unit,poolId,createdAt:serverTimestamp()});
+    }else{
+      await addDoc(collection(db,'questions'),{text,active:true,qType:'yesno',options:['YES','NO'],basePoints:p.pts,poolId,createdAt:serverTimestamp()});
+    }
+  }
+  return selected.length;
+}
+
+// ── POOL MANAGER ─────────────────────────────────────────────────
+window.toggleFake=()=>{
+  const cb=document.getElementById('fake-enabled');cb.checked=!cb.checked;
+  const on=cb.checked;
+  document.getElementById('ft-track').style.background=on?'var(--neon)':'rgba(255,255,255,0.15)';
+  document.getElementById('ft-thumb').style.transform=on?'translateX(20px)':'translateX(0)';
+  document.getElementById('fake-body').style.display=on?'block':'none';
+  document.getElementById('fake-off').style.display=on?'none':'block';
+};
+window.updateFakePreview=()=>{
+  document.getElementById('fp1').textContent=document.getElementById('fake-start').value||82;
+  document.getElementById('fp2').textContent=document.getElementById('fake-hide').value||50;
+  document.getElementById('fp3').textContent=document.getElementById('fake-remove').value||500;
+};
+
+window.savePool=async()=>{
+  const name=document.getElementById('pn').value.trim();
+  const fee=parseFloat(document.getElementById('pf').value);
+  const prize=parseFloat(document.getElementById('pp').value);
+  const maxP=parseInt(document.getElementById('pm').value)||1000;
+  const desc=document.getElementById('pd').value.trim();
+  const matchRaw=document.getElementById('pmt').value;
+  const openRaw=document.getElementById('pot').value;
+  const editId=document.getElementById('p-edit-id').value;
+  const msg=document.getElementById('pm-msg');
+  if(!name||!fee||!prize||!matchRaw)return sMsg(msg,'Name, fee, prize aur match time zaroori hai','err');
+
+  const matchTime=new Date(matchRaw);
+  const openTime=openRaw?new Date(openRaw):new Date(matchTime.getTime()-24*60*60*1000);
+  const fe=document.getElementById('fake-enabled').checked;
+  const data={
+    name,entryFee:fee,prize,description:desc,maxPlayers:maxP,matchTime,openTime,
+    fakeEnabled:fe,fakeStart:parseInt(document.getElementById('fake-start').value)||82,
+    fakeHideBelow:parseInt(document.getElementById('fake-hide').value)||50,
+    fakeRemoveAt:parseInt(document.getElementById('fake-remove').value)||500,
+    updatedAt:serverTimestamp()
+  };
+
+  let poolId=editId;
+  if(editId){
+    await updateDoc(doc(db,'pools',editId),data);
+    sMsg(msg,'✅ Pool update ho gayi!','ok');
+    document.getElementById('p-edit-id').value='';
+  }else{
+    const ref=await addDoc(collection(db,'pools'),{...data,joined:0,createdAt:serverTimestamp()});
+    poolId=ref.id;
+    // Auto push preset questions
+    if(selectedPresets.size>0){
+      const count=await pushPresetQuestions(poolId);
+      sMsg(msg,`✅ Pool bani! ${count} preset questions auto push ho gaye!`,'ok');
+    }else{
+      sMsg(msg,'✅ Pool bani!','ok');
+    }
+  }
+  clearPool();
+};
+
+window.clearPool=()=>{
+  ['pn','pf','pp','pd','p-edit-id','pmt','pot'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('pm').value='1000';
+  document.getElementById('fake-start').value='82';
+  document.getElementById('fake-hide').value='50';
+  document.getElementById('fake-remove').value='500';
+};
+
+window.editPool=(id,name,fee,prize,desc,max,mTs,oTs,fe,fs,fh,fr)=>{
+  document.getElementById('pn').value=name;
+  document.getElementById('pf').value=fee;
+  document.getElementById('pp').value=prize;
+  document.getElementById('pd').value=desc;
+  document.getElementById('pm').value=max||1000;
+  document.getElementById('p-edit-id').value=id;
+  if(mTs){const d=new Date(mTs);document.getElementById('pmt').value=d.toISOString().slice(0,16);}
+  if(oTs){const d=new Date(oTs);document.getElementById('pot').value=d.toISOString().slice(0,16);}
+  const cb=document.getElementById('fake-enabled');
+  if(cb.checked!==(fe!==false))toggleFake();
+  document.getElementById('fake-start').value=fs??82;
+  document.getElementById('fake-hide').value=fh??50;
+  document.getElementById('fake-remove').value=fr??500;
+  updateFakePreview();
+  document.getElementById('sec-pools').scrollIntoView({behavior:'smooth'});
+};
+
+window.deletePool=async(id)=>{if(!confirm('Pool delete karein?'))return;await deleteDoc(doc(db,'pools',id));};
+
+function loadPools(){
+  onSnapshot(collection(db,'pools'),snap=>{
+    const el=document.getElementById('pools-list');if(!el)return;
+    if(snap.empty){el.innerHTML='<div class="empty"><div class="ei">🏆</div><p>Koi pool nahi</p></div>';return;}
+    el.innerHTML=snap.docs.map(d=>{
+      const p=d.data();
+      const mD=p.matchTime?.toDate?.()?.toLocaleString('en-IN')||'–';
+      const oD=p.openTime?.toDate?.()?.toLocaleString('en-IN')||'–';
+      const now=Date.now(),mTs=p.matchTime?.toDate?.()?.getTime()||0,oTs=p.openTime?.toDate?.()?.getTime()||0;
+      const sc=now>=mTs?'var(--red)':now>=oTs?'var(--green)':'var(--gold)';
+      const st=now>=mTs?'🔴 CLOSED':now>=oTs?'🟢 OPEN':'⏳ UPCOMING';
+      return`<div class="pi">
+        <div style="flex:1">
+          <h3>🏏 ${p.name} <span style="font-size:0.68rem;color:${sc}">${st}</span></h3>
+          <p>📅 Match: ${mD} | 🔓 Opens: ${oD}</p>
+          <p>Entry: ₹${p.entryFee} | Prize: ₹${p.prize} | Max: ${p.maxPlayers||1000} | Joined: ${p.joined||0} | Fake: ${p.fakeEnabled!==false?`✅ start=${p.fakeStart??82}`:'❌ off'}</p>
+        </div>
+        <div class="btn-gap">
+          <button class="btn btn-o" onclick="editPool('${d.id}','${esc(p.name)}',${p.entryFee},${p.prize},'${esc(p.description||'')}',${p.maxPlayers||1000},${mTs},${oTs},${p.fakeEnabled!==false},${p.fakeStart??82},${p.fakeHideBelow??50},${p.fakeRemoveAt??500})">EDIT</button>
+          <button class="btn btn-r" onclick="deletePool('${d.id}')">DELETE</button>
+          ${now<mTs && now>=oTs ? `<button class="btn" style="background:linear-gradient(135deg,#ff4757,#c0392b);color:#fff;animation:pulse-btn 1.5s infinite" onclick="instantLive('${d.id}')">⚡ INSTANT LIVE</button>` : ''}
+          ${now>=mTs ? `<button class="btn btn-o" style="font-size:0.72rem" onclick="reopenPool('${d.id}')">🔄 REOPEN</button>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+  });
+}
+
+// POOL SELECTS
+function loadPoolSelects(){
+  onSnapshot(collection(db,'pools'),snap=>{
+    ['nq-pool','eq-pool','bq-pool','lb-pool'].forEach(id=>{
+      const sel=document.getElementById(id);if(!sel)return;
+      const curr=sel.value;
+      sel.innerHTML='<option value="">-- Koi pool --</option>';
+      snap.docs.forEach(d=>{const o=document.createElement('option');o.value=d.id;o.textContent=d.data().name||d.id;if(d.id===curr)o.selected=true;sel.appendChild(o);});
+    });
+  });
+}
+
+// TEMPLATE
+window.applyTmpl=()=>{
+  const t=document.getElementById('nq-tmpl').value;
+  if(t)document.getElementById('nq-text').value=t;
+  document.getElementById('nq-tmpl').value='';
+};
+
+// QUESTIONS
+window.pushNormalQ=async()=>{
+  const text=document.getElementById('nq-text').value.trim(),pts=parseFloat(document.getElementById('nq-pts').value)||10,poolId=document.getElementById('nq-pool').value,msg=document.getElementById('nq-msg');
+  if(!text)return sMsg(msg,'Question likho','err');
+  await addDoc(collection(db,'questions'),{text,active:true,qType:'yesno',options:['YES','NO'],basePoints:pts,poolId:poolId||null,createdAt:serverTimestamp()});
+  sMsg(msg,'✅ Normal Q live!','ok');document.getElementById('nq-text').value='';
+};
+
+window.pushExactQ=async()=>{
+  const text=document.getElementById('eq-text').value.trim(),minV=parseInt(document.getElementById('eq-min').value)||0,maxV=parseInt(document.getElementById('eq-max').value)||999,unit=document.getElementById('eq-unit').value||'runs',poolId=document.getElementById('eq-pool').value,msg=document.getElementById('eq-msg');
+  if(!text)return sMsg(msg,'Question likho','err');
+  await addDoc(collection(db,'questions'),{text,active:true,qType:'exact',minVal:minV,maxVal:maxV,unit,poolId:poolId||null,createdAt:serverTimestamp()});
+  sMsg(msg,'✅ Exact Q live!','ok');document.getElementById('eq-text').value='';
+};
+
+window.toggleBqOpts=()=>{
+  document.getElementById('bq-opts-row').style.display=document.getElementById('bq-type').value==='custom'?'block':'none';
+};
+
+window.pushBonusQ=async()=>{
+  const text=document.getElementById('bq-text').value.trim(),type=document.getElementById('bq-type').value,optsRaw=document.getElementById('bq-opts').value,poolId=document.getElementById('bq-pool').value,msg=document.getElementById('bq-msg');
+  if(!text)return sMsg(msg,'Question likho','err');
+  let opts=type==='custom'?optsRaw.split(',').map(s=>s.trim()).filter(Boolean):['YES','NO'];
+  if(type==='custom'&&opts.length<2)return sMsg(msg,'2+ options chahiye','err');
+  const endsAt=new Date(Date.now()+120000);
+  await addDoc(collection(db,'questions'),{text,active:true,qType:'bonus',options:opts,endsAt,duration:120,poolId:poolId||null,createdAt:serverTimestamp()});
+  sMsg(msg,'⚡ Bonus Q live! 2 min mein band hoga.','ok');document.getElementById('bq-text').value='';
+};
+
+function loadAllQs(){
+  onSnapshot(query(collection(db,'questions'),where('active','==',true)),snap=>{
+    const all=snap.docs.map(d=>({id:d.id,...d.data()}));
+    renderQList(all.filter(q=>q.qType==='yesno'),'normal-qs-list','normal');
+    renderQList(all.filter(q=>q.qType==='exact'),'exact-qs-list','exact');
+    renderQList(all.filter(q=>q.qType==='bonus'),'bonus-qs-list','bonus');
+    renderResultsList(all);
+  });
+}
+
+function renderQList(qs,elId,type){
+  const el=document.getElementById(elId);if(!el)return;
+  if(!qs.length){el.innerHTML=`<div class="empty"><div class="ei">${type==='bonus'?'⚡':type==='exact'?'🎯':'✅'}</div><p>Koi active question nahi</p></div>`;return;}
+  el.innerHTML=qs.map(q=>`<div class="qc">
+    <div style="flex:1">
+      <div style="font-size:0.7rem;color:${type==='bonus'?'#ffa500':type==='exact'?'var(--neon)':'var(--green)'};margin-bottom:5px">${type==='bonus'?'⚡ BONUS':type==='exact'?'🎯 EXACT':'✅ YES/NO'}</div>
+      <div class="qt">${q.text}</div>
+      ${q.options?`<div style="font-size:0.73rem;color:var(--text2);margin-top:4px">Options: ${q.options.join(', ')}</div>`:''}
+    </div>
+    <div class="qa"><button class="btn btn-r" style="font-size:0.72rem;padding:6px 10px" onclick="closeQ('${q.id}')">CLOSE</button></div>
+  </div>`).join('');
+}
+window.closeQ=async(id)=>{await updateDoc(doc(db,'questions',id),{active:false});};
+
+// RESULTS
+function renderResultsList(qs){
+  const el=document.getElementById('results-list');if(!el)return;
+  if(!qs.length){el.innerHTML='<div class="empty"><div class="ei">🏅</div><p>Koi active question nahi</p></div>';return;}
+  el.innerHTML=qs.map(q=>{
+    if(q.qType==='exact'){
+      return`<div class="qc">
+        <div style="flex:1">
+          <div style="font-size:0.7rem;color:var(--neon);margin-bottom:5px">🎯 EXACT — Sahi value daalo</div>
+          <div class="qt">${q.text}</div>
+        </div>
+        <div class="qa" style="flex-direction:row;align-items:center;gap:8px;flex-wrap:wrap">
+          <input type="number" id="res-${q.id}" placeholder="Sahi value" style="width:110px;background:rgba(255,255,255,0.05);border:1px solid var(--cb);border-radius:8px;padding:7px;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:0.88rem;outline:none"/>
+          <button class="btn btn-g" onclick="resolveExact('${q.id}')">✅ SET</button>
+          <button class="btn btn-r" onclick="closeQ('${q.id}')">CLOSE</button>
+        </div>
+      </div>`;
+    }
+    const opts=q.options||['YES','NO'];
+    const optBtns=opts.map(o=>`<button class="btn btn-g" style="font-size:0.73rem;padding:6px 10px" onclick="resolveQ('${q.id}','${esc(o)}','${q.qType}',${q.basePoints||10})">✅ "${o}" SAHI</button>`).join('');
+    return`<div class="qc">
+      <div style="flex:1">
+        <div style="font-size:0.7rem;color:${q.qType==='bonus'?'#ffa500':'var(--green)'};margin-bottom:5px">${q.qType==='bonus'?'⚡ BONUS':'✅ YES/NO'}</div>
+        <div class="qt">${q.text}</div>
+        ${q.options?`<div style="font-size:0.73rem;color:var(--text2);margin-top:4px">Options: ${q.options.join(', ')}</div>`:''}
+      </div>
+      <div class="qa">${optBtns}<button class="btn btn-r" style="font-size:0.72rem;padding:5px 8px;margin-top:4px" onclick="closeQ('${q.id}')">CLOSE</button></div>
+    </div>`;
+  }).join('');
+}
+
+window.resolveQ=async(qId,winner,qType,basePts)=>{
+  if(!confirm(`"${winner}" ko sahi jawab declare karein?`))return;
+  const votesSnap=await getDocs(collection(db,'votes'));
+  const allVotes=votesSnap.docs.map(d=>d.data()).filter(v=>v.qId===qId);
+  const total=allVotes.length,correct=allVotes.filter(v=>v.answer===winner).length;
+  let credited=0;
+  for(const v of allVotes.filter(v=>v.answer===winner)){
+    let pts=qType==='bonus'?(v.bonusPts||0):basePts;
+    if(qType==='yesno'&&total>0){
+      const pct=correct/total;
+      if(pct<=0.2)pts+=15;else if(pct<=0.35)pts+=10;else if(pct<=0.5)pts+=5;else if(pct<=0.65)pts+=3;else pts+=1;
+    }
+    if(pts>0){
+      await updateDoc(doc(db,'users',v.uid),{points:increment(pts)});
+      const qDoc=await getDoc(doc(db,'questions',qId));
+      const poolId=qDoc.data()?.poolId;
+      if(poolId){
+        const pmSnap=await getDocs(query(collection(db,'pool_members'),where('uid','==',v.uid),where('poolId','==',poolId)));
+        for(const pm of pmSnap.docs)await updateDoc(pm.ref,{points:increment(pts)});
+      }
+      credited++;
+    }
+  }
+  await closeQ(qId);
+  alert(`✅ "${winner}" — ${credited} users ko points diye!`);
+};
+
+window.resolveExact=async(qId)=>{
+  const inp=document.getElementById('res-'+qId);
+  const correct=parseInt(inp.value);if(isNaN(correct)){alert('Sahi value daalo');return;}
+  if(!confirm(`Sahi answer: ${correct}?`))return;
+  const votesSnap=await getDocs(collection(db,'votes'));
+  const allVotes=votesSnap.docs.map(d=>d.data()).filter(v=>v.qId===qId);
+  const qDoc=await getDoc(doc(db,'questions',qId));
+  const poolId=qDoc.data()?.poolId;
+  let credited=0;
+  for(const v of allVotes){
+    const diff=Math.abs((parseInt(v.exactValue||v.answer)||0)-correct);
+    let pts=0;
+    if(diff===0)pts=50;else if(diff<=2)pts=30;else if(diff<=5)pts=15;else if(diff<=10)pts=5;
+    if(pts>0){
+      await updateDoc(doc(db,'users',v.uid),{points:increment(pts)});
+      if(poolId){
+        const pmSnap=await getDocs(query(collection(db,'pool_members'),where('uid','==',v.uid),where('poolId','==',poolId)));
+        for(const pm of pmSnap.docs)await updateDoc(pm.ref,{points:increment(pts)});
+      }
+      credited++;
+    }
+  }
+  await closeQ(qId);
+  alert(`✅ Exact result ${correct} — ${credited} users ko points!`);
+};
+
+// ── LEADERBOARD ──────────────────────────────────────────────────
+let _currentPoolData = null; // cache pool for prize calc
+
+function loadLBPools(){
+  onSnapshot(collection(db,'pools'),snap=>{
+    const sel=document.getElementById('lb-pool');if(!sel)return;
+    const curr=sel.value;sel.innerHTML='<option value="">-- Pool --</option>';
+    snap.docs.forEach(d=>{const o=document.createElement('option');o.value=d.id;o.textContent=d.data().name||d.id;if(d.id===curr)o.selected=true;sel.appendChild(o);});
+  });
+}
+
+window.onPrizeModeChange=()=>{
+  const mode=document.getElementById('lb-prize-mode').value;
+  document.getElementById('pct-row').style.display       = mode==='percentage'?'block':'none';
+  document.getElementById('lb-custom-row').style.display = mode==='custom'?'block':'none';
+  if(_currentPoolData)updatePctPreview();
+};
+
+window.updatePctPreview=()=>{
+  if(!_currentPoolData)return;
+  const pool=_currentPoolData;
+  const totalCollected=(pool.joined||0)*(pool.entryFee||0);
+  const appCut=parseInt(document.getElementById('pct-app').value)||20;
+  const winnersCut=100-appCut;
+  document.getElementById('pct-winners').value=winnersCut;
+  const winnersPool=Math.floor(totalCollected*winnersCut/100);
+  const appProfit=totalCollected-winnersPool;
+
+  // Update summary card
+  document.getElementById('pool-summary-card').style.display='block';
+  document.getElementById('sum-total').textContent=totalCollected.toLocaleString();
+  document.getElementById('sum-winners').textContent=winnersPool.toLocaleString();
+  document.getElementById('sum-profit').textContent=appProfit.toLocaleString();
+
+  // Preview prize breakdown
+  const p1=parseInt(document.getElementById('pw-1').value)||50;
+  const p2=parseInt(document.getElementById('pw-2').value)||25;
+  const p3=parseInt(document.getElementById('pw-3').value)||15;
+  const pRest=parseInt(document.getElementById('pw-rest').value)||10;
+  const totalPct=p1+p2+p3+pRest;
+
+  const pr1=Math.floor(winnersPool*p1/100);
+  const pr2=Math.floor(winnersPool*p2/100);
+  const pr3=Math.floor(winnersPool*p3/100);
+  const prRest=Math.floor(winnersPool*pRest/100/7); // 4th-10th = 7 people
+
+  document.getElementById('pct-preview').innerHTML=`
+    <div style="font-weight:700;color:var(--text);margin-bottom:8px">
+      📊 ${pool.joined||0} users × ₹${pool.entryFee||0} = <span style="color:var(--neon)">₹${totalCollected.toLocaleString()}</span> collected
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:0.78rem">
+      <div>🥇 1st place:</div><div style="color:var(--gold);font-weight:700">₹${pr1.toLocaleString()}</div>
+      <div>🥈 2nd place:</div><div style="color:var(--gold);font-weight:700">₹${pr2.toLocaleString()}</div>
+      <div>🥉 3rd place:</div><div style="color:var(--gold);font-weight:700">₹${pr3.toLocaleString()}</div>
+      <div>4th–10th each:</div><div style="color:var(--gold);font-weight:700">₹${prRest.toLocaleString()}</div>
+      <div style="color:var(--green)">App Profit (${appCut}%):</div><div style="color:var(--green);font-weight:700">₹${appProfit.toLocaleString()}</div>
+    </div>
+    ${totalPct!==100?`<div style="color:var(--red);margin-top:6px;font-size:0.74rem">⚠️ Percentages ka total ${totalPct}% hai — 100% hona chahiye!</div>`:'<div style="color:var(--green);margin-top:6px;font-size:0.74rem">✅ Percentages theek hain</div>'}
+  `;
+};
+
+function getPrizes(count, pool){
+  const mode=document.getElementById('lb-prize-mode').value;
+
+  if(mode==='percentage'){
+    const totalCollected=(pool?.joined||0)*(pool?.entryFee||0);
+    const appCut=parseInt(document.getElementById('pct-app').value)||20;
+    const winnersPool=Math.floor(totalCollected*(100-appCut)/100);
+    const p1=parseInt(document.getElementById('pw-1').value)||50;
+    const p2=parseInt(document.getElementById('pw-2').value)||25;
+    const p3=parseInt(document.getElementById('pw-3').value)||15;
+    const pRest=parseInt(document.getElementById('pw-rest').value)||10;
+    const prizes=[
+      Math.floor(winnersPool*p1/100),
+      Math.floor(winnersPool*p2/100),
+      Math.floor(winnersPool*p3/100),
+    ];
+    const restTotal=Math.floor(winnersPool*pRest/100);
+    const restCount=Math.min(count-3,7); // 4th to 10th
+    const perPerson=restCount>0?Math.floor(restTotal/restCount):0;
+    for(let i=0;i<restCount;i++)prizes.push(perPerson);
+    return prizes;
+  }
+
+  if(mode==='custom'){
+    return(document.getElementById('lb-custom-prizes').value||'').split(',').map(s=>parseInt(s.trim())||0);
+  }
+
+  // Fixed mode
+  const def=[40000,10000,3000];
+  for(let i=3;i<Math.min(count,10);i++)def.push(1000);
+  return def;
+}
+
+window.loadAdminLB=async()=>{
+  const poolId=document.getElementById('lb-pool').value,el=document.getElementById('admin-lb-list');
+  if(!poolId){el.innerHTML='';document.getElementById('pool-summary-card').style.display='none';return;}
+  el.innerHTML='<div class="empty"><div class="ei">⏳</div><p>Loading...</p></div>';
+
+  // Load pool data for prize calc
+  const poolSnap=await getDoc(doc(db,'pools',poolId));
+  _currentPoolData={id:poolId,...poolSnap.data()};
+  updatePctPreview();
+
+  const ms=await getDocs(query(collection(db,'pool_members'),where('poolId','==',poolId)));
+  if(ms.empty){el.innerHTML='<div class="empty"><div class="ei">👥</div><p>Koi member nahi</p></div>';return;}
+  const members=ms.docs.map(d=>({...d.data()})).sort((a,b)=>(b.points||0)-(a.points||0));
+  const prizes=getPrizes(members.length,_currentPoolData);
+  const emojis=['🥇','🥈','🥉'];
+
+  const totalPrize=prizes.reduce((s,p)=>s+p,0);
+  const totalCollected=(_currentPoolData.joined||0)*(_currentPoolData.entryFee||0);
+  const appProfit=totalCollected-totalPrize;
+
+  el.innerHTML=`
+    <div class="tw"><table>
+      <thead><tr><th>Rank</th><th>Email</th><th>Points</th><th>Prize</th></tr></thead>
+      <tbody>
+        ${members.map((m,i)=>`<tr style="${i<3?'background:rgba(255,215,0,0.04)':''}">
+          <td>${i<3?emojis[i]:`#${i+1}`}</td>
+          <td style="font-size:0.83rem">${m.email||'User'}</td>
+          <td style="color:var(--neon);font-weight:700">${(m.points||0).toFixed(1)}</td>
+          <td style="color:var(--gold);font-weight:700">${prizes[i]?'₹'+prizes[i].toLocaleString():'-'}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table></div>
+    <div style="margin-top:12px;padding:12px;background:rgba(0,0,0,0.3);border-radius:10px;display:flex;justify-content:space-between;font-size:0.8rem;flex-wrap:wrap;gap:8px">
+      <span>Total distributed: <strong style="color:var(--green)">₹${totalPrize.toLocaleString()}</strong></span>
+      <span>App profit: <strong style="color:var(--gold)">₹${appProfit.toLocaleString()}</strong></span>
+    </div>`;
+};
+
+window.distributePrizes=async()=>{
+  const poolId=document.getElementById('lb-pool').value,msgEl=document.getElementById('lb-msg');
+  if(!poolId)return sMsg(msgEl,'Pool choose karo','err');
+  if(!_currentPoolData)return sMsg(msgEl,'Pehle leaderboard load karo','err');
+
+  const mode=document.getElementById('lb-prize-mode').value;
+  const ms=await getDocs(query(collection(db,'pool_members'),where('poolId','==',poolId)));
+  if(ms.empty)return sMsg(msgEl,'Koi member nahi','err');
+  const members=ms.docs.map(d=>({...d.data()})).sort((a,b)=>(b.points||0)-(a.points||0));
+  const prizes=getPrizes(members.length,_currentPoolData);
+  const totalPrize=prizes.reduce((s,p)=>s+p,0);
+  const totalCollected=(_currentPoolData.joined||0)*(_currentPoolData.entryFee||0);
+  const appProfit=totalCollected-totalPrize;
+
+  if(!confirm(`Prizes distribute karein?\n\nTotal: ₹${totalCollected.toLocaleString()}\nWinners ko: ₹${totalPrize.toLocaleString()}\nApp profit: ₹${appProfit.toLocaleString()}\n\nYeh undo nahi hoga!`))return;
+
+  let distributed=0;
+  for(let i=0;i<members.length&&i<prizes.length;i++){
+    if(!prizes[i])continue;
+    await updateDoc(doc(db,'users',members[i].uid),{balance:increment(prizes[i])});
+    await addDoc(collection(db,'transactions'),{
+      uid:members[i].uid,
+      type:`Prize Rank #${i+1} — ${_currentPoolData.name||'Pool'}`,
+      amount:prizes[i],credit:true,status:'approved',createdAt:serverTimestamp()
+    });
+    distributed++;
+  }
+
+  // Save app profit record
+  if(appProfit>0){
+    await addDoc(collection(db,'transactions'),{
+      uid:'admin',type:`App Profit — ${_currentPoolData.name||'Pool'}`,
+      amount:appProfit,credit:true,status:'approved',createdAt:serverTimestamp()
+    });
+  }
+
+  sMsg(msgEl,`✅ ${distributed} winners ko prizes! App profit: ₹${appProfit.toLocaleString()}`,'ok');
+  loadAdminLB();
+};
+
+// DEPOSITS
+let allDeps=[];
+function loadDeposits(){
+  onSnapshot(query(collection(db,'deposit_requests'),orderBy('createdAt','desc')),snap=>{
+    allDeps=snap.docs.map(d=>({id:d.id,...d.data()}));filterDeps();
+  });
+}
+window.filterDeps=()=>{
+  const q=(document.getElementById('dep-search')?.value||'').toLowerCase();
+  const st=document.getElementById('dep-sf')?.value||'all';
+  let rows=allDeps;
+  if(st!=='all')rows=rows.filter(r=>r.status===st);
+  if(q)rows=rows.filter(r=>(r.email||'').toLowerCase().includes(q)||(r.utr||'').toLowerCase().includes(q)||String(r.amount||'').includes(q));
+  const countEl=document.getElementById('dep-count');if(countEl)countEl.textContent=`${rows.length} records (Total: ${allDeps.length})`;
+  const tbody=document.getElementById('dep-tbody');if(!tbody)return;
+  if(!rows.length){tbody.innerHTML=`<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text2)">${q||st!=='all'?'Koi match nahi':'Koi deposit nahi'}</td></tr>`;return;}
+  tbody.innerHTML=rows.map(r=>{
+    const date=r.createdAt?.toDate?.()?.toLocaleDateString('en-IN')||'–';
+    return`<tr>
+      <td>${hl(r.email||'',q)}</td>
+      <td style="color:var(--neon);font-weight:700">₹${r.amount}</td>
+      <td><code style="font-size:0.75rem;color:var(--text2)">${hl(r.utr||'',q)}</code></td>
+      <td>${date}</td>
+      <td><span class="sb ${r.status}">${(r.status||'').toUpperCase()}</span></td>
+      <td>${r.status==='pending'
+        ?`<div class="btn-gap"><button class="btn btn-g" style="font-size:0.73rem;padding:5px 10px" onclick="approveDep('${r.id}','${r.uid}',${r.amount})">APPROVE</button><button class="btn btn-r" style="font-size:0.73rem;padding:5px 10px" onclick="rejectReq('deposit_requests','${r.id}')">REJECT</button></div>`
+        :`<span style="color:var(--text2);font-size:0.78rem">Done</span>`}
+      </td>
+    </tr>`;
+  }).join('');
+};
+window.approveDep=async(rid,uid,amt)=>{
+  if(!confirm(`₹${amt} deposit approve karein?`))return;
+  await updateDoc(doc(db,'deposit_requests',rid),{status:'approved'});
+  await updateDoc(doc(db,'users',uid),{balance:increment(amt)});
+  await addDoc(collection(db,'transactions'),{uid,type:'Deposit Approved',amount:amt,credit:true,status:'approved',createdAt:serverTimestamp()});
+};
+
+// WITHDRAWALS
+let allWds=[];
+function loadWithdrawals(){
+  onSnapshot(query(collection(db,'withdraw_requests'),orderBy('createdAt','desc')),snap=>{
+    allWds=snap.docs.map(d=>({id:d.id,...d.data()}));filterWds();
+  });
+}
+window.filterWds=()=>{
+  const q=(document.getElementById('wd-search')?.value||'').toLowerCase();
+  const st=document.getElementById('wd-sf')?.value||'all';
+  let rows=allWds;
+  if(st!=='all')rows=rows.filter(r=>r.status===st);
+  if(q)rows=rows.filter(r=>(r.email||'').toLowerCase().includes(q)||(r.upiId||'').toLowerCase().includes(q)||String(r.amount||'').includes(q));
+  const countEl=document.getElementById('wd-count');if(countEl)countEl.textContent=`${rows.length} records (Total: ${allWds.length})`;
+  const tbody=document.getElementById('wd-tbody');if(!tbody)return;
+  if(!rows.length){tbody.innerHTML=`<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--text2)">${q||st!=='all'?'Koi match nahi':'Koi withdrawal nahi'}</td></tr>`;return;}
+  tbody.innerHTML=rows.map(r=>{
+    const date=r.createdAt?.toDate?.()?.toLocaleDateString('en-IN')||'–';
+    return`<tr>
+      <td>${hl(r.email||'',q)}</td>
+      <td style="color:var(--gold);font-weight:700">₹${r.amount}</td>
+      <td><code style="font-size:0.75rem;color:var(--text2)">${hl(r.upiId||'',q)}</code></td>
+      <td>${date}</td>
+      <td><span class="sb ${r.status}">${(r.status||'').toUpperCase()}</span></td>
+      <td>${r.status==='pending'
+        ?`<div class="btn-gap"><button class="btn btn-g" style="font-size:0.73rem;padding:5px 10px" onclick="approveWd('${r.id}','${r.uid}',${r.amount})">APPROVE</button><button class="btn btn-r" style="font-size:0.73rem;padding:5px 10px" onclick="rejectReq('withdraw_requests','${r.id}')">REJECT</button></div>`
+        :`<span style="color:var(--text2);font-size:0.78rem">Done</span>`}
+      </td>
+    </tr>`;
+  }).join('');
+};
+window.approveWd=async(rid,uid,amt)=>{
+  if(!confirm(`₹${amt} withdrawal approve karein?`))return;
+  const us=await getDoc(doc(db,'users',uid));
+  if((us.data()?.balance||0)<amt)return alert('User ka balance kam hai!');
+  await updateDoc(doc(db,'withdraw_requests',rid),{status:'approved'});
+  await updateDoc(doc(db,'users',uid),{balance:increment(-amt)});
+  await addDoc(collection(db,'transactions'),{uid,type:'Withdrawal Approved',amount:amt,credit:false,status:'approved',createdAt:serverTimestamp()});
+};
+window.rejectReq=async(col,id)=>{if(!confirm('Reject?'))return;await updateDoc(doc(db,col,id),{status:'rejected'});};
+
+// SETTINGS
+async function loadSettingsData(){
+  try{
+    const s=await getDoc(doc(db,'settings','upi'));
+    const upi=s.exists()?s.data():{};
+    document.getElementById('s-upi').value=upi.upiId||'rishabhsisodiya1998@ybl';
+    document.getElementById('s-upi-name').value=upi.name||'Smart11';
+    document.getElementById('upi-preview').innerHTML=`Current UPI: <strong style="color:var(--neon)">${upi.upiId||'rishabhsisodiya1998@ybl'}</strong>`;
+    const bs=await getDoc(doc(db,'settings','general'));
+    if(bs.exists()){
+      document.getElementById('s-bonus').value=bs.data().signupBonus||50;
+    }
+    const pr=await getDoc(doc(db,'settings','profit'));
+    if(pr.exists()){
+      const appCut=pr.data().appCut||20;
+      document.getElementById('s-profit-pct').value=appCut;
+      // Sync to leaderboard
+      const la=document.getElementById('pct-app');if(la)la.value=appCut;
+      const lw=document.getElementById('pct-winners');if(lw)lw.value=100-appCut;
+      // Highlight correct button
+      setProfitPct(appCut);
+    }
+    updateProfitPreview();
+    const ps=await getDoc(doc(db,'settings','admin'));
+    if(ps.exists()&&ps.data().password)syncPass(ps.data().password);
+    updateProfitPreview();
+  }catch(e){}
+}
+
+window.changePassword=async()=>{
+  const curr=document.getElementById('s-curr-pass').value,np=document.getElementById('s-new-pass').value,msg=document.getElementById('pass-msg');
+  if(curr!==adminPass)return sMsg(msg,'Current password galat hai','err');
+  if(!np||np.length<4)return sMsg(msg,'New password min 4 chars','err');
+  await setDoc(doc(db,'settings','admin'),{password:np},{merge:true});
+  syncPass(np);sMsg(msg,'✅ Password change ho gaya!','ok');
+  document.getElementById('s-curr-pass').value='';document.getElementById('s-new-pass').value='';
+};
+window.saveUPI=async()=>{
+  const upiId=document.getElementById('s-upi').value.trim(),name=document.getElementById('s-upi-name').value.trim(),msg=document.getElementById('upi-msg');
+  if(!upiId)return sMsg(msg,'UPI ID daalo','err');
+  await setDoc(doc(db,'settings','upi'),{upiId,name:name||'Smart11'},{merge:true});
+  sMsg(msg,'✅ UPI save ho gaya!','ok');
+  document.getElementById('upi-preview').innerHTML=`Current UPI: <strong style="color:var(--neon)">${upiId}</strong>`;
+};
+window.saveBonus=async()=>{
+  const b=parseInt(document.getElementById('s-bonus').value)||50,msg=document.getElementById('bonus-msg');
+  await setDoc(doc(db,'settings','general'),{signupBonus:b},{merge:true});
+  sMsg(msg,'✅ Signup bonus save!','ok');
+};
+
+// Simple profit preview update
+window.setProfitPct=function(pct){
+  document.getElementById('s-profit-pct').value=pct;
+  // Highlight selected button
+  document.querySelectorAll('.pct-btn').forEach(btn=>{
+    const isSel=btn.id==='pct-btn-'+pct;
+    btn.style.borderColor=isSel?'var(--neon)':'rgba(0,212,255,0.2)';
+    btn.style.background=isSel?'rgba(0,212,255,0.1)':'rgba(0,212,255,0.04)';
+    btn.style.color=isSel?'var(--neon)':'var(--text2)';
+  });
+  refreshProfitPreview(pct);
+};
+
+window.onCustomPctInput=function(){
+  const pct=parseInt(document.getElementById('s-profit-pct').value)||20;
+  document.querySelectorAll('.pct-btn').forEach(btn=>{
+    const isSel=btn.id==='pct-btn-'+pct;
+    btn.style.borderColor=isSel?'var(--neon)':'rgba(0,212,255,0.2)';
+    btn.style.background=isSel?'rgba(0,212,255,0.1)':'rgba(0,212,255,0.04)';
+    btn.style.color=isSel?'var(--neon)':'var(--text2)';
+  });
+  refreshProfitPreview(pct);
+};
+
+function refreshProfitPreview(appCut){
+  const example=10000; // 100 users x 100
+  const winnersPct=100-appCut;
+  const profit=Math.floor(example*appCut/100);
+  const winners=example-profit;
+  const first=Math.floor(winners*0.5);
+  document.getElementById('prev-profit').textContent='₹'+profit.toLocaleString();
+  document.getElementById('prev-pct-lbl').textContent=appCut+'%';
+  document.getElementById('prev-winners').textContent='₹'+winners.toLocaleString();
+  document.getElementById('prev-wpct-lbl').textContent=winnersPct+'%';
+  document.getElementById('prev-1st').textContent='₹'+first.toLocaleString();
+  // Sync to leaderboard pct-app field
+  const la=document.getElementById('pct-app');if(la)la.value=appCut;
+  const lw=document.getElementById('pct-winners');if(lw)lw.value=winnersPct;
+}
+
+window.updateProfitPreview=function(){
+  const pct=parseInt(document.getElementById('s-profit-pct')?.value)||20;
+  refreshProfitPreview(pct);
+};
+
+window.saveProfitSettings=async()=>{
+  const appCut=parseInt(document.getElementById('s-profit-pct').value)||20;
+  const msg=document.getElementById('profit-msg');
+  if(appCut<1||appCut>90)return sMsg(msg,'1% se 90% ke beech rakho','err');
+  await setDoc(doc(db,'settings','profit'),{appCut,updatedAt:serverTimestamp()},{merge:true});
+  // Sync to leaderboard
+  const la=document.getElementById('pct-app');if(la)la.value=appCut;
+  const lw=document.getElementById('pct-winners');if(lw)lw.value=100-appCut;
+  sMsg(msg,`✅ App cut ${appCut}% save ho gaya!`,'ok');
+};
+
+// CHAT
+let selUid=null,chatUnsub=null;
+function loadChatUsers(){
+  onSnapshot(collection(db,'chats'),snap=>{
+    const users={};
+    snap.docs.forEach(d=>{const m=d.data();if(m.role!=='admin'&&m.uid){if(!users[m.uid])users[m.uid]={uid:m.uid,email:m.email,last:m.text};else users[m.uid].last=m.text;}});
+    const el=document.getElementById('cu-list');if(!el)return;
+    const list=Object.values(users);
+    if(!list.length){el.innerHTML='<div style="padding:14px;color:var(--text2);font-size:0.8rem">Koi chat nahi</div>';return;}
+    el.innerHTML=list.map(u=>`<div class="cui ${selUid===u.uid?'active':''}" onclick="selUser('${u.uid}','${(u.email||'').replace(/'/g,"\\'")}')">
+      <div style="font-weight:600">${u.email?.split('@')[0]||'User'}</div>
+      <div class="ue">${u.email||''}</div>
+    </div>`).join('');
+  });
+}
+
+window.selUser=(uid,email)=>{
+  selUid=uid;
+  if(chatUnsub)chatUnsub();
+  document.querySelectorAll('.cui').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.cui').forEach(el=>{if(el.textContent.includes(email.split('@')[0]))el.classList.add('active');});
+  chatUnsub=onSnapshot(collection(db,'chats'),snap=>{
+    const msgs=snap.docs.map(d=>d.data()).filter(m=>m.uid===uid||m.toUid===uid).sort((a,b)=>(a.createdAt?.seconds||0)-(b.createdAt?.seconds||0));
+    const el=document.getElementById('adm-msgs');if(!el)return;
+    if(!msgs.length){el.innerHTML='<div class="empty"><div class="ei">💬</div><p>Koi message nahi</p></div>';return;}
+    el.innerHTML=msgs.map(m=>{
+      const isAdm=m.role==='admin';
+      const t=m.createdAt?.toDate?.()?.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})||'';
+      return`<div class="cmsg ${isAdm?'a':'u'}">${m.text}<div class="ct">${isAdm?'Admin':email?.split('@')[0]||'User'} · ${t}</div></div>`;
+    }).join('');
+    el.scrollTop=el.scrollHeight;
+  });
+};
+window.sendAdminMsg=async()=>{
+  if(!selUid)return alert('Pehle user select karo');
+  const inp=document.getElementById('adm-inp'),txt=inp.value.trim();if(!txt)return;
+  await addDoc(collection(db,'chats'),{uid:'admin',toUid:selUid,text:txt,role:'admin',createdAt:serverTimestamp()});
+  inp.value='';
+};
+
+// ── INSTANT LIVE / REOPEN POOL ──────────────────────────────────
+window.instantLive=async(poolId)=>{
+  if(!confirm('Pool ko ABHI TURANT LIVE karo? Match time ignore ho jayega!'))return;
+  // Set openTime to right now so it's immediately open
+  await updateDoc(doc(db,'pools',poolId),{
+    openTime: new Date(Date.now()-1000), // 1 sec ago = open
+    updatedAt: serverTimestamp()
+  });
+  alert('✅ Pool LIVE ho gayi! Users join kar sakte hain.');
+};
+
+window.reopenPool=async(poolId)=>{
+  if(!confirm('Pool ko dobara open karo? Match time aage set hogi.'))return;
+  const newMatchTime = new Date(Date.now() + 24*60*60*1000); // +24 hrs
+  await updateDoc(doc(db,'pools',poolId),{
+    matchTime: newMatchTime,
+    openTime: new Date(Date.now()-1000),
+    updatedAt: serverTimestamp()
+  });
+  alert('✅ Pool reopen ho gayi! Match time +24 hrs set ho gayi.');
+};
+</script>
+</body>
+</html>
