@@ -365,6 +365,42 @@ tbody tr:last-child td{border-bottom:none;}
           </div>
           <button class="btn bp" style="margin-top:12px" onclick="saveWS()">💾 Save</button>
         </div>
+
+        <div class="card"><div class="ct"><div class="ctl">🏆 Prize Pool Settings</div></div>
+          <div class="alert ai" style="font-size:10px">ℹ️ App Cut = aapka profit. Prize Pool = baaki winners mein bata jata hai.</div>
+          <div class="fg">
+            <div class="fl">
+              <label>App Cut % <span style="color:var(--muted);font-size:9px">(Aapka profit)</span></label>
+              <input type="number" id="s-cut" value="40" min="0" max="90"/>
+              <div style="font-size:9px;color:var(--muted);margin-top:3px">Default: 40% — app rakhta hai, 60% prize mein jata hai</div>
+            </div>
+            <div class="fl">
+              <label>Fill Threshold % <span style="color:var(--muted);font-size:9px">(Prize lock hoga)</span></label>
+              <input type="number" id="s-thresh" value="40" min="1" max="100"/>
+              <div style="font-size:9px;color:var(--muted);margin-top:3px">Default: 40% — itne players join karte hi prize fix ho jati hai</div>
+            </div>
+            <div class="fl">
+              <label>Prize Distribution</label>
+              <div style="background:var(--bg3);border-radius:8px;padding:10px;font-size:10px;color:var(--muted)">
+                🥇 1st = 50% &nbsp;|&nbsp; 🥈 2nd = 30% &nbsp;|&nbsp; 🥉 3rd = 10%<br>
+                4th-10th = bacha 10% barabar
+              </div>
+            </div>
+            <div class="fl">
+              <label>Preview (Live Calculation)</label>
+              <div style="background:var(--bg3);border-radius:8px;padding:10px;">
+                <div style="font-size:10px;color:var(--muted);margin-bottom:5px">Entry fee × Players × (1 - Cut%)</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                  <input type="number" id="s-prev-fee" placeholder="Fee ₹" style="width:80px;padding:5px 8px;background:rgba(0,212,255,0.05);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;outline:none"/>
+                  <input type="number" id="s-prev-players" placeholder="Players" style="width:80px;padding:5px 8px;background:rgba(0,212,255,0.05);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;outline:none"/>
+                  <button class="btn bg2 bsm" onclick="calcPreview()">🧮 Calculate</button>
+                </div>
+                <div id="s-prev-result" style="margin-top:8px;font-size:11px;color:var(--green)"></div>
+              </div>
+            </div>
+          </div>
+          <button class="btn bp" style="margin-top:12px" onclick="savePrizeSettings()">💾 Save Prize Settings</button>
+        </div>
         <div class="card"><div class="ct"><div class="ctl">🎮 Toggles</div></div>
           <div class="sr"><div class="sr-i"><div class="st">Dummy Users in Polls (+82)</div><div class="sd">Make pools look more active</div></div><label class="tog"><input type="checkbox" id="tog-dummy" checked/><div class="tog-t"></div><div class="tog-th"></div></label></div>
           <div class="sr"><div class="sr-i"><div class="st">Maintenance Mode</div><div class="sd">Block user access</div></div><label class="tog"><input type="checkbox" id="tog-maint"/><div class="tog-t"></div><div class="tog-th"></div></label></div>
@@ -1254,6 +1290,8 @@ async function loadSettings(){
     if(d.dailyBonus)document.getElementById('s-db').value=d.dailyBonus;
     if(d.signupBonus)document.getElementById('s-sb').value=d.signupBonus;
     if(d.upiId)document.getElementById('s-upi').value=d.upiId;
+    if(d.appCutPct!==undefined)document.getElementById('s-cut').value=d.appCutPct;
+    if(d.fillThreshold!==undefined)document.getElementById('s-thresh').value=d.fillThreshold;
     document.getElementById('tog-dummy').checked=d.dummyUsers!==false;
     document.getElementById('tog-maint').checked=d.maintenance||false;
     document.getElementById('tog-reg').checked=d.registration!==false;
@@ -1261,6 +1299,35 @@ async function loadSettings(){
     document.getElementById('tog-wd').checked=d.withdrawals!==false;
   }catch(e){}
 }
+window.calcPreview=function(){
+  var fee=parseInt(document.getElementById('s-prev-fee').value)||0;
+  var players=parseInt(document.getElementById('s-prev-players').value)||0;
+  var cut=parseInt(document.getElementById('s-cut').value)||40;
+  var thresh=parseInt(document.getElementById('s-thresh').value)||40;
+  if(!fee||!players){document.getElementById('s-prev-result').textContent='Fee aur Players daalo';return;}
+  var total=fee*players;
+  var appEarns=Math.floor(total*cut/100);
+  var prizePool=total-appEarns;
+  var threshPlayers=Math.ceil(players*thresh/100);
+  var prizeAtThresh=Math.floor(fee*threshPlayers*(1-cut/100));
+  var res=document.getElementById('s-prev-result');
+  res.innerHTML='<b style="color:var(--green)">Prize Pool: ₹'+prizePool.toLocaleString('en-IN')+'</b><br>'
+    +'<span style="color:var(--red)">App Earns: ₹'+appEarns.toLocaleString('en-IN')+'</span><br>'
+    +'<span style="color:var(--neon)">Prize locks at '+threshPlayers+' players: ₹'+prizeAtThresh.toLocaleString('en-IN')+'</span><br>'
+    +'<span style="color:var(--gold)">🥇 ₹'+Math.floor(prizePool*0.50).toLocaleString('en-IN')+' &nbsp; 🥈 ₹'+Math.floor(prizePool*0.30).toLocaleString('en-IN')+' &nbsp; 🥉 ₹'+Math.floor(prizePool*0.10).toLocaleString('en-IN')+'</span>';
+};
+
+window.savePrizeSettings=async function(){
+  var cut=parseInt(document.getElementById('s-cut').value);
+  var thresh=parseInt(document.getElementById('s-thresh').value);
+  if(isNaN(cut)||cut<0||cut>90){toast('App Cut 0-90% ke beech hona chahiye','var(--red)');return;}
+  if(isNaN(thresh)||thresh<1||thresh>100){toast('Fill Threshold 1-100% ke beech hona chahiye','var(--red)');return;}
+  try{
+    await db.collection('settings').doc('platform').set({appCutPct:cut,fillThreshold:thresh},{merge:true});
+    toast('✅ Prize settings saved! App Cut: '+cut+'%, Fill: '+thresh+'%','var(--green)');
+  }catch(e){toast('Error: '+e.message,'var(--red)');}
+};
+
 window.saveWS=async function(){
   try{await db.collection('settings').doc('platform').set({minDeposit:parseInt(document.getElementById('s-md').value)||500,minWithdraw:parseInt(document.getElementById('s-mw').value)||100,dailyBonus:parseInt(document.getElementById('s-db').value)||10,signupBonus:parseInt(document.getElementById('s-sb').value)||50,upiId:document.getElementById('s-upi').value.trim()},{merge:true});toast('✅ Saved!','var(--green)');}catch(e){toast('Error: '+e.message,'var(--red)');}
 };
