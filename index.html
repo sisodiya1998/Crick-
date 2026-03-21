@@ -450,7 +450,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
       <div class="quiz-done">
         <div style="font-size:28px;margin-bottom:4px">🎉</div>
         <div style="font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;color:var(--green)">Quiz Complete!</div>
-        <div style="font-size:12px;color:var(--muted);margin-top:3px">Earned <span id="q-pts" style="color:var(--purple);font-weight:700">0</span> points!</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:3px">Points milenge: <span id="q-pts" style="color:var(--orange);font-weight:700">Match ke baad</span> ⏳</div>
       </div>
       <button class="btn-ok" style="width:100%;padding:12px;font-size:15px" onclick="proceedJoin()">✅ Join Contest →</button>
     </div>
@@ -1376,8 +1376,15 @@ window._real_pickOpt=async function(i){
     if(new Date()>dl){toast('⏰ Answer time khatam ho gaya!','var(--red)');return;}
   }
   QD.ans[QD.cur]=i;
-  var ok=q.correct===null||q.correct===undefined||i===q.correct;
-  if(ok){QD.score+=(q.pts||10);await awardPts(q.pts||10,'pm','✅ Pre-Match Q'+(QD.cur+1)+' correct');}
+  // Save answer to Firestore (in poll entry) - NO points yet
+  // Points will be given by admin after match when they settle answers
+  try{
+    var ansUpdate={};
+    ansUpdate['pmAns_'+QD.cur]=i;
+    // Store answers in user doc for tracking
+    await db.collection('users').doc(CU.uid).update(ansUpdate);
+  }catch(e){}
+  // Just show saved message - no points
   renderQQ();
   setTimeout(function(){QD.cur++;if(QD.cur>=QD.qs.length)finishQuiz();else renderQQ();},1100);
 };
@@ -1387,7 +1394,7 @@ function finishQuiz(){
   document.getElementById('quiz-done').style.display='block';
   document.getElementById('qpf').style.width='100%';
   document.getElementById('qpn').textContent=QD.qs.length+'/'+QD.qs.length;
-  document.getElementById('q-pts').textContent=QD.score;
+  document.getElementById('q-pts').textContent='Match ke baad';
   localStorage.setItem('qz_'+QD.pid+'_'+(CU&&CU.uid?CU.uid:''),'1');
 }
 
@@ -1656,6 +1663,29 @@ window._real_sendMsg=async function(){
 // NAVIGATION
 // ============================================================
 // goPage defined in admin section above
+
+window._real_goPage=function(pg){
+  // Hide all pages
+  document.querySelectorAll('.page').forEach(function(p){
+    p.classList.remove('on');
+    p.style.display='';
+  });
+  // Remove active from all nav buttons
+  document.querySelectorAll('.bn').forEach(function(b){b.classList.remove('on');});
+  
+  // Show selected page
+  var pEl=document.getElementById('page-'+pg);
+  if(pEl){pEl.classList.add('on');pEl.style.display='block';}
+  
+  // Activate nav button
+  var bEl=document.getElementById('bn-'+pg);
+  if(bEl)bEl.classList.add('on');
+  
+  // Load page data
+  if(pg==='wallet')loadTxns();
+  if(pg==='lb')loadLB('lb-full',20);
+  if(pg==='points')loadPH();
+};
 
 window._real_om=function(id){
   var el=document.getElementById(id);
