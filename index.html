@@ -19,8 +19,7 @@ window._q=[];
 ['stab','doLogin','doSignup','doGoogle','doLogout','goPage','cm','toast',
  'startQuiz','pickOpt','proceedJoin','confirmJoin','openDep','submitDep',
  'openWd','submitWd','ansBQ','ansSQ','toggleChat','sendMsg','installApp',
- 'claimDailyBonus','adminCreatePool','adminDeletePool','adminEditPool',
- 'adminTogglePool','adminSaveSettings','adminPreviewPool'
+ 'claimDailyBonus'
 ].forEach(function(fn){
   window[fn]=function(){
     var args=Array.prototype.slice.call(arguments);
@@ -413,12 +412,6 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   </div>
 
 
-  <!-- ADMIN PAGE (admin only) -->
-  <div class="page" id="page-admin" style="display:none">
-    <div id="admin-panel-content">
-      <div class="empty"><div class="ei">🔒</div><p>Admin access only</p></div>
-    </div>
-  </div>
   <!-- BOTTOM NAVIGATION -->
   <div id="botnav">
     <button class="bn on" id="bn-home" onclick="goPage('home')"><div class="bi">🏠</div>Home</button>
@@ -427,7 +420,6 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <button class="bn" id="bn-points" onclick="goPage('points')"><div class="bi">⭐</div>Points</button>
     <button class="bn" id="bn-wallet" onclick="goPage('wallet')"><div class="bi">💰</div>Wallet</button>
     <button class="bn" id="bn-profile" onclick="goPage('profile')"><div class="bi">👤</div>Profile</button>
-    <button class="bn" id="bn-admin" onclick="goPage('admin')" style="display:none"><div class="bi">⚙️</div>Admin</button>
   </div>
 </div>
 
@@ -869,7 +861,7 @@ auth.onAuthStateChanged(async function(u){
     loadLB('lb-home',3);
     startLBCheck();
     renderDailyBonus();
-    checkAdmin();
+
   }else{
     CU=null;UD=null;
     document.getElementById('auth-screen').style.display='flex';
@@ -1076,9 +1068,6 @@ function renderLBSoon(st,mn){
 // 1st=50%, 2nd=30%, 3rd=10%, 4th-10th share remaining 10% equally
 // Prize shown only after fillThreshold% filled (default 40%)
 // ============================================================
-var APP_CUT_PCT = 40; // 40% app cut, 60% goes to prize pool
-var FILL_THRESHOLD = 40;    // % filled before prize is shown/locked
-var PRIZE_DIST = [50,30,10]; // 1st,2nd,3rd %  of prize pool
 // 4th to 10th share remaining 10% equally (7 places → ~1.43% each)
 
 async function loadPlatformSettings(){
@@ -1572,241 +1561,9 @@ window._real_sendMsg=async function(){
 // ============================================================
 // ADMIN PANEL
 // Admin UID stored in Firestore: settings/admin -> {uids:['uid1','uid2']}
-// Or set ADMIN_UIDS array here for quick setup
 // ============================================================
-var ADMIN_UIDS=['9oMaD4nQaiUZGERBKDts7NUUahT2']; // fallback; also checks Firestore
-var IS_ADMIN=false;
 
-async function checkAdmin(){
-  if(!CU)return;
-  // Check local hardcoded list first
-  if(ADMIN_UIDS.indexOf(CU.uid)>=0){IS_ADMIN=true;}
-  // Check Firestore - try both 'settings' and 'setting' collection names
-  try{
-    var s=await db.collection('settings').doc('admin').get();
-    if(s.exists&&s.data().uids&&s.data().uids.indexOf(CU.uid)>=0)IS_ADMIN=true;
-  }catch(e){}
-  try{
-    var s2=await db.collection('setting').doc('admin').get();
-    if(s2.exists&&s2.data().uids&&s2.data().uids.indexOf(CU.uid)>=0)IS_ADMIN=true;
-  }catch(e){}
-  if(IS_ADMIN){
-    document.getElementById('bn-admin').style.display='flex';
-  }
-}
 
-window._real_goPage=function(pg){
-  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('on');p.style.display='';});
-  document.querySelectorAll('.bn').forEach(function(b){b.classList.remove('on');});
-  var pEl=document.getElementById('page-'+pg);
-  if(pEl){pEl.classList.add('on');pEl.style.display='block';}
-  var bEl=document.getElementById('bn-'+pg);
-  if(bEl)bEl.classList.add('on');
-  if(pg==='wallet')loadTxns();
-  if(pg==='lb')loadLB('lb-full',20);
-  if(pg==='points')loadPH();
-  if(pg==='admin'&&IS_ADMIN)renderAdminPanel();
-};
-
-// ====== ADMIN PANEL RENDERER ======
-async function renderAdminPanel(){
-  var el=document.getElementById('admin-panel-content');
-  if(!el)return;
-  el.innerHTML='<div class="empty"><div class="ei">⏳</div><div class="ld"><span></span><span></span><span></span></div></div>';
-
-  // Load platform settings
-  var appCut=40,fillThresh=40;
-  try{
-    var st=await db.collection('settings').doc('platform').get();
-    if(st.exists){appCut=st.data().appCutPct||40;fillThresh=st.data().fillThreshold||40;}
-  }catch(e){}
-
-  // Load all pools
-  var poolsHtml='';
-  try{
-    var ps=await db.collection('polls').get();
-    ps.forEach(function(d){
-      var p=d.data();
-      var joined=p.joined||0;
-      var prizePool=Math.floor((p.fee||0)*joined*(1-((p.appCutPct||appCut)/100)));
-      poolsHtml+='<div class="pool-adm-item">'
-        +'<div class="pool-adm-name">'+p.name+' <span style="font-size:9px;padding:1px 5px;border-radius:3px;background:'+(p.status==='active'?'rgba(0,255,136,0.15)':'rgba(255,59,92,0.12)')+';color:'+(p.status==='active'?'var(--green)':'var(--red)')+'">'+p.status+'</span></div>'
-        +'<div class="pool-adm-meta">₹'+p.fee+' fee · '+joined+'/'+p.maxUsers+' joined · App cut: '+(p.appCutPct||appCut)+'% · Prize lock: '+(p.fillThreshold||fillThresh)+'%</div>'
-        +'<div class="pool-adm-meta" style="color:var(--gold)">💰 Current Prize Pool: ₹'+prizePool.toLocaleString()+'</div>'
-        +'<div class="pool-adm-acts">'
-        +'<button class="btn-adm-e" onclick="adminEditPool(this)" data-pid="'+d.id+'">✏️ Edit</button>'
-        +'<button class="btn-adm-e" onclick="adminTogglePool(this)" data-pid="'+d.id+'" data-status="'+p.status+'">'+(p.status==='active'?'⏸ Close':'▶ Open')+'</button>'
-         +'<button class="btn-adm-r" onclick="adminDeletePool(this)" data-pid="'+d.id+'" data-name="'+encodeURIComponent(p.name)+'" >🗑 Delete</button>'
-        +'</div>'
-        +'</div>';
-    });
-  }catch(e){poolsHtml='<p style="color:var(--red);font-size:11px">Error loading pools: '+e.message+'</p>';}
-
-  el.innerHTML=
-    // Global settings
-    '<div class="adm-sec">'
-    +'<h4>⚙️ Platform Settings</h4>'
-    +'<div class="adm-row">'
-    +'<div class="ig"><label>App Cut %</label><input type="number" id="adm-cut" value="'+appCut+'" min="0" max="90" style="width:100%"/></div>'
-    +'<div class="ig"><label>Fill Threshold %</label><input type="number" id="adm-thresh" value="'+fillThresh+'" min="1" max="100" style="width:100%"/></div>'
-    +'<div style="display:flex;align-items:flex-end"><button class="btn-adm" onclick="adminSaveSettings()">💾 Save</button></div>'
-    +'</div>'
-    +'<div id="adm-set-msg" style="font-size:11px;margin-top:4px;min-height:14px"></div>'
-    +'</div>'
-
-    // Create Pool
-    +'<div class="adm-sec">'
-    +'<h4>➕ Create New Pool</h4>'
-    +'<div class="adm-row">'
-    +'<div class="ig" style="flex:2"><label>Pool Name</label><input type="text" id="np-name" placeholder="e.g. India vs Australia T20"/></div>'
-    +'</div>'
-    +'<div class="adm-row">'
-    +'<div class="ig"><label>Entry Fee (₹)</label><input type="number" id="np-fee" placeholder="49" min="1"/></div>'
-    +'<div class="ig"><label>Max Players</label><input type="number" id="np-max" placeholder="100" min="2"/></div>'
-    +'<div class="ig"><label>App Cut %</label><input type="number" id="np-cut" placeholder="'+appCut+'" min="0" max="90"/></div>'
-    +'<div class="ig"><label>Fill Thresh %</label><input type="number" id="np-thresh" placeholder="'+fillThresh+'" min="1" max="100"/></div>'
-    +'</div>'
-    +'<div class="adm-row">'
-    +'<div class="ig" style="flex:1"><label>Description (optional)</label><input type="text" id="np-desc" placeholder="Match description..."/></div>'
-    +'</div>'
-    +'<div id="np-prize-preview" class="prize-preview" style="display:none"></div>'
-    +'<div style="display:flex;gap:7px;margin-top:8px">'
-    +'<button class="btn-adm" onclick="adminPreviewPool()">👁 Preview Prize</button>'
-    +'<button class="btn-adm" style="background:linear-gradient(135deg,#006600,var(--green))" onclick="adminCreatePool()">✅ Create Pool</button>'
-    +'</div>'
-    +'<div id="np-msg" style="font-size:11px;margin-top:6px;min-height:14px"></div>'
-    +'</div>'
-
-    // Existing Pools
-    +'<div class="adm-sec">'
-    +'<h4>🏏 Existing Pools</h4>'
-    +(poolsHtml||'<div class="empty" style="padding:16px"><p>No pools yet</p></div>')
-    +'</div>';
-}
-
-// Preview prize distribution before creating pool
-window._real_adminPreviewPool=function(){
-  var fee=parseInt(document.getElementById('np-fee').value)||0;
-  var max=parseInt(document.getElementById('np-max').value)||100;
-  var cut=parseInt(document.getElementById('np-cut').value);
-  if(isNaN(cut))cut=APP_CUT_PCT;
-  var thresh=parseInt(document.getElementById('np-thresh').value);
-  if(isNaN(thresh))thresh=FILL_THRESHOLD;
-  var threshPlayers=Math.ceil(max*thresh/100);
-  var prizeAtThresh=Math.floor(fee*threshPlayers*(1-cut/100));
-  var prizeAtFull=Math.floor(fee*max*(1-cut/100));
-  var bd=calcPrizeBreakdown(prizeAtFull);
-  var bdT=calcPrizeBreakdown(prizeAtThresh);
-  var medals=['🥇','🥈','🥉','4th','5th','6th','7th','8th','9th','10th'];
-  var rows='';
-  for(var i=0;i<10;i++){
-    if(bd[i]>0)rows+='<span style="margin-right:6px">'+medals[i]+' ₹'+bd[i]+'</span>';
-  }
-  var el=document.getElementById('np-prize-preview');
-  el.style.display='block';
-  el.innerHTML='<b>At '+thresh+'% fill ('+threshPlayers+' players):</b> Prize=₹'+prizeAtThresh+' | App earns ₹'+Math.floor(fee*threshPlayers*cut/100)+'<br>'
-    +'<b>At 100% full ('+max+' players):</b> Prize=₹'+prizeAtFull+' | App earns ₹'+Math.floor(fee*max*cut/100)+'<br>'
-    +'<b>Prize breakdown (full):</b> '+rows;
-};
-
-window._real_adminCreatePool=async function(){
-  var name=(document.getElementById('np-name').value||'').trim();
-  var fee=parseInt(document.getElementById('np-fee').value);
-  var max=parseInt(document.getElementById('np-max').value);
-  var cut=parseInt(document.getElementById('np-cut').value);
-  var thresh=parseInt(document.getElementById('np-thresh').value);
-  var desc=(document.getElementById('np-desc').value||'').trim();
-  var msg=document.getElementById('np-msg');
-  if(!name){msg.style.color='var(--red)';msg.textContent='Enter pool name';return;}
-  if(!fee||fee<1){msg.style.color='var(--red)';msg.textContent='Enter valid fee';return;}
-  if(!max||max<2){msg.style.color='var(--red)';msg.textContent='Enter max players (min 2)';return;}
-  if(isNaN(cut))cut=APP_CUT_PCT;
-  if(isNaN(thresh))thresh=FILL_THRESHOLD;
-  msg.style.color='var(--neon)';msg.textContent='Creating...';
-  try{
-    await db.collection('polls').add({
-      name:name,fee:fee,maxUsers:max,joined:0,
-      appCutPct:cut,fillThreshold:thresh,
-      description:desc,status:'active',
-      createdAt:firebase.firestore.FieldValue.serverTimestamp()
-    });
-    msg.style.color='var(--green)';msg.textContent='✅ Pool created!';
-    // Clear form
-    ['np-name','np-fee','np-max','np-cut','np-thresh','np-desc'].forEach(function(id){document.getElementById(id).value='';});
-    document.getElementById('np-prize-preview').style.display='none';
-    setTimeout(function(){renderAdminPanel();},500);
-    loadPools();
-  }catch(e){msg.style.color='var(--red)';msg.textContent='Error: '+e.message;}
-};
-
-window._real_adminDeletePool=async function(btn,pname){
-  var pid=btn&&btn.dataset?btn.dataset.pid:btn;
-  pname=btn&&btn.dataset?decodeURIComponent(btn.dataset.name||''):pname;
-  if(!confirm('Delete pool "'+pname+'"? This cannot be undone.'))return;
-  try{
-    await db.collection('polls').doc(pid).delete();
-    toast('🗑 Pool deleted','var(--red)');
-    renderAdminPanel();loadPools();
-  }catch(e){toast('Error: '+e.message,'var(--red)');}
-};
-
-window._real_adminTogglePool=async function(btn,status){
-  var pid=btn&&btn.dataset?btn.dataset.pid:btn;
-  status=btn&&btn.dataset?btn.dataset.status:status;
-  var newStatus=status==='active'?'closed':'active';
-  try{
-    await db.collection('polls').doc(pid).update({status:newStatus});
-    toast((newStatus==='active'?'▶ Pool opened':'⏸ Pool closed'),'var(--neon)');
-    renderAdminPanel();loadPools();
-  }catch(e){toast('Error: '+e.message,'var(--red)');}
-};
-
-window._real_adminEditPool=async function(btn){
-  var pid=btn&&btn.dataset?btn.dataset.pid:btn;
-  try{
-    var s=await db.collection('polls').doc(pid).get();
-    if(!s.exists)return;
-    var p=s.data();
-    var newName=prompt('Pool name:',p.name||'');
-    if(newName===null)return;
-    var newFee=prompt('Entry fee (₹):',p.fee||'');
-    if(newFee===null)return;
-    var newMax=prompt('Max players:',p.maxUsers||'');
-    if(newMax===null)return;
-    var newCut=prompt('App cut %:',p.appCutPct||APP_CUT_PCT);
-    if(newCut===null)return;
-    var newThresh=prompt('Fill threshold % (prize locks after this):',p.fillThreshold||FILL_THRESHOLD);
-    if(newThresh===null)return;
-    var newDesc=prompt('Description:',p.description||'');
-    if(newDesc===null)return;
-    await db.collection('polls').doc(pid).update({
-      name:newName.trim(),
-      fee:parseInt(newFee)||p.fee,
-      maxUsers:parseInt(newMax)||p.maxUsers,
-      appCutPct:parseInt(newCut)||p.appCutPct||APP_CUT_PCT,
-      fillThreshold:parseInt(newThresh)||p.fillThreshold||FILL_THRESHOLD,
-      description:newDesc.trim()
-    });
-    toast('✅ Pool updated','var(--green)');
-    renderAdminPanel();loadPools();
-  }catch(e){toast('Error: '+e.message,'var(--red)');}
-};
-
-window._real_adminSaveSettings=async function(){
-  var cut=parseInt(document.getElementById('adm-cut').value);
-  var thresh=parseInt(document.getElementById('adm-thresh').value);
-  var msg=document.getElementById('adm-set-msg');
-  if(isNaN(cut)||cut<0||cut>90){msg.style.color='var(--red)';msg.textContent='Invalid cut %';return;}
-  if(isNaN(thresh)||thresh<1||thresh>100){msg.style.color='var(--red)';msg.textContent='Invalid threshold %';return;}
-  msg.style.color='var(--neon)';msg.textContent='Saving...';
-  try{
-    await db.collection('settings').doc('platform').set({appCutPct:cut,fillThreshold:thresh},{merge:true});
-    APP_CUT_PCT=cut;FILL_THRESHOLD=thresh;
-    msg.style.color='var(--green)';msg.textContent='✅ Settings saved!';
-    loadPools();
-    setTimeout(function(){msg.textContent='';},3000);
-  }catch(e){msg.style.color='var(--red)';msg.textContent='Error: '+e.message;}
-};
 
 // ============================================================
 // NAVIGATION
