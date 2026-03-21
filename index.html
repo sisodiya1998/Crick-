@@ -608,8 +608,34 @@ try{auth.setPersistence('local').catch(function(e){console.warn('Persistence:',e
 // GLOBAL STATE
 // ============================================================
 var CU=null, UD=null, SP=null, bqUnsub=null, sqUnsub=null, chatUnsub=null;
-var APP_CUT_PCT=40; // App 40% rakhta hai, 60% prize pool
-var FILL_THRESHOLD=40; // 40% fill hone par prize lock hoti hai
+var APP_CUT_PCT=40;
+var FILL_THRESHOLD=40;
+
+// ============================================================
+// CACHE SYSTEM - Reads kam karne ke liye
+// ============================================================
+var _cache={};
+function cacheSet(key,data,ttlSeconds){
+  _cache[key]={data:data,exp:Date.now()+(ttlSeconds*1000)};
+}
+function cacheGet(key){
+  var c=_cache[key];
+  if(c&&Date.now()<c.exp)return c.data;
+  return null;
+}
+function cacheClear(key){delete _cache[key];}
+
+// Enable Firestore OFFLINE PERSISTENCE (biggest read saver!)
+// Firestore caches data locally - repeat reads = 0 server reads!
+try{
+  db.enablePersistence({synchronizeTabs:true}).then(function(){
+    console.log('[Smart11] Offline persistence enabled - reads saved!');
+  }).catch(function(err){
+    if(err.code!=='failed-precondition'&&err.code!=='unimplemented'){
+      console.warn('Persistence:',err);
+    }
+  });
+}catch(e){}
 var sN=function(){return String(UD&&UD.name?UD.name:CU&&CU.displayName?CU.displayName:CU&&CU.email?CU.email.split('@')[0]:'User');};
 var sE=function(){return String(CU&&CU.email?CU.email:'');};
 var sU=function(){return String(CU&&CU.uid?CU.uid:'');};
@@ -795,6 +821,8 @@ auth.getRedirectResult().then(async function(result){
 async function loadTxns(){
   var el=document.getElementById('txn-list');
   if(!el)return;
+  var cached=cacheGet('txns');
+  if(cached){el.innerHTML=cached;return;}
   try{
     var s=await db.collection('users').doc(CU.uid).collection('txns').orderBy('createdAt','desc').limit(30).get();
     if(s.empty){el.innerHTML='<div class="empty"><div class="ei">&#128194;</div><p>No transactions yet</p></div>';return;}
@@ -805,6 +833,7 @@ async function loadTxns(){
       var sc=t.status==='completed'?'var(--green)':t.status==='pending'?'var(--orange)':'var(--red)';
       el.innerHTML+='<div class="ti">'        +'<div class="ti-i"><div class="tt">'+t.title+'</div>'        +'<div class="td">'+dt+' &middot; <span style="color:'+sc+'">'+t.status+'</span></div></div>'        +'<div class="ti-a '+(t.type==='credit'?'cr':'dr')+'">'+(t.type==='credit'?'+':'-')+'&#x20B9;'+t.amount+'</div>'        +'</div>';
     });
+    cacheSet('txns',el.innerHTML,60); // 1 min cache
   }catch(e){console.error('loadTxns',e);}
 }
 
@@ -833,6 +862,10 @@ async function loadPH(){
 async function loadLB(elId,lim){
   var el=document.getElementById(elId);
   if(!el)return;
+  // Cache leaderboard 2 min
+  var ckey='lb_'+elId+'_'+(lim||20);
+  var cached=cacheGet(ckey);
+  if(cached){el.innerHTML=cached;return;}
   try{
     var s=await db.collection('users').orderBy('points','desc').limit(lim||20).get();
     if(s.empty){el.innerHTML='<div class="empty"><div class="ei">&#127941;</div><p>No players yet</p></div>';return;}
@@ -848,6 +881,7 @@ async function loadLB(elId,lim){
       el.innerHTML+='<div class="lb-item '+(isMe?'me':'')+'">'        +'<div class="lb-r '+rc+'">'+medal+'</div>'        +'<div class="lb-av">'+av+'</div>'        +'<div class="lb-info">'        +'<div class="lb-name">'+(u.name||'User')+(isMe?' <span style="font-size:9px;color:var(--neon)">(You)</span>':'')+'</div>'        +'<div class="lb-sub">Contests: '+(u.contestsJoined||0)+' &middot; Wins: '+(u.wins||0)+'</div>'        +'</div>'        +'<div class="lb-pts">'+(u.points||0)+'<div style="font-size:9px;color:var(--muted);font-weight:400">pts</div></div>'        +'</div>';
       rank++;
     });
+    cacheSet(ckey,el.innerHTML,120); // 2 min cache
   }catch(e){console.error('loadLB',e);}
 }
 
@@ -860,6 +894,7 @@ auth.onAuthStateChanged(async function(u){
     loadPools();
     listenBQ();
     listenSQ();
+    // Load home LB only top 3 (less reads)
     loadLB('lb-home',3);
     startLBCheck();
     renderDailyBonus();
@@ -1134,6 +1169,13 @@ function calcTiePrizes(rankedUsers, prizePool){
 
 async function loadPools(){
   var el=document.getElementById('pools-list');
+  // Check cache first (5 min)
+  var cached=cacheGet('polls');
+  if(cached){
+    el.innerHTML='';
+    cached.forEach(function(p){el.innerHTML+=mkPC(p.id,p.data);});
+    return;
+  }
   el.innerHTML='<div class="empty"><div class="ei">⏳</div><div class="ld"><span></span><span></span><span></span></div></div>';
   try{
     await loadPlatformSettings();
@@ -1143,10 +1185,13 @@ async function loadPools(){
       return;
     }
     el.innerHTML='';
+    var pollsData=[];
     s.forEach(function(d){
       var p=d.data();
+      pollsData.push({id:d.id,data:p});
       el.innerHTML+=mkPC(d.id,p);
     });
+    cacheSet('polls',pollsData,300); // 5 min cache
   }catch(e){
     el.innerHTML='<div class="empty"><div class="ei">⚠️</div><p>'+e.message+'</p></div>';
   }
