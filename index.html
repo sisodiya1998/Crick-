@@ -1205,30 +1205,56 @@ function mkPC(id, p){
   var fillPct=maxUsers>0?Math.round((joined/maxUsers)*100):0;
   var fillThresh=typeof p.fillThreshold==='number'?p.fillThreshold:FILL_THRESHOLD;
   var prizePool=calcPrizePool(fee,joined,appCut);
-  var threshReached=fillPct>=fillThresh;
+  // If fillThreshold is 0, always show prize (no lock)
+  var threshReached=(fillThresh===0)||fillPct>=fillThresh;
   var breakdown=calcPrizeBreakdown(prizePool);
   var medals=['🥇','🥈','🥉','4th','5th','6th','7th','8th','9th','10th'];
   var distPcts=[50,30,10];for(var x=0;x<7;x++)distPcts.push(Math.floor(10/7));
 
   // Prize pool display
-  var prizeHtml='';
-  if(threshReached){
-    prizeHtml='<div style="background:rgba(255,215,0,0.07);border:1px solid rgba(255,215,0,0.25);border-radius:9px;padding:9px;margin-bottom:8px">'
-      +'<div style="font-size:10px;color:var(--gold);font-weight:700;margin-bottom:5px">🏆 Prize Pool: ₹'+prizePool.toLocaleString()+' <span style="font-size:9px;color:var(--muted)">(App cut: '+appCut+'%)</span></div>'
-      +'<div style="display:flex;flex-wrap:wrap;gap:4px">';
-    for(var i=0;i<Math.min(10,maxUsers);i++){
-      var amt=breakdown[i]||0;
-      if(amt<=0)break;
-      prizeHtml+='<span style="background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.2);border-radius:4px;padding:2px 6px;font-size:9px;color:var(--gold)">'+medals[i]+' ₹'+amt+'</span>';
-    }
-    prizeHtml+='</div></div>';
-  }else{
-    var need=Math.ceil(maxUsers*fillThresh/100);
-    prizeHtml='<div style="background:rgba(255,107,53,0.06);border:1px solid rgba(255,107,53,0.18);border-radius:9px;padding:8px;margin-bottom:8px;font-size:10px;color:var(--orange)">'
-      +'⏳ Prize pool locks after '+fillThresh+'% filled ('+need+' players needed) · '+(need-joined)+' more to go!'
-      +'</div>';
-  }
+  // Current prize (based on joined players)
+  var currentPrize=calcPrizePool(fee,joined,appCut);
+  // Maximum prize (based on maxUsers)
+  var maxPrize=calcPrizePool(fee,maxUsers,appCut);
+  var currentBreakdown=calcPrizeBreakdown(currentPrize);
+  var maxBreakdown=calcPrizeBreakdown(maxPrize);
+  var medals=['🥇','🥈','🥉','4th','5th','6th','7th','8th','9th','10th'];
 
+  var prizeHtml='';
+  // Main prize box - always show
+  prizeHtml+='<div style="background:linear-gradient(135deg,rgba(255,215,0,0.08),rgba(255,107,53,0.05));border:1px solid rgba(255,215,0,0.3);border-radius:10px;padding:10px;margin-bottom:8px">';
+  
+  // Max prize (highlighted)
+  prizeHtml+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">';
+  prizeHtml+='<span style="font-size:10px;color:var(--muted)">🏆 Max Prize Pool</span>';
+  prizeHtml+='<span style="font-family:Rajdhani,sans-serif;font-size:24px;font-weight:700;color:var(--gold)">₹'+maxPrize.toLocaleString('en-IN')+'</span>';
+  prizeHtml+='</div>';
+  
+  // Current prize (if players joined)
+  if(joined>0){
+    prizeHtml+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
+    prizeHtml+='<span style="font-size:9px;color:var(--muted)">💰 Current ('+joined+' joined)</span>';
+    prizeHtml+='<span style="font-size:13px;font-weight:700;color:var(--green)">₹'+currentPrize.toLocaleString('en-IN')+'</span>';
+    prizeHtml+='</div>';
+  }
+  
+  // Progress bar showing how full pool is
+  var fillBar=Math.min(100,fillPct);
+  prizeHtml+='<div style="height:3px;background:rgba(255,255,255,0.08);border-radius:2px;margin-bottom:6px;overflow:hidden">';
+  prizeHtml+='<div style="width:'+fillBar+'%;height:100%;background:linear-gradient(90deg,var(--gold),var(--orange));border-radius:2px;transition:width 0.5s"></div>';
+  prizeHtml+='</div>';
+  
+  // Winners breakdown (based on max prize)
+  prizeHtml+='<div style="font-size:9px;color:var(--muted);margin-bottom:5px">Prize distribution ('+maxUsers+' players pe):</div>';
+  prizeHtml+='<div style="display:flex;flex-wrap:wrap;gap:3px">';
+  for(var wi=0;wi<Math.min(10,maxUsers);wi++){
+    var wamt=maxBreakdown[wi]||0;
+    if(wamt<=0)break;
+    prizeHtml+='<span style="background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.2);border-radius:3px;padding:1px 5px;font-size:9px;color:var(--gold)">'+medals[wi]+' ₹'+wamt.toLocaleString('en-IN')+'</span>';
+  }
+  prizeHtml+='</div>';
+  prizeHtml+='<div style="font-size:8px;color:var(--muted);margin-top:5px">⬆️ Jitne zyada players, utna bada prize!</div>';
+  prizeHtml+='</div>';
   var pct=Math.min(100,fillPct);
   var barColor=fillPct>=fillThresh?'linear-gradient(90deg,var(--gold),var(--orange))':'linear-gradient(90deg,var(--neon2),var(--neon))';
 
