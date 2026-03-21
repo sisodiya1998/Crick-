@@ -1611,7 +1611,7 @@ async function renderAdminPanel(){
         +'<div class="pool-adm-acts">'
         +'<button class="btn-adm-e" onclick="adminEditPool(this)" data-pid="'+d.id+'">✏️ Edit</button>'
         +'<button class="btn-adm-e" onclick="adminTogglePool(this)" data-pid="'+d.id+'" data-status="'+p.status+'">'+(p.status==='active'?'⏸ Close':'▶ Open')+'</button>'
-         +'<button class="btn-adm-r" onclick="adminDeletePool(this)" data-pid="'+d.id+'" data-name="'+p.name.replace(/"/g,\'&quot;\')+'" >🗑 Delete</button>'
+         +'<button class="btn-adm-r" onclick="adminDeletePool(this)" data-pid="'+d.id+'" data-name="'+encodeURIComponent(p.name)+'" >🗑 Delete</button>'
         +'</div>'
         +'</div>';
     });
@@ -1716,7 +1716,7 @@ window._real_adminCreatePool=async function(){
 
 window._real_adminDeletePool=async function(btn,pname){
   var pid=btn&&btn.dataset?btn.dataset.pid:btn;
-  pname=btn&&btn.dataset?btn.dataset.name:pname;
+  pname=btn&&btn.dataset?decodeURIComponent(btn.dataset.name||''):pname;
   if(!confirm('Delete pool "'+pname+'"? This cannot be undone.'))return;
   try{
     await db.collection('polls').doc(pid).delete();
