@@ -550,12 +550,13 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   var icon='data:image/svg+xml;base64,'+btoa(svg);
 
   // Manifest - fix start_url for GitHub Pages
-  var pathBase=window.location.pathname.replace(/[^/]*$/,'');
+  // Fixed URLs for GitHub Pages
+  var repoPath='/Crick-/';
   var manifest={
     name:'Smart 11',short_name:'Smart11',
     description:'Cricket Prediction Platform',
-    start_url:pathBase||'/',
-    scope:pathBase||'/',
+    start_url:repoPath,
+    scope:repoPath,
     display:'standalone',
     orientation:'portrait',
     background_color:'#060d1a',
@@ -581,24 +582,13 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   addMeta('theme-color','#00d4ff');
   addLink('apple-touch-icon',icon);
 
-  // Service Worker (inline blob)
+  // Service Worker - blob URL not supported on GitHub Pages
+  // PWA will work without SW (installable via manifest)
   if('serviceWorker' in navigator){
-    var sw=[
-      'var CACHE="s11-v1";',
-      'self.addEventListener("install",function(e){self.skipWaiting();});',
-      'self.addEventListener("activate",function(e){',
-      '  e.waitUntil(caches.keys().then(function(k){',
-      '    return Promise.all(k.filter(function(n){return n!==CACHE;}).map(function(n){return caches.delete(n);}));',
-      '  }));self.clients.claim();',
-      '});',
-      'self.addEventListener("fetch",function(e){',
-      '  if(e.request.method!=="GET")return;',
-      '  e.respondWith(fetch(e.request).catch(function(){return caches.match(e.request)||new Response("Offline");}));',
-      '});'
-    ].join('\n');
-    var swBlob=new Blob([sw],{type:'application/javascript'});
-    var swUrl=URL.createObjectURL(swBlob);
-    navigator.serviceWorker.register(swUrl).catch(function(err){console.warn('SW:',err);});
+    // Only register if a real sw.js file exists
+    fetch('/Crick-/sw.js',{method:'HEAD'}).then(function(r){
+      if(r.ok) navigator.serviceWorker.register('/Crick-/sw.js').catch(function(){});
+    }).catch(function(){});
   }
 })();
 </script>
@@ -1422,34 +1412,47 @@ function mkSQ(id,q,ans){
   (q.options||[]).forEach(function(o){if((o.pts||5)>maxPts)maxPts=(o.pts||5);});
   var opts=(q.options||[]).map(function(o,i){
     var cls='opt';
-    if(ans!==undefined){if(q.settled){if(i===q.correctOpt)cls+=' ok';else if(i===ans)cls+=' no';}else if(i===ans)cls+=' sel';}
+    if(ans!==undefined){
+      if(q.settled){if(i===q.correctOpt)cls+=' ok';else if(i===ans)cls+=' no';}
+      else if(i===ans)cls+=' sel';
+    }
     var pts=o.pts||5;
     var isExact=o.isExact||false;
-    var ptsBadge=q.settled&&i===q.correctOpt
-      ?'<span style="color:var(--green);font-size:10px;font-weight:700">✓ +'+pts+'pts</span>'
-      :'<span style="background:'+(isExact?'rgba(255,215,0,0.15)':'rgba(0,212,255,0.1)')+';color:'+(isExact?'var(--gold)':'var(--neon)')+';font-size:9px;font-weight:700;padding:2px 5px;border-radius:3px">+'+pts+'pts'+(isExact?' 🎯':'')+'</span>';
-    return'<button class="'+cls+'" onclick="ansSQ(''+id+'','+i+','+pts+')" '+(ans!==undefined||q.settled?'disabled':'')+'><span>'+(o.label||o)+'</span>'+ptsBadge+'</button>';
+    var bgColor=isExact?'rgba(255,215,0,0.15)':'rgba(0,212,255,0.1)';
+    var txtColor=isExact?'var(--gold)':'var(--neon)';
+    var ptsBadge='';
+    if(q.settled&&i===q.correctOpt){
+      ptsBadge='<span style="color:var(--green);font-size:10px;font-weight:700">&#x2713; +'+pts+'pts</span>';
+    }else{
+      ptsBadge='<span style="background:'+bgColor+';color:'+txtColor+';font-size:9px;font-weight:700;padding:2px 5px;border-radius:3px">+'+pts+'pts'+(isExact?' &#x1F3AF;':'')+'</span>';
+    }
+    var disabled=(ans!==undefined||q.settled)?'disabled':'';
+    return'<button class="'+cls+'" onclick="ansSQ(''+id+'','+i+','+pts+')" '+disabled+'><span>'+(o.label||o)+'</span>'+ptsBadge+'</button>';
   }).join('');
   var fb='';
   if(ans!==undefined){
     if(q.settled){
       var co=(q.options||[])[q.correctOpt];
-      var cpts=co&&co.pts||5;var clabel=co&&(co.label||co)||'—';
-      fb=ans===q.correctOpt
-        ?'<div class="ans-b">🎉 Bilkul sahi! +'+cpts+' pts'+(co&&co.isExact?' 🎯 (Exact Bonus!)':'')+'</div>'
-        :'<div class="ans-b" style="border-color:var(--red);color:var(--red)">❌ Wrong. Sahi tha: '+clabel+'</div>';
+      var cpts=co&&co.pts||5;
+      var clabel=co&&(co.label||co)||'--';
+      if(ans===q.correctOpt){
+        fb='<div class="ans-b">&#x1F389; Bilkul sahi! +'+cpts+' pts'+(co&&co.isExact?' &#x1F3AF; (Exact Bonus!)':'')+'</div>';
+      }else{
+        fb='<div class="ans-b" style="border-color:var(--red);color:var(--red)">&#x274C; Wrong. Sahi tha: '+clabel+'</div>';
+      }
     }else{
-      fb='<div class="ans-b">✅ Prediction save! Result match ke baad milega!</div>';
+      fb='<div class="ans-b">&#x2705; Prediction save! Result match ke baad!</div>';
     }
   }
-  return'<div class="qc score">'
-    +'<div style="display:flex;gap:5px;align-items:center;margin-bottom:7px">'
-    +'<span class="qbadge qb-s">🎯 SCORE PREDICTION</span>'
-    +'<span style="background:rgba(255,215,0,0.1);color:var(--gold);font-size:9px;font-weight:700;padding:2px 7px;border-radius:3px;border:1px solid rgba(255,215,0,0.25)">Max +'+maxPts+' pts</span>'
-    +'</div>'
-    +'<div class="qt">'+q.question+'</div>'
-    +'<div class="qmeta">🏏 '+(q.match||'Live Match')+' &nbsp;·&nbsp; Jo closest bataye = zyada points!</div>'
-    +'<div class="opts">'+opts+'</div>'+fb+'</div>';
+  var html='<div class="qc score">';
+  html+='<div style="display:flex;gap:5px;align-items:center;margin-bottom:7px">';
+  html+='<span class="qbadge qb-s">&#x1F3AF; SCORE PREDICTION</span>';
+  html+='<span style="background:rgba(255,215,0,0.1);color:var(--gold);font-size:9px;font-weight:700;padding:2px 7px;border-radius:3px;border:1px solid rgba(255,215,0,0.25)">Max +'+maxPts+' pts</span>';
+  html+='</div>';
+  html+='<div class="qt">'+q.question+'</div>';
+  html+='<div class="qmeta">&#x1F3CF; '+(q.match||'Live Match')+'&nbsp;&middot;&nbsp;Jo closest bataye = zyada points!</div>';
+  html+='<div class="opts">'+opts+'</div>'+fb+'</div>';
+  return html;
 }
 
 function listenChat(){
