@@ -666,7 +666,6 @@ tbody tr:last-child td{border-bottom:none;}
 <div id="tw"></div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script>
 (function(){
@@ -675,10 +674,7 @@ const FC={apiKey:'AIzaSyA5LBLlGP83ol2nQwFrPmfDS3zYMyA5c28',authDomain:'cricket-c
 firebase.initializeApp(FC);
 const db=firebase.firestore();
 const FS=firebase.firestore.FieldValue;
-const auth=firebase.auth();
 
-// Sign in anonymously so Firestore rules pass (request.auth != null)
-auth.signInAnonymously().catch(function(e){console.warn('Auth:',e);});
 
 let APW=localStorage.getItem('adm_pw')||'123456';
 let allUsers=[],allDeps=[],allWds=[],allPolls=[];
@@ -692,10 +688,6 @@ window.unlock=async function(){
   if(pw===APW){
     document.getElementById('lock').style.display='none';
     document.getElementById('ap').style.display='block';
-    // Wait for anonymous auth before init
-    if(!auth.currentUser){
-      try{await auth.signInAnonymously();}catch(ae){console.warn('anon auth:',ae);}
-    }
     initAdmin();
   }
   else{e.textContent='❌ Wrong password';document.getElementById('ap-i').value='';setTimeout(function(){e.textContent='';},2500);}
