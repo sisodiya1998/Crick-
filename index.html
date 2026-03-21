@@ -305,6 +305,20 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
       <div class="bonus-b">🎁 ₹50 Cash + 50 Bonus Points on Signup!</div>
     </div>
     <div class="err" id="aerr"></div>
+    <div style="text-align:center;margin-top:12px;font-size:9px;color:var(--muted)">
+      By joining, you agree to our 
+      <span onclick="showPolicy('terms')" style="color:var(--neon);cursor:pointer">Terms & Conditions</span> and 
+      <span onclick="showPolicy('privacy')" style="color:var(--neon);cursor:pointer">Privacy Policy</span>
+    </div>
+  </div>
+</div>
+
+<!-- Terms & Privacy Modal -->
+<div class="mov" id="policy-modal">
+  <div class="modal" style="max-width:480px">
+    <h3 id="policy-title">📋 Terms & Conditions</h3>
+    <div id="policy-body" style="font-size:11px;color:var(--muted);line-height:1.7;max-height:400px;overflow-y:auto"></div>
+    <div style="margin-top:15px"><button class="btn bp" style="width:100%" onclick="cm('policy-modal')">✅ Samajh Gaya</button></div>
   </div>
 </div>
 
@@ -323,9 +337,9 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   <!-- HOME PAGE -->
   <div class="page on" id="page-home">
     <div class="hero">
-      <h2>🔥 Win Big Today!</h2>
-      <p>Answer questions, earn points &amp; win real prizes</p>
-      <span class="tag">💰 Prize Pools up to ₹10,000</span>
+      <h2>🏏 Cricket Prediction Contest!</h2>
+      <p>Apni cricket knowledge use karo &amp; exciting prizes jeeto!</p>
+      <span class="tag">🏆 Knowledge + Points = Prizes!</span>
     </div>
 
     <!-- Daily Bonus Section -->
@@ -1723,6 +1737,35 @@ window._real_installApp=async function(){
   }catch(e){
     toast('Install prompt error: '+e.message,'var(--red)');
   }
+};
+
+// Policy Modal
+window.showPolicy=function(type){
+  var title=type==='terms'?'📋 Terms & Conditions':'🔒 Privacy Policy';
+  var body='';
+  if(type==='terms'){
+    body='<b style="color:var(--text)">Smart 11 - Terms & Conditions</b><br><br>'
+      +'<b>1. Platform Nature</b><br>Smart 11 ek skill-based cricket prediction platform hai. Yeh gambling nahi hai — aapki cricket knowledge test hoti hai.<br><br>'
+      +'<b>2. Eligibility</b><br>Sirf 18+ users participate kar sakte hain. Aapko apni sahi information deni hogi.<br><br>'
+      +'<b>3. Entry Fee & Prize</b><br>Entry fee non-refundable hai match shuru hone ke baad. Prize pool mein se platform fee deducted hogi.<br><br>'
+      +'<b>4. Results</b><br>Saare results admin dwara settle kiye jayenge match khatam hone ke baad.<br><br>'
+      +'<b>5. Withdrawals</b><br>Min withdrawal ₹100. Processing 24-48 hours mein hogi.<br><br>'
+      +'<b>6. Fair Play</b><br>Multiple accounts, fraud ya cheating par account ban ho sakta hai.<br><br>'
+      +'<b>7. Liability</b><br>Smart 11 match cancellation, technical issues ya internet problems ke liye liable nahi hai.<br><br>'
+      +'<b>Contact:</b> rishabhsisodiya1998@gmail.com';
+  } else {
+    body='<b style="color:var(--text)">Smart 11 - Privacy Policy</b><br><br>'
+      +'<b>Data Collection</b><br>Hum collect karte hain: Name, Email, Phone (optional). Yeh data sirf platform use ke liye hai.<br><br>'
+      +'<b>Data Usage</b><br>Aapka data kisi third party ko nahi becha/diya jayega. Sirf account management aur prize distribution ke liye use hoga.<br><br>'
+      +'<b>Firebase</b><br>Hum Google Firebase use karte hain data store karne ke liye. Google ki privacy policy bhi apply hoti hai.<br><br>'
+      +'<b>Cookies</b><br>Hum localStorage use karte hain aapki preferences save karne ke liye.<br><br>'
+      +'<b>Security</b><br>Aapka data encrypted aur secure hai.<br><br>'
+      +'<b>Contact:</b> rishabhsisodiya1998@gmail.com<br>'
+      +'<b>Address:</b> India';
+  }
+  document.getElementById('policy-title').textContent=title;
+  document.getElementById('policy-body').innerHTML=body;
+  document.getElementById('policy-modal').classList.add('open');
 };
 
 // Drain any queued function calls (stubs -> real functions now ready)
