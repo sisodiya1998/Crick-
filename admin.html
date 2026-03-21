@@ -461,11 +461,24 @@ tbody tr:last-child td{border-bottom:none;}
 <div class="mov" id="m-aqq"><div class="modal"><h3>📝 Add Pre-Match Question</h3>
   <div class="fg">
     <div class="fl"><label>Poll *</label><select id="aqq-poll"><option value="">-- Select --</option></select></div>
-    <div class="fl fl-full"><label>Question *</label><input type="text" id="aqq-q" placeholder="Who will win the toss?"/></div>
-    <div class="fl"><label>Option A *</label><input type="text" id="aqq-a" placeholder="Yes / Team A"/></div>
-    <div class="fl"><label>Option B *</label><input type="text" id="aqq-b" placeholder="No / Team B"/></div>
-    <div class="fl"><label>Option C</label><input type="text" id="aqq-c"/></div>
-    <div class="fl"><label>Option D</label><input type="text" id="aqq-d"/></div>
+    <div class="fl fl-full"><label>Question *</label><input type="text" id="aqq-q" placeholder="Kaun toss jeetega?"/></div>
+  </div>
+
+  <!-- Quick Templates -->
+  <div style="margin:8px 0;"><div style="font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;font-weight:700;margin-bottom:6px">⚡ Quick Fill:</div>
+  <div style="display:flex;gap:5px;flex-wrap:wrap;">
+    <button class="btn bg2 bxs" onclick="fillOpts('Yes','No','','')">✅ Yes / No</button>
+    <button class="btn bg2 bxs" onclick="fillOpts('Team A','Team B','','')">🏏 Team A / B</button>
+    <button class="btn bg2 bxs" onclick="fillOpts('RCB','KKR','','')">🏏 RCB / KKR</button>
+    <button class="btn bg2 bxs" onclick="fillOpts('0-5','6-10','11-15','15+')">📊 0-5/6-10/11-15/15+</button>
+    <button class="btn bg2 bxs" onclick="fillOpts('Batsman','Bowler','All-rounder','')">🏅 Bat/Bowl/AR</button>
+  </div></div>
+
+  <div class="fg">
+    <div class="fl"><label>Option A *</label><input type="text" id="aqq-a" placeholder="Yes"/></div>
+    <div class="fl"><label>Option B *</label><input type="text" id="aqq-b" placeholder="No"/></div>
+    <div class="fl"><label>Option C</label><input type="text" id="aqq-c" placeholder="(optional)"/></div>
+    <div class="fl"><label>Option D</label><input type="text" id="aqq-d" placeholder="(optional)"/></div>
     <div class="fl fl-full"><label>Correct Answer</label><select id="aqq-cor"><option value="-1">🎯 Prediction (any = 10 pts)</option><option value="0">A Correct</option><option value="1">B Correct</option><option value="2">C Correct</option><option value="3">D Correct</option></select></div>
     <div class="fl fl-full"><label>⏰ Timer Type</label>
       <select id="aqq-timer-type" onchange="toggleAqqTimer()">
@@ -522,23 +535,51 @@ tbody tr:last-child td{border-bottom:none;}
 </div></div>
 
 <!-- Push Score Q -->
-<div class="mov" id="m-sq"><div class="modal"><h3>🎯 Push Score Question</h3>
+<div class="mov" id="m-sq"><div class="modal" style="max-width:520px"><h3>🎯 Score Prediction Question</h3>
+  <div class="alert ai" style="font-size:10px;margin-bottom:10px">🎯 Range options — jo closest answer bataye usse zyada points! Exact answer = max points bonus!</div>
   <div class="fg">
     <div class="fl fl-full"><label>Select Poll *</label><select id="sq-poll"><option value="">-- Select Poll --</option></select></div>
-    <div class="fl fl-full"><label>Question *</label><input type="text" id="sq-q" placeholder="What will IND score in 5 overs?"/></div>
-    <div class="fl fl-full"><label>Match</label><input type="text" id="sq-m" placeholder="IND vs AUS T20"/></div>
-    <div class="fl"><label>Option A Label *</label><input type="text" id="sq-al" placeholder="60-65 runs"/></div>
-    <div class="fl"><label>A Points</label><input type="number" id="sq-ap" value="5"/></div>
-    <div class="fl"><label>Option B Label *</label><input type="text" id="sq-bl" placeholder="55-60 runs"/></div>
-    <div class="fl"><label>B Points</label><input type="number" id="sq-bp" value="10"/></div>
-    <div class="fl"><label>Option C Label</label><input type="text" id="sq-cl" placeholder="Exact: 63"/></div>
-    <div class="fl"><label>C Points</label><input type="number" id="sq-cp" value="15"/></div>
-    <div class="fl"><label>Option D Label</label><input type="text" id="sq-dl" placeholder="Under 55"/></div>
-    <div class="fl"><label>D Points</label><input type="number" id="sq-dp" value="20"/></div>
-    <div class="fl"><label>Timer (seconds)</label><input type="number" id="sq-timer" value="120"/></div>
+    <div class="fl fl-full"><label>Question *</label><input type="text" id="sq-q" placeholder="e.g. Match mein total kitne six lagenge?"/></div>
+    <div class="fl fl-full"><label>Match</label><input type="text" id="sq-m" placeholder="RCB vs KKR T20"/></div>
+  </div>
+
+  <!-- Quick Templates -->
+  <div style="margin:8px 0 10px"><div style="font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;font-weight:700;margin-bottom:6px">⚡ Quick Templates:</div>
+  <div style="display:flex;gap:5px;flex-wrap:wrap;">
+    <button class="btn bg2 bxs" onclick="fillSQTemplate('sixes')">🏏 Sixes</button>
+    <button class="btn bg2 bxs" onclick="fillSQTemplate('runs')">🏃 Total Runs</button>
+    <button class="btn bg2 bxs" onclick="fillSQTemplate('margin')">📊 Jeet ka Margin</button>
+    <button class="btn bg2 bxs" onclick="fillSQTemplate('wickets')">🎳 Wickets</button>
+    <button class="btn bg2 bxs" onclick="fillSQTemplate('powerplay')">⚡ Powerplay Score</button>
+  </div></div>
+
+  <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px">
+    <div style="font-size:10px;color:var(--muted);margin-bottom:8px;font-weight:700">OPTIONS & POINTS <span style="color:var(--green);font-size:9px">(More difficult = More points)</span></div>
+    <div style="display:grid;grid-template-columns:1fr auto;gap:6px;align-items:center;margin-bottom:6px">
+      <input type="text" id="sq-al" placeholder="Option A (e.g. 0-10 six)" style="padding:7px 10px;background:rgba(0,212,255,0.04);border:1px solid var(--border);border-radius:7px;color:var(--text);font-family:'Exo 2',sans-serif;font-size:12px;outline:none"/>
+      <div style="display:flex;align-items:center;gap:5px"><span style="font-size:10px;color:var(--muted)">pts:</span><input type="number" id="sq-ap" value="5" min="1" max="50" style="width:55px;padding:7px;background:rgba(0,212,255,0.04);border:1px solid var(--border);border-radius:7px;color:var(--neon);font-size:12px;outline:none;text-align:center"/></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr auto;gap:6px;align-items:center;margin-bottom:6px">
+      <input type="text" id="sq-bl" placeholder="Option B (e.g. 11-15 six)" style="padding:7px 10px;background:rgba(0,212,255,0.04);border:1px solid var(--border);border-radius:7px;color:var(--text);font-family:'Exo 2',sans-serif;font-size:12px;outline:none"/>
+      <div style="display:flex;align-items:center;gap:5px"><span style="font-size:10px;color:var(--muted)">pts:</span><input type="number" id="sq-bp" value="10" min="1" max="50" style="width:55px;padding:7px;background:rgba(0,212,255,0.04);border:1px solid var(--border);border-radius:7px;color:var(--neon);font-size:12px;outline:none;text-align:center"/></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr auto;gap:6px;align-items:center;margin-bottom:6px">
+      <input type="text" id="sq-cl" placeholder="Option C (e.g. 16-20 six)" style="padding:7px 10px;background:rgba(0,212,255,0.04);border:1px solid var(--border);border-radius:7px;color:var(--text);font-family:'Exo 2',sans-serif;font-size:12px;outline:none"/>
+      <div style="display:flex;align-items:center;gap:5px"><span style="font-size:10px;color:var(--muted)">pts:</span><input type="number" id="sq-cp" value="15" min="1" max="50" style="width:55px;padding:7px;background:rgba(0,212,255,0.04);border:1px solid var(--border);border-radius:7px;color:var(--neon);font-size:12px;outline:none;text-align:center"/></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr auto;gap:6px;align-items:center;margin-bottom:6px">
+      <input type="text" id="sq-dl" placeholder="Option D — EXACT (e.g. Exactly 20 six) +bonus" style="padding:7px 10px;background:rgba(255,215,0,0.05);border:1px solid rgba(255,215,0,0.3);border-radius:7px;color:var(--gold);font-family:'Exo 2',sans-serif;font-size:12px;outline:none"/>
+      <div style="display:flex;align-items:center;gap:5px"><span style="font-size:10px;color:var(--gold)">pts:</span><input type="number" id="sq-dp" value="20" min="1" max="50" style="width:55px;padding:7px;background:rgba(255,215,0,0.06);border:1px solid rgba(255,215,0,0.3);border-radius:7px;color:var(--gold);font-size:12px;outline:none;text-align:center"/></div>
+    </div>
+    <div style="font-size:9px;color:var(--muted);margin-top:4px">💡 Option D = Exact prediction — zyada points do (e.g. 20 pts)</div>
+  </div>
+
+  <div class="fg">
+    <div class="fl"><label>⏱️ Timer (seconds)</label><input type="number" id="sq-timer" value="120" min="30" max="300"/></div>
+    <div class="fl"><label>🏆 Exact Match Bonus</label><input type="number" id="sq-bonus" value="10" min="0" placeholder="Extra pts if exact"/><div style="font-size:9px;color:var(--muted);margin-top:3px">Exact answer par extra pts</div></div>
   </div>
   <div class="merr" id="sq-err"></div>
-  <div class="mfoot"><button class="btn bg2" onclick="cm('m-sq')">Cancel</button><button class="btn bw" onclick="pushSQ()">🎯 Create</button></div>
+  <div class="mfoot"><button class="btn bg2" onclick="cm('m-sq')">Cancel</button><button class="btn bw" onclick="pushSQ()">🎯 Push Live</button></div>
 </div></div>
 
 <!-- Settle Score Q -->
@@ -894,14 +935,38 @@ window.pushBQ=async function(){
 };
 
 window.pushSQ=async function(){
-  const pid=document.getElementById('sq-poll').value,q=document.getElementById('sq-q').value.trim(),m=document.getElementById('sq-m').value.trim(),timer=parseInt(document.getElementById('sq-timer').value)||120;
-  const e=document.getElementById('sq-err');if(!pid){e.textContent='Select a poll';return;}if(!q){e.textContent='Q required';return;}
-  const opts=[];[['al','ap'],['bl','bp'],['cl','cp'],['dl','dp']].forEach(function(x){const l=document.getElementById('sq-'+x[0]).value.trim(),p=parseInt(document.getElementById('sq-'+x[1]).value)||5;if(l)opts.push({label:l,pts:p});});
-  if(opts.length<2){e.textContent='Min 2 options';return;}
+  const pid=document.getElementById('sq-poll').value;
+  const q=document.getElementById('sq-q').value.trim();
+  const m=document.getElementById('sq-m').value.trim();
+  const timer=parseInt(document.getElementById('sq-timer').value)||120;
+  const exactBonus=parseInt(document.getElementById('sq-bonus').value)||0;
+  const e=document.getElementById('sq-err');
+  if(!pid){e.textContent='Select a poll';return;}
+  if(!q){e.textContent='Question required';return;}
+  const opts=[];
+  [['al','ap'],['bl','bp'],['cl','cp'],['dl','dp']].forEach(function(x){
+    const l=document.getElementById('sq-'+x[0]).value.trim();
+    const p=parseInt(document.getElementById('sq-'+x[1]).value)||5;
+    if(l)opts.push({label:l,pts:p});
+  });
+  if(opts.length<2){e.textContent='Min 2 options chahiye';return;}
+  // Last option = exact prediction, add bonus pts
+  if(exactBonus>0&&opts.length>0){
+    opts[opts.length-1].pts=(opts[opts.length-1].pts||0)+exactBonus;
+    opts[opts.length-1].isExact=true;
+  }
   try{
-    await db.collection('pollQuestions').add({type:'score',pollId:pid,question:q,match:m,options:opts,timerSeconds:timer,settled:false,correctOpt:null,createdAt:FS.serverTimestamp()});
-    cm('m-sq');['sq-q','sq-m','sq-al','sq-bl','sq-cl','sq-dl'].forEach(function(id){document.getElementById(id).value='';});
-    toast('🎯 Score Q created!','var(--gold)');loadPollQs();
+    await db.collection('pollQuestions').add({
+      type:'score',pollId:pid,question:q,match:m,
+      options:opts,timerSeconds:timer,
+      exactBonus:exactBonus,
+      settled:false,correctOpt:null,
+      createdAt:FS.serverTimestamp()
+    });
+    cm('m-sq');
+    ['sq-q','sq-m','sq-al','sq-bl','sq-cl','sq-dl'].forEach(function(id){document.getElementById(id).value='';});
+    toast('🎯 Score Q live! Users answer kar sakte hain!','var(--gold)');
+    loadPollQs();loadDash();
   }catch(err){e.textContent=err.message;}
 };
 
@@ -1340,6 +1405,66 @@ window.confirmDistribute=async function(){
 window.settlePollPrizes=function(pid){
   var poll=allPolls.find(function(p){return p.id===pid;});
   openDistribute(pid,poll?poll.name:'Poll');
+};
+
+window.fillSQTemplate=function(type){
+  var q=document.getElementById('sq-q');
+  var al=document.getElementById('sq-al');var ap=document.getElementById('sq-ap');
+  var bl=document.getElementById('sq-bl');var bp=document.getElementById('sq-bp');
+  var cl=document.getElementById('sq-cl');var cp=document.getElementById('sq-cp');
+  var dl=document.getElementById('sq-dl');var dp=document.getElementById('sq-dp');
+  var bonus=document.getElementById('sq-bonus');
+
+  if(type==='sixes'){
+    q.value='Match mein total kitne six lagenge?';
+    al.value='0-10 Six';ap.value=5;
+    bl.value='11-15 Six';bp.value=10;
+    cl.value='16-20 Six';cp.value=15;
+    dl.value='Exactly 20 Six (Exact!)';dp.value=20;
+    bonus.value=10;
+  } else if(type==='runs'){
+    q.value='Match mein total runs kitne honge?';
+    al.value='Under 300 Runs';ap.value=5;
+    bl.value='300-349 Runs';bp.value=10;
+    cl.value='350-399 Runs';cp.value=15;
+    dl.value='400+ Runs (Exact Range!)';dp.value=20;
+    bonus.value=10;
+  } else if(type==='margin'){
+    q.value='Jeetne wali team ka margin kya hoga?';
+    al.value='1-20 Runs / 1-3 Wkt';ap.value=5;
+    bl.value='21-50 Runs / 4-6 Wkt';bp.value=10;
+    cl.value='51-100 Runs / 7-8 Wkt';cp.value=15;
+    dl.value='Exactly 10 Runs / Super Over';dp.value=20;
+    bonus.value=10;
+  } else if(type==='wickets'){
+    q.value='Match mein total wickets kitni giregi?';
+    al.value='0-5 Wickets';ap.value=5;
+    bl.value='6-10 Wickets';bp.value=10;
+    cl.value='11-15 Wickets';cp.value=15;
+    dl.value='16-20 Wickets (All Out!)';dp.value=20;
+    bonus.value=10;
+  } else if(type==='powerplay'){
+    q.value='Powerplay (1-6 over) mein kitne runs honge?';
+    al.value='Under 40 Runs';ap.value=5;
+    bl.value='40-50 Runs';bp.value=10;
+    cl.value='51-60 Runs';cp.value=15;
+    dl.value='60+ Runs (Exact!)';dp.value=20;
+    bonus.value=10;
+  }
+};
+
+window.fillOpts=function(a,b,c,d){
+  // Auto-detect team names from poll name if "Team A/B" selected
+  if(a==='Team A'&&b==='Team B'){
+    var pollSel=document.getElementById('aqq-poll');
+    var pollName=pollSel.options[pollSel.selectedIndex]&&pollSel.options[pollSel.selectedIndex].text||'';
+    var parts=pollName.split(/\s+vs\s+/i);
+    if(parts.length>=2){a=parts[0].trim();b=parts[1].trim();}
+  }
+  document.getElementById('aqq-a').value=a;
+  document.getElementById('aqq-b').value=b;
+  document.getElementById('aqq-c').value=c||'';
+  document.getElementById('aqq-d').value=d||'';
 };
 
 window.toggleAqqTimer=function(){

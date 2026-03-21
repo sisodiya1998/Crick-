@@ -1418,182 +1418,39 @@ function listenSQ(){
 }
 
 function mkSQ(id,q,ans){
+  var maxPts=0;
+  (q.options||[]).forEach(function(o){if((o.pts||5)>maxPts)maxPts=(o.pts||5);});
   var opts=(q.options||[]).map(function(o,i){
     var cls='opt';
     if(ans!==undefined){if(q.settled){if(i===q.correctOpt)cls+=' ok';else if(i===ans)cls+=' no';}else if(i===ans)cls+=' sel';}
-    var ck=q.settled&&i===q.correctOpt?'<span style="color:var(--green);font-size:10px">✓ +'+(o.pts||5)+'</span>':'<span class="pts-pill">+'+(o.pts||5)+'pts</span>';
-    return'<button class="'+cls+'" onclick="ansSQ(\''+id+'\','+i+','+(o.pts||5)+')" '+(ans!==undefined||q.settled?'disabled':'')+'><span>'+(o.label||o)+'</span>'+ck+'</button>';
+    var pts=o.pts||5;
+    var isExact=o.isExact||false;
+    var ptsBadge=q.settled&&i===q.correctOpt
+      ?'<span style="color:var(--green);font-size:10px;font-weight:700">✓ +'+pts+'pts</span>'
+      :'<span style="background:'+(isExact?'rgba(255,215,0,0.15)':'rgba(0,212,255,0.1)')+';color:'+(isExact?'var(--gold)':'var(--neon)')+';font-size:9px;font-weight:700;padding:2px 5px;border-radius:3px">+'+pts+'pts'+(isExact?' 🎯':'')+'</span>';
+    return'<button class="'+cls+'" onclick="ansSQ(''+id+'','+i+','+pts+')" '+(ans!==undefined||q.settled?'disabled':'')+'><span>'+(o.label||o)+'</span>'+ptsBadge+'</button>';
   }).join('');
   var fb='';
   if(ans!==undefined){
-    if(q.settled)fb=ans===q.correctOpt?'<div class="ans-b">🎉 Correct! +'+((q.options||[])[q.correctOpt]&&(q.options||[])[q.correctOpt].pts||5)+' pts!</div>'
-      :'<div class="ans-b" style="border-color:var(--red);color:var(--red)">❌ Wrong. Correct: '+((q.options||[])[q.correctOpt]&&((q.options||[])[q.correctOpt].label||(q.options||[])[q.correctOpt])||'—')+'</div>';
-    else fb='<div class="ans-b">✅ Prediction saved — Result after match!</div>';
+    if(q.settled){
+      var co=(q.options||[])[q.correctOpt];
+      var cpts=co&&co.pts||5;var clabel=co&&(co.label||co)||'—';
+      fb=ans===q.correctOpt
+        ?'<div class="ans-b">🎉 Bilkul sahi! +'+cpts+' pts'+(co&&co.isExact?' 🎯 (Exact Bonus!)':'')+'</div>'
+        :'<div class="ans-b" style="border-color:var(--red);color:var(--red)">❌ Wrong. Sahi tha: '+clabel+'</div>';
+    }else{
+      fb='<div class="ans-b">✅ Prediction save! Result match ke baad milega!</div>';
+    }
   }
-  return'<div class="qc score"><span class="qbadge qb-s">🎯 SCORE RANGE • 5-20 PTS</span>'
+  return'<div class="qc score">'
+    +'<div style="display:flex;gap:5px;align-items:center;margin-bottom:7px">'
+    +'<span class="qbadge qb-s">🎯 SCORE PREDICTION</span>'
+    +'<span style="background:rgba(255,215,0,0.1);color:var(--gold);font-size:9px;font-weight:700;padding:2px 7px;border-radius:3px;border:1px solid rgba(255,215,0,0.25)">Max +'+maxPts+' pts</span>'
+    +'</div>'
     +'<div class="qt">'+q.question+'</div>'
-    +'<div class="qmeta">🏏 '+(q.match||'Live')+' · More accurate = More points!</div>'
+    +'<div class="qmeta">🏏 '+(q.match||'Live Match')+' &nbsp;·&nbsp; Jo closest bataye = zyada points!</div>'
     +'<div class="opts">'+opts+'</div>'+fb+'</div>';
 }
-
-window._real_ansSQ=async function(qid,i,pts){
-  if(!CU||!UD){return;}
-  if(UD.sqa&&UD.sqa[qid]!==undefined)return;
-  try{
-    var upd={};upd['sqa.'+qid]=i;
-    await db.collection('users').doc(CU.uid).update(upd);
-    await db.collection('pollQuestions').doc(qid).collection('entries').add({
-      uid:sU(),name:sN(),answer:i,potPts:pts,
-      createdAt:firebase.firestore.FieldValue.serverTimestamp()
-    });
-    if(!UD.sqa)UD.sqa={};
-    UD.sqa[qid]=i;
-    toast('✅ Score prediction saved! Up to +'+pts+' pts if correct!','var(--gold)');
-  }catch(e){toast('Error: '+e.message,'var(--red)');}
-};
-
-// ============================================================
-// LEADERBOARD — Global rank, medals, user highlighted
-// ============================================================
-async function loadLB(elId,lim){
-  var el=document.getElementById(elId);
-  if(!el)return;
-  try{
-    var s=await db.collection('users').orderBy('points','desc').limit(lim||20).get();
-    if(s.empty){el.innerHTML='<div class="empty"><div class="ei">🏅</div><p>No users yet</p></div>';return;}
-    el.innerHTML='';
-    var rank=1;
-    s.forEach(function(d){
-      var u=d.data();
-      var isMe=CU&&d.id===CU.uid;
-      var rc=rank===1?'r1':rank===2?'r2':rank===3?'r3':'';
-      var em=rank<=3?['🥇','🥈','🥉'][rank-1]:rank;
-      var ph=u.photoURL;
-      el.innerHTML+='<div class="lb-item '+(isMe?'me':'')+'">'
-        +'<div class="lb-r '+rc+'">'+em+'</div>'
-        +'<div class="lb-av">'+(ph?'<img src="'+ph+'"/>':(u.name||'?').charAt(0).toUpperCase())+'</div>'
-        +'<div class="lb-info"><div class="lb-name">'+(u.name||'User')+(isMe?' <span style="font-size:9px;color:var(--neon)">(You)</span>':'')+'</div>'
-        +'<div class="lb-sub">Contests: '+(u.contestsJoined||0)+' · Wins: '+(u.wins||0)+'</div></div>'
-        +'<div class="lb-pts">'+(u.points||0)+'<div style="font-size:9px;color:var(--muted);font-weight:400">pts</div></div>'
-        +'</div>';
-      rank++;
-    });
-  }catch(e){console.error('loadLB',e);}
-}
-
-// ============================================================
-// WALLET — Balance, Deposit (UPI+UTR), Withdraw, Txn history
-// ============================================================
-window._real_openDep=function(){
-  document.getElementById('d-amt').value='';
-  document.getElementById('d-utr').value='';
-  document.getElementById('d-err').textContent='';
-  document.getElementById('dep-modal').classList.add('open');
-};
-
-window._real_submitDep=async function(){
-  var amt=parseInt(document.getElementById('d-amt').value);
-  var utr=document.getElementById('d-utr').value.trim();
-  var e=document.getElementById('d-err');
-  if(!amt||amt<500){e.textContent='⚠️ Minimum deposit is ₹500!';return;}
-  if(!utr||utr.length<6){e.textContent='Enter valid UTR number';return;}
-  try{
-    var ud=UD;
-    if(!ud){var snp=await db.collection('users').doc(CU.uid).get();if(snp.exists)ud=snp.data();}
-    await db.collection('depositRequests').add({
-      uid:sU(),name:String(ud&&ud.name?ud.name:sN()),email:sE(),
-      amount:Number(amt),utr:String(utr),status:'pending',
-      createdAt:firebase.firestore.FieldValue.serverTimestamp()
-    });
-    await db.collection('users').doc(CU.uid).collection('txns').add({
-      type:'credit',title:'💳 Deposit ₹'+amt+' (Pending)',amount:Number(amt),status:'pending',
-      createdAt:firebase.firestore.FieldValue.serverTimestamp()
-    });
-    cm('dep-modal');toast('✅ Submitted! Admin verifies within 30 mins.','var(--green)');
-  }catch(e2){e.textContent=e2.message;}
-};
-
-window._real_openWd=function(){
-  document.getElementById('w-amt').value='';
-  document.getElementById('w-upi').value='';
-  document.getElementById('w-err').textContent='';
-  document.getElementById('wd-modal').classList.add('open');
-};
-
-window._real_submitWd=async function(){
-  var amt=parseInt(document.getElementById('w-amt').value);
-  var upi=document.getElementById('w-upi').value.trim();
-  var e=document.getElementById('w-err');
-  if(!amt||amt<100){e.textContent='Minimum withdrawal ₹100';return;}
-  if(WL()<amt){e.textContent='Insufficient balance!';return;}
-  if(!upi){e.textContent='Enter UPI ID';return;}
-  try{
-    var ud=UD;
-    if(!ud){var snp=await db.collection('users').doc(CU.uid).get();if(snp.exists)ud=snp.data();}
-    await db.collection('withdrawRequests').add({
-      uid:sU(),name:String(ud&&ud.name?ud.name:sN()),email:sE(),
-      amount:Number(amt),upi:String(upi),status:'pending',
-      createdAt:firebase.firestore.FieldValue.serverTimestamp()
-    });
-    await db.collection('users').doc(CU.uid).update({
-      wallet:firebase.firestore.FieldValue.increment(-amt)
-    });
-    await db.collection('users').doc(CU.uid).collection('txns').add({
-      type:'debit',title:'💸 Withdrawal ₹'+amt+' (Pending)',amount:Number(amt),status:'pending',
-      createdAt:firebase.firestore.FieldValue.serverTimestamp()
-    });
-    UD.wallet=(UD.wallet||0)-amt;
-    updateUI();cm('wd-modal');
-    toast('✅ Withdrawal request submitted!','var(--green)');
-  }catch(e2){e.textContent=e2.message;}
-};
-
-async function loadTxns(){
-  var el=document.getElementById('txn-list');
-  try{
-    var s=await db.collection('users').doc(CU.uid).collection('txns').orderBy('createdAt','desc').limit(30).get();
-    if(s.empty){el.innerHTML='<div class="empty"><div class="ei">📂</div><p>No transactions</p></div>';return;}
-    el.innerHTML='';
-    s.forEach(function(d){
-      var t=d.data();
-      var dt=t.createdAt&&t.createdAt.toDate?t.createdAt.toDate().toLocaleDateString('en-IN'):'—';
-      var sc=t.status==='completed'?'var(--green)':t.status==='pending'?'var(--orange)':'var(--red)';
-      el.innerHTML+='<div class="ti"><div class="ti-i"><div class="tt">'+t.title+'</div>'
-        +'<div class="td">'+dt+' · <span style="color:'+sc+'">'+t.status+'</span></div></div>'
-        +'<div class="ti-a '+(t.type==='credit'?'cr':'dr')+'">'+(t.type==='credit'?'+':'-')+'₹'+t.amount+'</div></div>';
-    });
-  }catch(e){console.error('loadTxns',e);}
-}
-
-// ============================================================
-// POINTS HISTORY — pm/bq/lv/sq breakdown
-// ============================================================
-async function loadPH(){
-  var el=document.getElementById('pts-hist');
-  try{
-    var s=await db.collection('users').doc(CU.uid).collection('ph').orderBy('createdAt','desc').limit(20).get();
-    if(s.empty){el.innerHTML='<div class="empty"><div class="ei">📋</div><p>No points yet</p></div>';return;}
-    el.innerHTML='';
-    var cc={pm:'var(--neon)',bq:'var(--green)',lv:'var(--orange)',sq:'var(--gold)',su:'var(--purple)'};
-    s.forEach(function(d){
-      var h=d.data();
-      var dt=h.createdAt&&h.createdAt.toDate?h.createdAt.toDate().toLocaleDateString('en-IN'):'—';
-      el.innerHTML+='<div class="ph-item"><div class="ph-i"><div class="pt">'+h.title+'</div>'
-        +'<div class="pd">'+dt+'</div></div>'
-        +'<div class="ph-p" style="color:'+(cc[h.type]||'var(--purple)')+'">+'+h.pts+'</div></div>';
-    });
-  }catch(e){console.error('loadPH',e);}
-}
-
-// ============================================================
-// CHAT — Live chat, auto-reply, admin messages
-// ============================================================
-window._real_toggleChat=function(){
-  var w=document.getElementById('chat-window');
-  w.classList.toggle('open');
-  if(w.classList.contains('open'))listenChat();
-  else if(chatUnsub){chatUnsub();chatUnsub=null;}
-};
 
 function listenChat(){
   if(chatUnsub)return;
