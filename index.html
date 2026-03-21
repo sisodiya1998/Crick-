@@ -366,7 +366,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <div class="sh"><h3>📋 How to Earn</h3></div>
     <div class="info-grid">
       <div class="ib"><div class="iv" style="color:var(--neon)">10 pts</div><div class="il">Pre-match correct answer</div></div>
-      <div class="ib"><div class="iv" style="color:var(--green)">5 pts</div><div class="il">Bonus question correct</div></div>
+      <div class="ib"><div class="iv" style="color:var(--green)">5 pts</div><div class="il">Bonus question (2 min timer)</div></div>
       <div class="ib"><div class="iv" style="color:var(--orange)">1 pt</div><div class="il">Every 5 min live</div></div>
       <div class="ib"><div class="iv" style="color:var(--gold)">5-20 pts</div><div class="il">Score prediction</div></div>
       <div class="ib"><div class="iv" style="color:var(--gold)">₹10</div><div class="il">Daily login bonus</div></div>
@@ -965,7 +965,7 @@ function renderLBSoon(st,mn){
 // 1st=50%, 2nd=30%, 3rd=10%, 4th-10th share remaining 10% equally
 // Prize shown only after fillThreshold% filled (default 40%)
 // ============================================================
-var APP_CUT_PCT = 40;       // default, overridden by Firestore settings
+var APP_CUT_PCT = 40; // 40% app cut, 60% goes to prize pool
 var FILL_THRESHOLD = 40;    // % filled before prize is shown/locked
 var PRIZE_DIST = [50,30,10]; // 1st,2nd,3rd %  of prize pool
 // 4th to 10th share remaining 10% equally (7 places → ~1.43% each)
@@ -984,20 +984,23 @@ async function loadPlatformSettings(){
 // Compute prize pool from entries collected
 // prizePool = totalCollected * (1 - appCutPct/100)
 function calcPrizePool(fee, joined, appCut){
+  // appCut = 40 means app keeps 40%, 60% goes to winners
   var total = fee * joined;
   return Math.floor(total * (1 - appCut/100));
 }
 
 // Returns prize breakdown array for top 10
 function calcPrizeBreakdown(prizePool){
+  // prizePool = 60% of total collected (40% already removed as app cut)
+  // Distribution of prizePool: 1st=50%, 2nd=30%, 3rd=10%, 4th-10th share remaining 10%
   var res=[];
-  var top3=[50,30,10];
-  for(var i=0;i<3;i++) res.push(Math.floor(prizePool*top3[i]/100));
-  // 4th-10th: remaining 10% split among 7
-  var remaining = prizePool - res[0] - res[1] - res[2];
-  var each = Math.floor(remaining/7);
+  res.push(Math.floor(prizePool*0.50)); // 1st: 50%
+  res.push(Math.floor(prizePool*0.30)); // 2nd: 30%
+  res.push(Math.floor(prizePool*0.10)); // 3rd: 10%
+  var remaining = prizePool - res[0] - res[1] - res[2]; // 10% left
+  var each = Math.floor(remaining/7); // split among 4th-10th
   for(var j=0;j<7;j++) res.push(each);
-  return res; // [1st,2nd,3rd,4th,...,10th]
+  return res;
 }
 
 // TIE SPLITTING: when multiple users share the same rank,
@@ -1252,21 +1255,25 @@ function listenBQ(){
 }
 
 function mkBQ(id,q,ans){
-  // 2-min SVG timer if question has a deadline
+  // 2-min timer using timerSeconds + createdAt
   var timerHtml='';
-  if(q.deadline&&!q.settled){
-    var dl=q.deadline.toDate?q.deadline.toDate():new Date(q.deadline);
-    var rem=Math.max(0,dl-new Date());
+  var totalSecs=q.timerSeconds||120;
+  if(!q.settled&&q.createdAt){
+    var created=q.createdAt.toDate?q.createdAt.toDate():new Date(q.createdAt);
+    var deadline=new Date(created.getTime()+totalSecs*1000);
+    var rem=Math.max(0,deadline-new Date());
     if(rem>0){
-      var pct=Math.round((rem/(2*60*1000))*100);
+      var pct=Math.round((rem/(totalSecs*1000))*100);
+      var mLeft=Math.floor(rem/60000);
+      var sLeft=Math.floor((rem%60000)/1000);
       timerHtml='<div style="display:flex;align-items:center;gap:7px;margin-bottom:8px">'
         +'<svg viewBox="0 0 60 60" width="38" height="38">'
         +'<circle cx="30" cy="30" r="26" fill="none" stroke="rgba(0,212,255,0.15)" stroke-width="5"/>'
         +'<circle cx="30" cy="30" r="26" fill="none" stroke="var(--green)" stroke-width="5" stroke-dasharray="163" stroke-dashoffset="'+(163-(163*pct/100))+'" stroke-linecap="round" transform="rotate(-90 30 30)"/>'
-        +'</svg><span style="font-size:10px;color:var(--green)">'+Math.floor(rem/60000)+'m '+Math.floor((rem%60000)/1000)+'s left</span></div>';
+        +'</svg><span style="font-size:10px;color:var(--green)">'+mLeft+'m '+sLeft+'s left</span></div>';
     }
   }
-  var opts=(q.options||[]).map(function(o,i){
+    var opts=(q.options||[]).map(function(o,i){
     var cls='opt';
     if(ans!==undefined){
       if(q.settled){if(i===q.correctOpt)cls+=' ok';else if(i===ans)cls+=' no';}
