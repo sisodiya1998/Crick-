@@ -268,14 +268,6 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 </head>
 <body>
 
-<!-- AUTH LOADING OVERLAY (shown during Google redirect) -->
-<div id="auth-loading" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:9999;align-items:center;justify-content:center;flex-direction:column;gap:12px">
-  <div style="font-size:48px;filter:drop-shadow(0 0 16px var(--neon))">🏏</div>
-  <div style="font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;background:linear-gradient(135deg,var(--neon),#fff);-webkit-background-clip:text;-webkit-text-fill-color:transparent">SMART 11</div>
-  <div style="display:flex;gap:5px;margin-top:4px"><span style="width:8px;height:8px;border-radius:50%;background:var(--neon);animation:bl 1.2s infinite"></span><span style="width:8px;height:8px;border-radius:50%;background:var(--neon);animation:bl 1.2s .2s infinite"></span><span style="width:8px;height:8px;border-radius:50%;background:var(--neon);animation:bl 1.2s .4s infinite"></span></div>
-  <div style="font-size:11px;color:var(--muted)">Signing you in...</div>
-</div>
-
 <!-- AUTH SCREEN -->
 <div id="auth-screen" class="screen" style="display:flex">
   <div class="a-logo"><div class="ico">🏏</div><h1>SMART 11</h1><p>Cricket Prediction Platform</p></div>
@@ -672,21 +664,28 @@ window._real_doSignup=async function(){
 // ============================================================
 window._real_doGoogle=async function(){
   var e=document.getElementById('aerr');
-  e.textContent='🔄 Redirecting to Google...';e.style.color='var(--neon)';
+  e.textContent='🔄 Opening Google...';e.style.color='var(--neon)';
   try{
     var provider=new firebase.auth.GoogleAuthProvider();
     provider.setCustomParameters({prompt:'select_account'});
-    // Use redirect (works on GitHub Pages, no popup blocker issues)
-    var lo=document.getElementById('auth-loading');
-    if(lo){lo.style.display='flex';document.getElementById('auth-screen').style.display='none';}
-    await auth.signInWithRedirect(provider);
+    var result=await auth.signInWithPopup(provider);
+    if(result&&result.user){
+      await handleGU(result.user);
+    }
+    e.textContent='';
   }catch(err){
     e.style.color='var(--red)';
-    var msg=err.message;
-    if(err.code==='auth/email-already-in-use')msg='Email already registered. Please login.';
-    else if(err.code==='auth/invalid-email')msg='Invalid email address.';
-    else if(err.code==='auth/weak-password')msg='Password too weak. Use 6+ characters.';
-    e.textContent=msg;
+    if(err.code==='auth/popup-closed-by-user'||err.code==='auth/cancelled-popup-request'){
+      e.textContent='Popup closed. Try again.';
+    }else if(err.code==='auth/popup-blocked'){
+      // Fallback to redirect if popup is blocked
+      e.textContent='🔄 Popup blocked, redirecting...';
+      setTimeout(async function(){
+        try{ await auth.signInWithRedirect(provider); }catch(e2){}
+      },1000);
+    }else{
+      e.textContent=err.message;
+    }
   }
 };
 
@@ -738,15 +737,14 @@ window._real_doLogout=async function(){
 // AUTH STATE — Auto-login on page load
 // ============================================================
 // Handle redirect result from Google Sign-In
+// Handle redirect result (fallback for popup-blocked scenarios)
 auth.getRedirectResult().then(async function(result){
   if(result&&result.user){
     await handleGU(result.user);
+    // onAuthStateChanged will call showMain() automatically
   }
-}).catch(function(err){
-  // Silently ignore - this fires on every page load when no redirect happened
-  if(err.code&&err.code!=='auth/no-auth-event'&&err.code!=='auth/null-user'&&err.code!=='auth/internal-error'){
-    console.warn('Redirect result error (non-critical):',err.code);
-  }
+}).catch(function(){
+  // No redirect was in progress - normal page load
 });
 
 auth.onAuthStateChanged(async function(u){
@@ -774,9 +772,6 @@ function showMain(){
   document.getElementById('main-screen').style.display='block';
   var cb=document.getElementById('chatbot-btn');
   if(cb)cb.style.display='flex';
-  // Remove loading overlay if present
-  var lo=document.getElementById('auth-loading');
-  if(lo)lo.remove();
 }
 
 // ============================================================
