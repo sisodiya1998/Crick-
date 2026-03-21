@@ -535,7 +535,7 @@ if(window._drainQ)window._drainQ();
   m.rel='manifest';
   var manifest={
     name:'Smart 11',short_name:'Smart11',
-    start_url:window.location.pathname||'/',
+    start_url:'/',
     display:'standalone',
     background_color:'#050a14',theme_color:'#00d4ff',
     icons:[{src:'https://via.placeholder.com/192x192/00d4ff/000000?text=S11',sizes:'192x192',type:'image/png'}]
@@ -961,6 +961,33 @@ function calcPrizeBreakdown(prizePool){
   var each = Math.floor(remaining/7);
   for(var j=0;j<7;j++) res.push(each);
   return res; // [1st,2nd,3rd,4th,...,10th]
+}
+
+// TIE SPLITTING: when multiple users share the same rank,
+// combine all their prizes and split equally.
+// e.g. 2 users tie for 1st: they split 1st+2nd prize equally.
+// positions: 0-indexed array of user objects [{uid,points,name,...}]
+// returns: [{uid,prize}]
+function calcTiePrizes(rankedUsers, prizePool){
+  var breakdown = calcPrizeBreakdown(prizePool);
+  var result = [];
+  var i = 0;
+  while(i < rankedUsers.length && i < 10){
+    // find how many users tie at this rank
+    var pts = rankedUsers[i].points;
+    var tieEnd = i;
+    while(tieEnd < rankedUsers.length && rankedUsers[tieEnd].points === pts) tieEnd++;
+    var tieCount = tieEnd - i;
+    // sum prizes for all tied positions
+    var totalPrize = 0;
+    for(var k=i; k<Math.min(tieEnd,10); k++) totalPrize += (breakdown[k]||0);
+    var eachPrize = tieCount > 1 ? Math.floor(totalPrize / tieCount) : totalPrize;
+    for(var j=i; j<tieEnd; j++){
+      result.push({uid: rankedUsers[j].uid, name: rankedUsers[j].name, rank: i+1, tieCount: tieCount, prize: eachPrize});
+    }
+    i = tieEnd;
+  }
+  return result;
 }
 
 async function loadPools(){
@@ -1539,9 +1566,9 @@ async function renderAdminPanel(){
         +'<div class="pool-adm-meta">₹'+p.fee+' fee · '+joined+'/'+p.maxUsers+' joined · App cut: '+(p.appCutPct||appCut)+'% · Prize lock: '+(p.fillThreshold||fillThresh)+'%</div>'
         +'<div class="pool-adm-meta" style="color:var(--gold)">💰 Current Prize Pool: ₹'+prizePool.toLocaleString()+'</div>'
         +'<div class="pool-adm-acts">'
-        +'<button class="btn-adm-e" onclick="adminEditPool(''+d.id+'')">✏️ Edit</button>'
-        +'<button class="btn-adm-e" onclick="adminTogglePool(''+d.id+'',''+p.status+'')">'+(p.status==='active'?'⏸ Close':'▶ Open')+'</button>'
-        +'<button class="btn-adm-r" onclick="adminDeletePool(''+d.id+'',''+p.name.replace(/'/g,"\'")+'')" >🗑 Delete</button>'
+        +'<button class="btn-adm-e" onclick="adminEditPool(this)" data-pid="'+d.id+'">✏️ Edit</button>'
+        +'<button class="btn-adm-e" onclick="adminTogglePool(this)" data-pid="'+d.id+'" data-status="'+p.status+'">'+(p.status==='active'?'⏸ Close':'▶ Open')+'</button>'
+         +'<button class="btn-adm-r" onclick="adminDeletePool(this)" data-pid="'+d.id+'" data-name="'+p.name.replace(/"/g,\'&quot;\')+'" >🗑 Delete</button>'
         +'</div>'
         +'</div>';
     });
@@ -1644,7 +1671,9 @@ window._real_adminCreatePool=async function(){
   }catch(e){msg.style.color='var(--red)';msg.textContent='Error: '+e.message;}
 };
 
-window._real_adminDeletePool=async function(pid,pname){
+window._real_adminDeletePool=async function(btn,pname){
+  var pid=btn&&btn.dataset?btn.dataset.pid:btn;
+  pname=btn&&btn.dataset?btn.dataset.name:pname;
   if(!confirm('Delete pool "'+pname+'"? This cannot be undone.'))return;
   try{
     await db.collection('polls').doc(pid).delete();
@@ -1653,7 +1682,9 @@ window._real_adminDeletePool=async function(pid,pname){
   }catch(e){toast('Error: '+e.message,'var(--red)');}
 };
 
-window._real_adminTogglePool=async function(pid,status){
+window._real_adminTogglePool=async function(btn,status){
+  var pid=btn&&btn.dataset?btn.dataset.pid:btn;
+  status=btn&&btn.dataset?btn.dataset.status:status;
   var newStatus=status==='active'?'closed':'active';
   try{
     await db.collection('polls').doc(pid).update({status:newStatus});
@@ -1662,7 +1693,8 @@ window._real_adminTogglePool=async function(pid,status){
   }catch(e){toast('Error: '+e.message,'var(--red)');}
 };
 
-window._real_adminEditPool=async function(pid){
+window._real_adminEditPool=async function(btn){
+  var pid=btn&&btn.dataset?btn.dataset.pid:btn;
   try{
     var s=await db.collection('polls').doc(pid).get();
     if(!s.exists)return;
