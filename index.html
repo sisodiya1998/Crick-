@@ -556,7 +556,6 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     name:'Smart 11',short_name:'Smart11',
     description:'Cricket Prediction Platform',
     start_url:repoPath,
-    scope:repoPath,
     display:'standalone',
     orientation:'portrait',
     background_color:'#060d1a',
@@ -1410,7 +1409,15 @@ function listenSQ(){
 function mkSQ(id,q,ans){
   var maxPts=0;
   (q.options||[]).forEach(function(o){if((o.pts||5)>maxPts)maxPts=(o.pts||5);});
-  var opts=(q.options||[]).map(function(o,i){
+  var html='<div class="qc score">';
+  html+='<div style="display:flex;gap:5px;align-items:center;margin-bottom:7px">';
+  html+='<span class="qbadge qb-s">&#127919; SCORE PREDICTION</span>';
+  html+='<span style="background:rgba(255,215,0,0.1);color:var(--gold);font-size:9px;font-weight:700;padding:2px 7px;border-radius:3px;border:1px solid rgba(255,215,0,0.25)">Max +'+maxPts+' pts</span>';
+  html+='</div>';
+  html+='<div class="qt">'+q.question+'</div>';
+  html+='<div class="qmeta">&#127951; '+(q.match||'Live')+'&nbsp;&middot;&nbsp;Jo closest = zyada pts!</div>';
+  html+='<div class="opts" id="sq-opts-'+id+'">';
+  (q.options||[]).forEach(function(o,i){
     var cls='opt';
     if(ans!==undefined){
       if(q.settled){if(i===q.correctOpt)cls+=' ok';else if(i===ans)cls+=' no';}
@@ -1418,42 +1425,36 @@ function mkSQ(id,q,ans){
     }
     var pts=o.pts||5;
     var isExact=o.isExact||false;
-    var bgColor=isExact?'rgba(255,215,0,0.15)':'rgba(0,212,255,0.1)';
-    var txtColor=isExact?'var(--gold)':'var(--neon)';
-    var ptsBadge='';
-    if(q.settled&&i===q.correctOpt){
-      ptsBadge='<span style="color:var(--green);font-size:10px;font-weight:700">&#x2713; +'+pts+'pts</span>';
-    }else{
-      ptsBadge='<span style="background:'+bgColor+';color:'+txtColor+';font-size:9px;font-weight:700;padding:2px 5px;border-radius:3px">+'+pts+'pts'+(isExact?' &#x1F3AF;':'')+'</span>';
-    }
     var disabled=(ans!==undefined||q.settled)?'disabled':'';
-    return'<button class="'+cls+'" onclick="ansSQ(''+id+'','+i+','+pts+')" '+disabled+'><span>'+(o.label||o)+'</span>'+ptsBadge+'</button>';
-  }).join('');
-  var fb='';
+    var badge='';
+    if(q.settled&&i===q.correctOpt){
+      badge='<span style="color:var(--green);font-size:10px;font-weight:700">+'+pts+'pts</span>';
+    }else{
+      var bc=isExact?'rgba(255,215,0,0.15)':'rgba(0,212,255,0.1)';
+      var tc=isExact?'var(--gold)':'var(--neon)';
+      badge='<span style="background:'+bc+';color:'+tc+';font-size:9px;padding:2px 5px;border-radius:3px;font-weight:700">+'+pts+'pts'+(isExact?' &#127919;':'')+'</span>';
+    }
+    html+='<button class="'+cls+'" data-qid="'+id+'" data-idx="'+i+'" data-pts="'+pts+'" onclick="ansSQClick(this)" '+disabled+'><span>'+(o.label||o)+'</span>'+badge+'</button>';
+  });
+  html+='</div>';
   if(ans!==undefined){
     if(q.settled){
       var co=(q.options||[])[q.correctOpt];
-      var cpts=co&&co.pts||5;
-      var clabel=co&&(co.label||co)||'--';
+      var cpts=co?co.pts||5:5;
+      var clbl=co?(co.label||co):'--';
       if(ans===q.correctOpt){
-        fb='<div class="ans-b">&#x1F389; Bilkul sahi! +'+cpts+' pts'+(co&&co.isExact?' &#x1F3AF; (Exact Bonus!)':'')+'</div>';
+        html+='<div class="ans-b">&#127881; Sahi! +'+cpts+' pts'+(co&&co.isExact?' (Exact Bonus!)':'')+'</div>';
       }else{
-        fb='<div class="ans-b" style="border-color:var(--red);color:var(--red)">&#x274C; Wrong. Sahi tha: '+clabel+'</div>';
+        html+='<div class="ans-b" style="border-color:var(--red);color:var(--red)">Wrong. Sahi: '+clbl+'</div>';
       }
     }else{
-      fb='<div class="ans-b">&#x2705; Prediction save! Result match ke baad!</div>';
+      html+='<div class="ans-b">&#9989; Save! Result match baad!</div>';
     }
   }
-  var html='<div class="qc score">';
-  html+='<div style="display:flex;gap:5px;align-items:center;margin-bottom:7px">';
-  html+='<span class="qbadge qb-s">&#x1F3AF; SCORE PREDICTION</span>';
-  html+='<span style="background:rgba(255,215,0,0.1);color:var(--gold);font-size:9px;font-weight:700;padding:2px 7px;border-radius:3px;border:1px solid rgba(255,215,0,0.25)">Max +'+maxPts+' pts</span>';
   html+='</div>';
-  html+='<div class="qt">'+q.question+'</div>';
-  html+='<div class="qmeta">&#x1F3CF; '+(q.match||'Live Match')+'&nbsp;&middot;&nbsp;Jo closest bataye = zyada points!</div>';
-  html+='<div class="opts">'+opts+'</div>'+fb+'</div>';
   return html;
 }
+
 
 function listenChat(){
   if(chatUnsub)return;
