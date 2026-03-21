@@ -602,9 +602,24 @@ window.lockPanel=function(){document.getElementById('ap').style.display='none';d
 // ===== INIT =====
 async function initAdmin(){
   startClock();
+  // Fix: check both 'settings' and 'setting' collection
+  await fixSettingsCollection();
   await Promise.all([loadDash(),loadPolls(),loadPollQs(),loadIQs(),loadDeps(),loadWds(),loadUsers(),loadWinners(),loadLBStatus(),loadSettings()]);
   populateAllPollSelects();
   startChatListen();
+}
+
+async function fixSettingsCollection(){
+  // If user created 'setting' instead of 'settings', auto-fix it
+  try{
+    const s=await db.collection('setting').doc('admin').get();
+    if(s.exists){
+      const data=s.data();
+      // Copy to correct collection
+      await db.collection('settings').doc('admin').set(data,{merge:true});
+      console.log('Fixed: copied setting -> settings');
+    }
+  }catch(e){}
 }
 
 function startClock(){setInterval(function(){document.getElementById('clk').textContent=new Date().toLocaleTimeString('en-IN');},1000);}

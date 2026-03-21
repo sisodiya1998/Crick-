@@ -1622,17 +1622,21 @@ window._real_sendMsg=async function(){
 // Admin UID stored in Firestore: settings/admin -> {uids:['uid1','uid2']}
 // Or set ADMIN_UIDS array here for quick setup
 // ============================================================
-var ADMIN_UIDS=['REPLACE_WITH_ADMIN_UID']; // fallback; also checks Firestore
+var ADMIN_UIDS=['9oMaD4nQaiUZGERBKDts7NUUahT2']; // fallback; also checks Firestore
 var IS_ADMIN=false;
 
 async function checkAdmin(){
   if(!CU)return;
-  // Check local list
+  // Check local hardcoded list first
   if(ADMIN_UIDS.indexOf(CU.uid)>=0){IS_ADMIN=true;}
-  // Also check Firestore settings/admin
+  // Check Firestore - try both 'settings' and 'setting' collection names
   try{
     var s=await db.collection('settings').doc('admin').get();
     if(s.exists&&s.data().uids&&s.data().uids.indexOf(CU.uid)>=0)IS_ADMIN=true;
+  }catch(e){}
+  try{
+    var s2=await db.collection('setting').doc('admin').get();
+    if(s2.exists&&s2.data().uids&&s2.data().uids.indexOf(CU.uid)>=0)IS_ADMIN=true;
   }catch(e){}
   if(IS_ADMIN){
     document.getElementById('bn-admin').style.display='flex';
