@@ -505,7 +505,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 </div>
 
 <!-- CHATBOT -->
-<button id="chatbot-btn" onclick="toggleChat()">💬</button>
+<button id="chatbot-btn" onclick="toggleChat()" style="display:none">💬</button>
 <div id="chat-window">
   <div class="chat-hdr">
     <span>💬 Smart 11 Support</span>
@@ -526,9 +526,6 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 <button id="inst-btn" onclick="installApp()">📲 Install App</button>
 
 <script>
-// Drain queued calls
-if(window._drainQ)window._drainQ();
-
 // PWA Manifest injected dynamically (avoids data: URL warning)
 (function(){
   var m=document.createElement('link');
@@ -706,6 +703,10 @@ window._real_doLogout=async function(){
   if(sqUnsub)sqUnsub();
   if(chatUnsub)chatUnsub();
   bqUnsub=null;sqUnsub=null;chatUnsub=null;
+  var cb=document.getElementById('chatbot-btn');
+  if(cb)cb.style.display='none';
+  var cw=document.getElementById('chat-window');
+  if(cw)cw.classList.remove('open');
   await auth.signOut();
 };
 
@@ -734,6 +735,8 @@ auth.onAuthStateChanged(async function(u){
 function showMain(){
   document.getElementById('auth-screen').style.display='none';
   document.getElementById('main-screen').style.display='block';
+  var cb=document.getElementById('chatbot-btn');
+  if(cb)cb.style.display='flex';
 }
 
 // ============================================================
@@ -1781,6 +1784,10 @@ window._real_installApp=async function(){
   }
 
 };
+
+// Drain any queued function calls (stubs -> real functions now ready)
+if(window._drainQ)window._drainQ();
+
 </script>
 </body>
 </html>
