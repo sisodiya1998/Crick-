@@ -608,6 +608,8 @@ try{auth.setPersistence('local').catch(function(e){console.warn('Persistence:',e
 // GLOBAL STATE
 // ============================================================
 var CU=null, UD=null, SP=null, bqUnsub=null, sqUnsub=null, chatUnsub=null;
+var APP_CUT_PCT=40; // App 40% rakhta hai, 60% prize pool
+var FILL_THRESHOLD=40; // 40% fill hone par prize lock hoti hai
 var sN=function(){return String(UD&&UD.name?UD.name:CU&&CU.displayName?CU.displayName:CU&&CU.email?CU.email.split('@')[0]:'User');};
 var sE=function(){return String(CU&&CU.email?CU.email:'');};
 var sU=function(){return String(CU&&CU.uid?CU.uid:'');};
