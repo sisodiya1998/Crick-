@@ -795,6 +795,68 @@ auth.getRedirectResult().then(async function(result){
   // No redirect was in progress - normal page load
 });
 
+// ============================================================
+// TRANSACTIONS
+// ============================================================
+async function loadTxns(){
+  var el=document.getElementById('txn-list');
+  if(!el)return;
+  try{
+    var s=await db.collection('users').doc(CU.uid).collection('txns').orderBy('createdAt','desc').limit(30).get();
+    if(s.empty){el.innerHTML='<div class="empty"><div class="ei">&#128194;</div><p>No transactions yet</p></div>';return;}
+    el.innerHTML='';
+    s.forEach(function(d){
+      var t=d.data();
+      var dt=t.createdAt&&t.createdAt.toDate?t.createdAt.toDate().toLocaleDateString('en-IN'):'--';
+      var sc=t.status==='completed'?'var(--green)':t.status==='pending'?'var(--orange)':'var(--red)';
+      el.innerHTML+='<div class="ti">'        +'<div class="ti-i"><div class="tt">'+t.title+'</div>'        +'<div class="td">'+dt+' &middot; <span style="color:'+sc+'">'+t.status+'</span></div></div>'        +'<div class="ti-a '+(t.type==='credit'?'cr':'dr')+'">'+(t.type==='credit'?'+':'-')+'&#x20B9;'+t.amount+'</div>'        +'</div>';
+    });
+  }catch(e){console.error('loadTxns',e);}
+}
+
+// ============================================================
+// POINTS HISTORY
+// ============================================================
+async function loadPH(){
+  var el=document.getElementById('pts-hist');
+  if(!el)return;
+  try{
+    var s=await db.collection('users').doc(CU.uid).collection('ph').orderBy('createdAt','desc').limit(20).get();
+    if(s.empty){el.innerHTML='<div class="empty"><div class="ei">&#128203;</div><p>No points yet</p></div>';return;}
+    el.innerHTML='';
+    var cc={pm:'var(--neon)',bq:'var(--green)',lv:'var(--orange)',sq:'var(--gold)',su:'var(--purple)'};
+    s.forEach(function(d){
+      var h=d.data();
+      var dt=h.createdAt&&h.createdAt.toDate?h.createdAt.toDate().toLocaleDateString('en-IN'):'--';
+      el.innerHTML+='<div class="ph-item">'        +'<div class="ph-i"><div class="pt">'+h.title+'</div><div class="pd">'+dt+'</div></div>'        +'<div class="ph-p" style="color:'+(cc[h.type]||'var(--purple)')+'">+'+h.pts+'</div>'        +'</div>';
+    });
+  }catch(e){console.error('loadPH',e);}
+}
+
+// ============================================================
+// LEADERBOARD
+// ============================================================
+async function loadLB(elId,lim){
+  var el=document.getElementById(elId);
+  if(!el)return;
+  try{
+    var s=await db.collection('users').orderBy('points','desc').limit(lim||20).get();
+    if(s.empty){el.innerHTML='<div class="empty"><div class="ei">&#127941;</div><p>No players yet</p></div>';return;}
+    el.innerHTML='';
+    var rank=1;
+    s.forEach(function(d){
+      var u=d.data();
+      var isMe=CU&&d.id===CU.uid;
+      var rc=rank===1?'r1':rank===2?'r2':rank===3?'r3':'';
+      var medal=rank<=3?['&#127945;','&#129352;','&#129353;'][rank-1]:rank;
+      var ph=u.photoURL;
+      var av=ph?'<img src="'+ph+'"/>':(u.name||'?').charAt(0).toUpperCase();
+      el.innerHTML+='<div class="lb-item '+(isMe?'me':'')+'">'        +'<div class="lb-r '+rc+'">'+medal+'</div>'        +'<div class="lb-av">'+av+'</div>'        +'<div class="lb-info">'        +'<div class="lb-name">'+(u.name||'User')+(isMe?' <span style="font-size:9px;color:var(--neon)">(You)</span>':'')+'</div>'        +'<div class="lb-sub">Contests: '+(u.contestsJoined||0)+' &middot; Wins: '+(u.wins||0)+'</div>'        +'</div>'        +'<div class="lb-pts">'+(u.points||0)+'<div style="font-size:9px;color:var(--muted);font-weight:400">pts</div></div>'        +'</div>';
+      rank++;
+    });
+  }catch(e){console.error('loadLB',e);}
+}
+
 auth.onAuthStateChanged(async function(u){
   console.log('[Smart11] authStateChanged, user:', u?u.email:'null');
   if(u){
