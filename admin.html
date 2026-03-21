@@ -188,7 +188,8 @@ tbody tr:last-child td{border-bottom:none;}
     <div class="lw-t">SMART 11</div>
     <div class="lw-s">Master Admin Console</div>
     <div class="lb">
-      <h3>🔐 Admin Password</h3>
+      <h3>🔐 Admin Login</h3>
+      <div class="liw" style="margin-bottom:8px"><input class="li" type="email" id="adm-email" placeholder="Admin Email" style="letter-spacing:0"/></div>
       <div class="liw"><input class="li" type="password" id="ap-i" placeholder="Password" maxlength="30" onkeydown="if(event.key==='Enter')unlock()"/><button class="eye" onclick="toggleEye()">👁️</button></div>
       <button class="lbtn" onclick="unlock()">🔓 UNLOCK</button>
       <div class="lerr" id="lerr"></div>
@@ -666,6 +667,7 @@ tbody tr:last-child td{border-bottom:none;}
 <div id="tw"></div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script>
 (function(){
@@ -674,6 +676,19 @@ const FC={apiKey:'AIzaSyA5LBLlGP83ol2nQwFrPmfDS3zYMyA5c28',authDomain:'cricket-c
 firebase.initializeApp(FC);
 const db=firebase.firestore();
 const FS=firebase.firestore.FieldValue;
+const auth=firebase.auth();
+
+// Auto sign-in with saved credentials for Firestore auth
+auth.onAuthStateChanged(function(u){
+  if(!u){
+    // Sign in with email silently if credentials saved
+    var savedEmail=localStorage.getItem('adm_email');
+    var savedToken=localStorage.getItem('adm_token');
+    if(savedEmail&&savedToken){
+      auth.signInWithEmailAndPassword(savedEmail,savedToken).catch(function(){});
+    }
+  }
+});
 
 
 let APW=localStorage.getItem('adm_pw')||'123456';
@@ -684,10 +699,22 @@ let depFlt='all',wdFlt='all',chatUnsub=null,curSec='dashboard';
 window.toggleEye=function(){const i=document.getElementById('ap-i');const b=document.querySelector('.eye');i.type=i.type==='password'?'text':'password';b.textContent=i.type==='password'?'👁️':'🙈';};
 window.unlock=async function(){
   const pw=document.getElementById('ap-i').value;
+  const emailEl=document.getElementById('adm-email');
+  const email=emailEl?emailEl.value.trim():'';
   const e=document.getElementById('lerr');
   if(pw===APW){
     document.getElementById('lock').style.display='none';
     document.getElementById('ap').style.display='block';
+    // Sign in to Firebase so Firestore rules pass
+    if(email&&pw&&auth){
+      auth.signInWithEmailAndPassword(email,pw).then(function(){
+        localStorage.setItem('adm_email',email);
+        localStorage.setItem('adm_token',pw);
+      }).catch(function(){
+        // Try Google sign in as fallback
+        // Admin is already unlocked, Firestore might work if rules allow
+      });
+    }
     initAdmin();
   }
   else{e.textContent='❌ Wrong password';document.getElementById('ap-i').value='';setTimeout(function(){e.textContent='';},2500);}
