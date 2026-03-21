@@ -217,6 +217,7 @@ tbody tr:last-child td{border-bottom:none;}
     <div class="ni" onclick="goSec('chat',this)"><span class="ni-ico">💬</span>Live Chat <span class="nbdg nb-o" id="nb-chat" style="display:none">!</span></div>
     <div class="sb-sec">System</div>
     <div class="ni" onclick="goSec('settings',this)"><span class="ni-ico">⚙️</span>Settings</div>
+    <div class="ni" onclick="goSec('custom',this)"><span class="ni-ico">🧩</span>Custom Block</div>
     <div class="ni" onclick="goSec('security',this)"><span class="ni-ico">🔒</span>Security</div>
     <div class="sb-foot">
       <div class="adm-row"><div class="adm-av">A</div><div><div class="adm-nm">Administrator</div><div class="adm-rl">● ONLINE</div></div></div>
@@ -374,6 +375,31 @@ tbody tr:last-child td{border-bottom:none;}
         </div>
       </div>
 
+      <!-- CUSTOM BLOCK -->
+      <div class="sec" id="sec-custom">
+        <div class="ph"><div class="ph-l"><h1>🧩 Custom Block</h1><p>Paste any HTML/JS code to add custom features</p></div></div>
+        <div class="alert ai">ℹ️ Yahan koi bhi HTML/JS code paste karke custom features add kar sakte ho. Code save hota hai aur page reload par bhi rehta hai.</div>
+        <div class="card">
+          <div class="ct"><div class="ctl">📝 Custom HTML/JS Code</div></div>
+          <div class="fl"><label>Code Paste Karo</label>
+            <textarea id="custom-code" style="min-height:200px;font-family:monospace;font-size:11px;background:rgba(0,0,0,0.3);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:10px;width:100%;resize:vertical" placeholder="<!-- Yahan apna HTML/JS code paste karo -->
+<div style='color:var(--neon)'>Hello Custom Block!</div>"></textarea>
+          </div>
+          <div style="display:flex;gap:9px;margin-top:12px;flex-wrap:wrap">
+            <button class="btn bp" onclick="saveCustomCode()">💾 Save & Apply</button>
+            <button class="btn bg2" onclick="previewCustomCode()">👁️ Preview</button>
+            <button class="btn bd bsm" onclick="clearCustomCode()">🗑️ Clear</button>
+          </div>
+          <div class="merr" id="custom-msg" style="color:var(--green)"></div>
+        </div>
+        <div class="card">
+          <div class="ct"><div class="ctl">👁️ Live Preview</div></div>
+          <div id="custom-preview" style="min-height:80px;background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:12px">
+            <p style="color:var(--muted);font-size:11px">Preview yahan dikhega...</p>
+          </div>
+        </div>
+      </div>
+
       <!-- SECURITY -->
       <div class="sec" id="sec-security">
         <div class="ph"><div class="ph-l"><h1>🔒 Security</h1></div></div>
@@ -466,7 +492,7 @@ tbody tr:last-child td{border-bottom:none;}
     <div class="fl"><label>Option B *</label><input type="text" id="bq-b" placeholder="No"/></div>
     <div class="fl"><label>Option C</label><input type="text" id="bq-c"/></div>
     <div class="fl"><label>Option D</label><input type="text" id="bq-d"/></div>
-    <div class="fl"><label>Timer (seconds)</label><input type="number" id="bq-timer" value="120" min="30"/></div>
+    <div class="fl"><label>Timer (seconds)</label><input type="number" id="bq-timer" value="120" min="30" max="300"/></div>
     <div class="fl"><label>Points per correct</label><input type="number" id="bq-pts" value="5"/></div>
   </div>
   <div class="merr" id="bq-err"></div>
@@ -520,7 +546,7 @@ tbody tr:last-child td{border-bottom:none;}
     <div class="fl"><label>Option A *</label><input type="text" id="iq-a" value="YES"/></div>
     <div class="fl"><label>Option B *</label><input type="text" id="iq-b" value="NO"/></div>
     <div class="fl"><label>Points per correct</label><input type="number" id="iq-pts" value="5" min="1"/></div>
-    <div class="fl"><label>Timer (seconds)</label><input type="number" id="iq-timer" value="120" min="30"/></div>
+    <div class="fl"><label>Timer (seconds)</label><input type="number" id="iq-timer" value="120" min="30" max="300"/></div>
   </div>
   <div class="merr" id="iq-err"></div>
   <div class="mfoot"><button class="btn bg2" onclick="cm('m-iq')">Cancel</button><button class="btn bd" onclick="pushIQ()">⚡ Push Now!</button></div>
@@ -576,9 +602,24 @@ window.lockPanel=function(){document.getElementById('ap').style.display='none';d
 // ===== INIT =====
 async function initAdmin(){
   startClock();
+  // Fix: check both 'settings' and 'setting' collection
+  await fixSettingsCollection();
   await Promise.all([loadDash(),loadPolls(),loadPollQs(),loadIQs(),loadDeps(),loadWds(),loadUsers(),loadWinners(),loadLBStatus(),loadSettings()]);
   populateAllPollSelects();
   startChatListen();
+}
+
+async function fixSettingsCollection(){
+  // If user created 'setting' instead of 'settings', auto-fix it
+  try{
+    const s=await db.collection('setting').doc('admin').get();
+    if(s.exists){
+      const data=s.data();
+      // Copy to correct collection
+      await db.collection('settings').doc('admin').set(data,{merge:true});
+      console.log('Fixed: copied setting -> settings');
+    }
+  }catch(e){}
 }
 
 function startClock(){setInterval(function(){document.getElementById('clk').textContent=new Date().toLocaleTimeString('en-IN');},1000);}
@@ -590,7 +631,7 @@ window.goSec=function(name,el){
   document.getElementById('sec-'+name).classList.add('on');
   if(el)el.classList.add('on');
   curSec=name;
-  const nm={dashboard:'Dashboard',polls:'Poll Manager',pmquiz:'Pre-Match Quiz',pollqs:'Push Questions',instant:'Instant Questions',livebonus:'Live Bonus',winners:'Winners',deposits:'Deposits',withdrawals:'Withdrawals',users:'Users',chat:'Live Chat',settings:'Settings',security:'Security'};
+  const nm={dashboard:'Dashboard',polls:'Poll Manager',pmquiz:'Pre-Match Quiz',pollqs:'Push Questions',instant:'Instant Questions',livebonus:'Live Bonus',winners:'Winners',deposits:'Deposits',withdrawals:'Withdrawals',users:'Users',chat:'Live Chat',settings:'Settings',custom:'Custom Block',security:'Security'};
   document.getElementById('cur-pg').textContent=nm[name]||name;
   if(document.getElementById('sb').classList.contains('open'))document.getElementById('sb').classList.remove('open');
   if(name==='chat'){_chatLastSeen=document.querySelectorAll('.ca-msg.usr').length;const cb=document.getElementById('nb-chat');if(cb)cb.style.display='none';}
@@ -617,27 +658,30 @@ async function populateAllPollSelects(){
 // ===== DASHBOARD =====
 async function loadDash(){
   try{
-    const[us,ds,ws,ps,pqs,iqs,ads]=await Promise.all([
+    const[us,ds,ws,ps,ads]=await Promise.all([
       db.collection('users').get(),
       db.collection('depositRequests').where('status','==','pending').get(),
       db.collection('withdrawRequests').where('status','==','pending').get(),
       db.collection('polls').where('status','==','active').get(),
-      db.collection('pollQuestions').where('type','==','bonus').where('settled','==',false).get(),
-      db.collection('pollQuestions').where('type','==','instant').where('settled','==',false).get(),
       db.collection('depositRequests').where('status','==','approved').get()
     ]);
+    // Separate queries to avoid composite index requirement
+    const pqs=await db.collection('pollQuestions').where('type','==','bonus').get();
+    const iqs=await db.collection('pollQuestions').where('type','==','instant').get();
     let td=0;ads.forEach(function(d){td+=(d.data().amount||0);});
     document.getElementById('s-u').textContent=us.size;
     document.getElementById('s-d').textContent='₹'+td.toLocaleString('en-IN');
     document.getElementById('s-p').textContent=ds.size+ws.size;
     document.getElementById('s-pl').textContent=ps.size;
-    document.getElementById('s-pq').textContent=pqs.size;
-    document.getElementById('s-iq').textContent=iqs.size;
+    let pqCount=0;pqs.forEach(function(d){if(!d.data().settled)pqCount++;});
+    let iqCount=0;iqs.forEach(function(d){if(!d.data().settled)iqCount++;});
+    document.getElementById('s-pq').textContent=pqCount;
+    document.getElementById('s-iq').textContent=iqCount;
     const dB=document.getElementById('nb-dep'),wB=document.getElementById('nb-wd'),iqB=document.getElementById('nb-iq'),pqB=document.getElementById('nb-pq');
     if(ds.size>0){dB.textContent=ds.size;dB.style.display='inline';}else dB.style.display='none';
     if(ws.size>0){wB.textContent=ws.size;wB.style.display='inline';}else wB.style.display='none';
-    if(iqs.size>0)iqB.style.display='inline';else iqB.style.display='none';
-    if(pqs.size>0){pqB.textContent=pqs.size;pqB.style.display='inline';}else pqB.style.display='none';
+    if(iqCount>0)iqB.style.display='inline';else iqB.style.display='none';
+    if(pqCount>0){pqB.textContent=pqCount;pqB.style.display='inline';}else pqB.style.display='none';
     const rec=await db.collection('depositRequests').orderBy('createdAt','desc').limit(5).get();
     let rh='';rec.forEach(function(d){const r=d.data();rh+='<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border2);font-size:10px"><span><b>'+( r.name||'—')+'</b><br><span style="color:var(--muted)">UTR: '+(r.utr||'—')+'</span></span><span style="text-align:right"><span style="color:var(--green);font-weight:700">₹'+r.amount+'</span><br><span class="bdg b-'+(r.status==='approved'?'app':r.status==='pending'?'pen':'rej')+'">'+r.status+'</span></span></div>';});
     document.getElementById('d-recent').innerHTML=rh||'<p style="color:var(--muted);font-size:10px">No deposits</p>';
@@ -771,8 +815,8 @@ async function loadPollQs(){
   const el=document.getElementById('pq-admin-list');
   const filterPid=document.getElementById('pq-poll-filter')&&document.getElementById('pq-poll-filter').value;
   try{
-    let q=db.collection('pollQuestions').where('type','in',['bonus','score']).orderBy('createdAt','desc');
-    if(filterPid)q=q.where('pollId','==',filterPid);
+    // Avoid compound index - get all then filter in JS
+    let q=db.collection('pollQuestions').where('type','in',['bonus','score']);
     const s=await q.get();
     if(s.empty){el.innerHTML='<div style="text-align:center;padding:18px;color:var(--muted);font-size:11px">No questions. Push one!</div>';return;}
     el.innerHTML='';
@@ -884,7 +928,7 @@ window.delPQ=async function(id){if(!confirm('Delete?'))return;try{await db.colle
 async function loadIQs(){
   const el=document.getElementById('iq-admin-list');
   try{
-    const s=await db.collection('pollQuestions').where('type','==','instant').orderBy('createdAt','desc').get();
+    const s=await db.collection('pollQuestions').where('type','==','instant').get();
     if(s.empty){el.innerHTML='<div style="text-align:center;padding:18px;color:var(--muted);font-size:11px">No instant questions. Push one above!</div>';return;}
     el.innerHTML='';
     s.forEach(function(d){
@@ -1193,9 +1237,12 @@ window.openDistribute=async function(pid,pname){
 };
 
 function calcPrizeBreakdownAdmin(prizePool,totalUsers){
+  // 40% app cut already removed. Distribute 60% (prizePool):
+  // 1st=50%, 2nd=30%, 3rd=10%, 4th-10th share remaining 10%
   const res=[];
-  const top3=[50,30,10];
-  for(let i=0;i<3;i++)res.push(Math.floor(prizePool*top3[i]/100));
+  res.push(Math.floor(prizePool*0.50));
+  res.push(Math.floor(prizePool*0.30));
+  res.push(Math.floor(prizePool*0.10));
   const remaining=prizePool-res[0]-res[1]-res[2];
   const each=Math.floor(remaining/7);
   for(let j=0;j<7;j++)res.push(each);
@@ -1256,6 +1303,35 @@ window.danger=async function(action){
 };
 
 // ===== TOAST =====
+// ===== CUSTOM BLOCK =====
+window.saveCustomCode=function(){
+  const code=document.getElementById('custom-code').value;
+  localStorage.setItem('admin_custom_code',code);
+  previewCustomCode();
+  document.getElementById('custom-msg').textContent='✅ Saved! Code applied.';
+  setTimeout(function(){document.getElementById('custom-msg').textContent='';},3000);
+};
+window.previewCustomCode=function(){
+  const code=document.getElementById('custom-code').value;
+  document.getElementById('custom-preview').innerHTML=code||'<p style="color:var(--muted);font-size:11px">Preview yahan dikhega...</p>';
+};
+window.clearCustomCode=function(){
+  if(!confirm('Custom code delete karein?'))return;
+  localStorage.removeItem('admin_custom_code');
+  document.getElementById('custom-code').value='';
+  document.getElementById('custom-preview').innerHTML='<p style="color:var(--muted);font-size:11px">Preview yahan dikhega...</p>';
+  document.getElementById('custom-msg').textContent='';
+};
+(function(){
+  const saved=localStorage.getItem('admin_custom_code');
+  if(saved){
+    document.addEventListener('DOMContentLoaded',function(){
+      const ta=document.getElementById('custom-code');
+      if(ta)ta.value=saved;
+    });
+  }
+})();
+
 window.toast=function(msg,color){
   color=color||'var(--neon)';
   const w=document.getElementById('tw');const id='t'+Date.now();
