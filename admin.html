@@ -526,6 +526,14 @@ tbody tr:last-child td{border-bottom:none;}
   <div class="mfoot"><button class="btn bg2" onclick="cm('m-iq')">Cancel</button><button class="btn bd" onclick="pushIQ()">⚡ Push Now!</button></div>
 </div></div>
 
+<!-- Distribute Prizes Modal -->
+<div class="mov" id="m-dist"><div class="modal" style="max-width:500px">
+  <h3 id="dist-title">🏆 Distribute Prizes</h3>
+  <div id="dist-body"></div>
+  <div class="alert aw" style="margin-top:10px;font-size:10px">⚠️ This will credit prizes to winners' wallets. Cannot be undone!</div>
+  <div class="mfoot"><button class="btn bg2" onclick="cm('m-dist')">Cancel</button><button class="btn bw" onclick="confirmDistribute()">✅ Confirm & Pay</button></div>
+</div></div>
+
 <!-- Credit Wallet -->
 <div class="mov" id="m-credit"><div class="modal"><h3>💰 Credit / Debit</h3>
   <input type="hidden" id="cr-uid"/>
@@ -716,7 +724,7 @@ window.addPMQ=async function(){
   try{
     const s=await db.collection('polls').doc(pid).get();
     const ex=s.exists&&s.data().questions?s.data().questions:[];
-    if(ex.length>=10){e.textContent='Max 10 questions!';return;}
+    if(ex.length>=11){e.textContent='Max 11 questions!';return;}
     const opts=[a,b];if(c)opts.push(c);if(d)opts.push(d);
     ex.push({q:q,opts:opts,correct:cor===-1?null:cor,pts:10});
     await db.collection('polls').doc(pid).update({questions:ex});
@@ -1111,6 +1119,132 @@ window.changePwd=function(){
   if(np!==cnp){e.textContent='❌ Passwords do not match';e.style.color='var(--red)';return;}
   APW=np;localStorage.setItem('adm_pw',np);['sec-cp','sec-np','sec-cnp'].forEach(function(id){document.getElementById(id).value='';});
   e.textContent='✅ Password updated!';e.style.color='var(--green)';toast('🔑 Password changed!','var(--green)');setTimeout(function(){e.textContent='';},4000);
+};
+
+// ===== DISTRIBUTE PRIZES =====
+window.openDistribute=async function(pid,pname){
+  toast('⏳ Loading entries...','var(--neon)');
+  try{
+    const pollDoc=await db.collection('polls').doc(pid).get();
+    const pollData=pollDoc.data();
+    const fee=pollData.fee||0;
+    const entries=await db.collection('polls').doc(pid).collection('entries').get();
+    if(entries.empty){toast('No entries in this poll','var(--orange)');return;}
+    
+    // Get all entries with their points
+    let users=[];
+    entries.forEach(function(d){
+      const e=d.data();
+      users.push({uid:e.uid,name:e.name||'User',points:e.points||0,entryId:d.id});
+    });
+    
+    // Sort by points descending
+    users.sort(function(a,b){return b.points-a.points;});
+    
+    // Calculate prize pool
+    const totalCollected=fee*users.length;
+    const appCut=(pollData.appCutPct||40)/100;
+    const prizePool=Math.floor(totalCollected*(1-appCut));
+    
+    // Calculate prizes with tie-splitting
+    const breakdown=calcPrizeBreakdownAdmin(prizePool,users.length);
+    
+    // Build modal content
+    let html='<div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px">';
+    html+='<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:6px"><span>Total Entries</span><b>'+users.length+'</b></div>';
+    html+='<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:6px"><span>Total Collected</span><b style="color:var(--green)">₹'+totalCollected+'</b></div>';
+    html+='<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:6px"><span>App Cut ('+((pollData.appCutPct||40))+'%)</span><b style="color:var(--red)">₹'+Math.floor(totalCollected*appCut)+'</b></div>';
+    html+='<div style="display:flex;justify-content:space-between;font-size:11px"><span>Prize Pool</span><b style="color:var(--gold)">₹'+prizePool+'</b></div>';
+    html+='</div>';
+    
+    html+='<div style="font-size:10px;color:var(--muted);margin-bottom:8px;font-weight:700">WINNERS & PRIZES:</div>';
+    
+    const medals=['🥇','🥈','🥉','4th','5th','6th','7th','8th','9th','10th'];
+    
+    // Handle ties
+    let i=0;let winnerData=[];
+    while(i<users.length&&i<10){
+      let pts=users[i].points;
+      let tieEnd=i;
+      while(tieEnd<users.length&&users[tieEnd].points===pts)tieEnd++;
+      let tieCount=tieEnd-i;
+      let totalPrize=0;
+      for(let k=i;k<Math.min(tieEnd,10);k++)totalPrize+=(breakdown[k]||0);
+      let eachPrize=tieCount>1?Math.floor(totalPrize/tieCount):totalPrize;
+      
+      for(let j=i;j<tieEnd&&j<10;j++){
+        winnerData.push({uid:users[j].uid,name:users[j].name,points:users[j].points,prize:eachPrize,rank:i+1});
+        html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 8px;background:rgba(255,215,0,0.05);border:1px solid rgba(255,215,0,0.15);border-radius:7px;margin-bottom:5px;font-size:11px">';
+        html+='<span>'+medals[Math.min(i,9)]+' '+users[j].name+'</span>';
+        html+='<span style="color:var(--muted)">'+users[j].points+' pts</span>';
+        html+='<span style="color:var(--gold);font-weight:700">₹'+eachPrize+'</span>';
+        html+='</div>';
+      }
+      i=tieEnd;
+    }
+    
+    // Store winner data for confirmation
+    window._pendingDistribute={pid:pid,pname:pname,winners:winnerData,prizePool:prizePool};
+    
+    document.getElementById('dist-body').innerHTML=html;
+    document.getElementById('dist-title').textContent='🏆 '+pname;
+    om('m-dist');
+  }catch(e){toast('Error: '+e.message,'var(--red)');}
+};
+
+function calcPrizeBreakdownAdmin(prizePool,totalUsers){
+  const res=[];
+  const top3=[50,30,10];
+  for(let i=0;i<3;i++)res.push(Math.floor(prizePool*top3[i]/100));
+  const remaining=prizePool-res[0]-res[1]-res[2];
+  const each=Math.floor(remaining/7);
+  for(let j=0;j<7;j++)res.push(each);
+  return res;
+}
+
+window.confirmDistribute=async function(){
+  const pd=window._pendingDistribute;
+  if(!pd){return;}
+  cm('m-dist');
+  toast('⏳ Distributing prizes...','var(--neon)');
+  try{
+    const batch=db.batch();
+    pd.winners.forEach(function(w){
+      if(w.prize>0){
+        batch.update(db.collection('users').doc(w.uid),{
+          wallet:FS.increment(w.prize),
+          wins:FS.increment(1)
+        });
+      }
+    });
+    await batch.commit();
+    
+    // Add transaction records
+    for(const w of pd.winners){
+      if(w.prize>0){
+        await db.collection('users').doc(w.uid).collection('txns').add({
+          type:'credit',
+          title:'🏆 Prize: '+pd.pname+' (Rank #'+w.rank+')',
+          amount:w.prize,status:'completed',
+          createdAt:FS.serverTimestamp()
+        });
+      }
+    }
+    
+    // Mark poll as distributed
+    await db.collection('polls').doc(pd.pid).update({
+      status:'closed',distributed:true,distributedAt:FS.serverTimestamp()
+    });
+    
+    toast('🎉 Prizes distributed to '+pd.winners.length+' winners!','var(--green)');
+    loadPolls();loadDash();
+    window._pendingDistribute=null;
+  }catch(e){toast('Error: '+e.message,'var(--red)');}
+};
+
+window.settlePollPrizes=function(pid){
+  var poll=allPolls.find(function(p){return p.id===pid;});
+  openDistribute(pid,poll?poll.name:'Poll');
 };
 
 window.danger=async function(action){

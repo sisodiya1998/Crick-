@@ -1106,7 +1106,7 @@ window._real_startQuiz=async function(pid,pname,fee,prize){
     var ps=await db.collection('polls').doc(pid).get();
     if(ps.exists&&ps.data().questions&&ps.data().questions.length)qs=ps.data().questions;
     if(!qs.length)qs=defQs(pname);
-    QD={pid:pid,pname:pname,qs:qs.slice(0,10),cur:0,score:0,ans:{}};
+    QD={pid:pid,pname:pname,qs:qs.slice(0,11),cur:0,score:0,ans:{}};
     document.getElementById('quiz-title').textContent='🏏 '+pname;
     document.getElementById('quiz-done').style.display='none';
     renderQQ();
@@ -1125,7 +1125,8 @@ function defQs(n){
     {q:'Top scorer position?',opts:['Opener','#3-#5','#6+'],correct:null,pts:10},
     {q:'Total wickets?',opts:['< 10','10-15','16-20','All out (20)'],correct:null,pts:10},
     {q:'Will there be a hat-trick?',opts:['Yes','No'],correct:null,pts:10},
-    {q:'Man of the Match?',opts:['Batsman','Bowler','All-rounder'],correct:null,pts:10}
+    {q:'Man of the Match?',opts:['Batsman','Bowler','All-rounder'],correct:null,pts:10},
+    {q:'Will there be a no-ball in this match?',opts:['Yes','No'],correct:null,pts:10}
   ];
 }
 
@@ -1199,9 +1200,16 @@ window._real_confirmJoin=async function(){
     });
     // Add entry + increment joined count on pool
     await db.collection('polls').doc(SP.id).collection('entries').add({
-      uid:sU(),name:sN(),points:PTS(),fee:SP.fee,
+      uid:sU(),name:sN(),points:0,fee:SP.fee,pmPoints:0,
       createdAt:firebase.firestore.FieldValue.serverTimestamp()
     });
+    // Track joined polls in user doc
+    var joinUpd={};
+    joinUpd['joinedPolls.'+SP.id+'.pollName']=SP.name;
+    joinUpd['joinedPolls.'+SP.id+'.points']=0;
+    joinUpd['joinedPolls.'+SP.id+'.fee']=SP.fee;
+    joinUpd['joinedPolls.'+SP.id+'.joinedAt']=firebase.firestore.FieldValue.serverTimestamp();
+    await db.collection('users').doc(CU.uid).update(joinUpd);
     await db.collection('polls').doc(SP.id).update({
       joined:firebase.firestore.FieldValue.increment(1)
     }).catch(function(){});
