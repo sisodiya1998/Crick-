@@ -659,32 +659,19 @@ window._real_doSignup=async function(){
 };
 
 // ============================================================
-// GOOGLE LOGIN — signInWithPopup (fixes redirect issues)
+// GOOGLE LOGIN — signInWithRedirect (GitHub Pages compatible)
 // ============================================================
 window._real_doGoogle=async function(){
   var e=document.getElementById('aerr');
-  e.textContent='🔄 Opening Google...';e.style.color='var(--neon)';
+  e.textContent='🔄 Redirecting to Google...';e.style.color='var(--neon)';
   try{
     var provider=new firebase.auth.GoogleAuthProvider();
     provider.setCustomParameters({prompt:'select_account'});
-    var result=await auth.signInWithPopup(provider);
-    if(result&&result.user){
-      await handleGU(result.user);
-    }
-    e.textContent='';
+    // Use redirect - GitHub Pages COOP header blocks popup
+    await auth.signInWithRedirect(provider);
   }catch(err){
     e.style.color='var(--red)';
-    if(err.code==='auth/popup-closed-by-user'||err.code==='auth/cancelled-popup-request'){
-      e.textContent='Popup closed. Try again.';
-    }else if(err.code==='auth/popup-blocked'){
-      // Fallback to redirect if popup is blocked
-      e.textContent='🔄 Popup blocked, redirecting...';
-      setTimeout(async function(){
-        try{ await auth.signInWithRedirect(provider); }catch(e2){}
-      },1000);
-    }else{
-      e.textContent=err.message;
-    }
+    e.textContent=err.message;
   }
 };
 
@@ -736,14 +723,17 @@ window._real_doLogout=async function(){
 // AUTH STATE — Auto-login on page load
 // ============================================================
 // Handle redirect result from Google Sign-In
-// Handle redirect result (fallback for popup-blocked scenarios)
+// Handle Google redirect result on page load
 auth.getRedirectResult().then(async function(result){
   if(result&&result.user){
     await handleGU(result.user);
-    // onAuthStateChanged will call showMain() automatically
+    // onAuthStateChanged will fire and call showMain()
   }
-}).catch(function(){
-  // No redirect was in progress - normal page load
+}).catch(function(err){
+  if(err&&err.code&&err.code!=='auth/no-auth-event'){
+    var e=document.getElementById('aerr');
+    if(e){e.style.color='var(--red)';e.textContent=err.message;}
+  }
 });
 
 auth.onAuthStateChanged(async function(u){
