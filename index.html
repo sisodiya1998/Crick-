@@ -1200,29 +1200,54 @@ function renderQQ(){
   document.getElementById('qpn').textContent=(QD.cur+1)+'/'+tot;
   if(!q){finishQuiz();return;}
   var ans=QD.ans[QD.cur];
+
+  // Timer check
+  var isLocked=false;
+  var timerHtml='';
+  if(q.deadline){
+    var dl=q.deadline.toDate?q.deadline.toDate():new Date(q.deadline);
+    var rem=dl-new Date();
+    if(rem<=0){
+      isLocked=true;
+      timerHtml='<div style="background:rgba(255,59,92,0.1);border:1px solid rgba(255,59,92,0.3);border-radius:7px;padding:6px 10px;font-size:10px;color:var(--red);margin-bottom:8px">🔒 Answer time khatam — locked!</div>';
+    }else{
+      var tm=Math.floor(rem/60000);var ts=Math.floor((rem%60000)/1000);
+      timerHtml='<div style="background:rgba(255,107,53,0.08);border:1px solid rgba(255,107,53,0.25);border-radius:7px;padding:6px 10px;font-size:10px;color:var(--orange);margin-bottom:8px">⏰ '+tm+'m '+ts+'s mein band hoga</div>';
+    }
+  }
+
   var opts=q.opts.map(function(o,i){
     var cls='opt';
+    var locked=isLocked||(ans!==undefined);
     if(ans!==undefined){
       if(q.correct===null||q.correct===undefined)cls+=i===ans?' sel':'';
       else if(i===q.correct)cls+=' ok';
       else if(i===ans)cls+=' no';
     }
-    return'<button class="'+cls+'" onclick="pickOpt('+i+')" '+(ans!==undefined?'disabled':'')+'>'+o+'</button>';
+    return'<button class="'+cls+'" onclick="pickOpt('+i+')" '+(locked?'disabled':'')+'>'+o+'</button>';
   }).join('');
   var fb='';
-  if(ans!==undefined){
-    if(q.correct===null||q.correct===undefined)fb='<div class="ans-b">✅ Saved +'+( q.pts||10)+' pts</div>';
+  if(isLocked&&ans===undefined){
+    fb='<div class="ans-b" style="border-color:var(--red);color:var(--red)">🔒 Answer band ho gaya</div>';
+  }else if(ans!==undefined){
+    if(q.correct===null||q.correct===undefined)fb='<div class="ans-b">✅ Saved +'+(q.pts||10)+' pts</div>';
     else if(ans===q.correct)fb='<div class="ans-b">🎉 Correct! +'+(q.pts||10)+' pts</div>';
     else fb='<div class="ans-b">❌ Wrong — result known after match</div>';
   }
   document.getElementById('quiz-body').innerHTML='<div class="qc"><span class="qbadge qb-p">PRE-MATCH Q'+(QD.cur+1)+'</span>'
     +'<div class="qt">'+q.q+'</div><div class="qmeta">⭐ '+(q.pts||10)+' pts</div>'
+    +timerHtml
     +'<div class="opts">'+opts+'</div>'+fb+'</div>';
 }
 
 window._real_pickOpt=async function(i){
   var q=QD.qs[QD.cur];
   if(QD.ans[QD.cur]!==undefined)return;
+  // Check deadline
+  if(q.deadline){
+    var dl=q.deadline.toDate?q.deadline.toDate():new Date(q.deadline);
+    if(new Date()>dl){toast('⏰ Answer time khatam ho gaya!','var(--red)');return;}
+  }
   QD.ans[QD.cur]=i;
   var ok=q.correct===null||q.correct===undefined||i===q.correct;
   if(ok){QD.score+=(q.pts||10);await awardPts(q.pts||10,'pm','✅ Pre-Match Q'+(QD.cur+1)+' correct');}

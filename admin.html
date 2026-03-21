@@ -462,11 +462,24 @@ tbody tr:last-child td{border-bottom:none;}
   <div class="fg">
     <div class="fl"><label>Poll *</label><select id="aqq-poll"><option value="">-- Select --</option></select></div>
     <div class="fl fl-full"><label>Question *</label><input type="text" id="aqq-q" placeholder="Who will win the toss?"/></div>
-    <div class="fl"><label>Option A *</label><input type="text" id="aqq-a" placeholder="Team A"/></div>
-    <div class="fl"><label>Option B *</label><input type="text" id="aqq-b" placeholder="Team B"/></div>
+    <div class="fl"><label>Option A *</label><input type="text" id="aqq-a" placeholder="Yes / Team A"/></div>
+    <div class="fl"><label>Option B *</label><input type="text" id="aqq-b" placeholder="No / Team B"/></div>
     <div class="fl"><label>Option C</label><input type="text" id="aqq-c"/></div>
     <div class="fl"><label>Option D</label><input type="text" id="aqq-d"/></div>
-    <div class="fl fl-full"><label>Correct Answer</label><select id="aqq-cor"><option value="-1">🎯 Prediction (any answer = 10 pts)</option><option value="0">A is correct</option><option value="1">B is correct</option><option value="2">C is correct</option><option value="3">D is correct</option></select></div>
+    <div class="fl fl-full"><label>Correct Answer</label><select id="aqq-cor"><option value="-1">🎯 Prediction (any = 10 pts)</option><option value="0">A Correct</option><option value="1">B Correct</option><option value="2">C Correct</option><option value="3">D Correct</option></select></div>
+    <div class="fl fl-full"><label>⏰ Timer Type</label>
+      <select id="aqq-timer-type" onchange="toggleAqqTimer()">
+        <option value="none">🚫 No Timer (match tak open)</option>
+        <option value="before">⏳ Match se X min pehle band</option>
+        <option value="exact">📅 Exact date & time pe band</option>
+      </select>
+    </div>
+    <div id="aqq-timer-box" style="display:none;grid-column:1/-1">
+      <div class="fg">
+        <div class="fl" id="aqq-mins-box"><label>Match se kitne min pehle band?</label><input type="number" id="aqq-mins" value="30" min="1" placeholder="30"/><div style="font-size:9px;color:var(--muted);margin-top:3px">e.g. 30 = match se 30 min pehle answer band</div></div>
+        <div class="fl" id="aqq-exact-box" style="display:none"><label>Exact Deadline</label><input type="datetime-local" id="aqq-deadline"/></div>
+      </div>
+    </div>
   </div>
   <div class="merr" id="aqq-err"></div>
   <div class="mfoot"><button class="btn bg2" onclick="cm('m-aqq')">Cancel</button><button class="btn bp" onclick="addPMQ()">➕ Add</button></div>
@@ -576,6 +589,7 @@ tbody tr:last-child td{border-bottom:none;}
 <div id="tw"></div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script>
 (function(){
@@ -584,6 +598,10 @@ const FC={apiKey:'AIzaSyA5LBLlGP83ol2nQwFrPmfDS3zYMyA5c28',authDomain:'cricket-c
 firebase.initializeApp(FC);
 const db=firebase.firestore();
 const FS=firebase.firestore.FieldValue;
+const auth=firebase.auth();
+
+// Sign in anonymously so Firestore rules pass (request.auth != null)
+auth.signInAnonymously().catch(function(e){console.warn('Auth:',e);});
 
 let APW=localStorage.getItem('adm_pw')||'123456';
 let allUsers=[],allDeps=[],allWds=[],allPolls=[];
@@ -591,10 +609,18 @@ let depFlt='all',wdFlt='all',chatUnsub=null,curSec='dashboard';
 
 // ===== LOCK =====
 window.toggleEye=function(){const i=document.getElementById('ap-i');const b=document.querySelector('.eye');i.type=i.type==='password'?'text':'password';b.textContent=i.type==='password'?'👁️':'🙈';};
-window.unlock=function(){
+window.unlock=async function(){
   const pw=document.getElementById('ap-i').value;
   const e=document.getElementById('lerr');
-  if(pw===APW){document.getElementById('lock').style.display='none';document.getElementById('ap').style.display='block';initAdmin();}
+  if(pw===APW){
+    document.getElementById('lock').style.display='none';
+    document.getElementById('ap').style.display='block';
+    // Wait for anonymous auth before init
+    if(!auth.currentUser){
+      try{await auth.signInAnonymously();}catch(ae){console.warn('anon auth:',ae);}
+    }
+    initAdmin();
+  }
   else{e.textContent='❌ Wrong password';document.getElementById('ap-i').value='';setTimeout(function(){e.textContent='';},2500);}
 };
 window.lockPanel=function(){document.getElementById('ap').style.display='none';document.getElementById('lock').style.display='flex';document.getElementById('ap-i').value='';};
@@ -1314,6 +1340,24 @@ window.confirmDistribute=async function(){
 window.settlePollPrizes=function(pid){
   var poll=allPolls.find(function(p){return p.id===pid;});
   openDistribute(pid,poll?poll.name:'Poll');
+};
+
+window.toggleAqqTimer=function(){
+  var type=document.getElementById('aqq-timer-type').value;
+  var box=document.getElementById('aqq-timer-box');
+  var minsBox=document.getElementById('aqq-mins-box');
+  var exactBox=document.getElementById('aqq-exact-box');
+  if(type==='none'){
+    box.style.display='none';
+  } else if(type==='before'){
+    box.style.display='block';
+    minsBox.style.display='block';
+    exactBox.style.display='none';
+  } else if(type==='exact'){
+    box.style.display='block';
+    minsBox.style.display='none';
+    exactBox.style.display='block';
+  }
 };
 
 window.danger=async function(action){
