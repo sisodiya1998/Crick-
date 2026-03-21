@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Smart 11 — Admin Panel</title>
+<title>Smart 11 — Admin Panel v3.1</title>
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Exo+2:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 <style>
 :root{--bg:#060d1a;--bg2:#0b1726;--bg3:#0f2035;--neon:#00d4ff;--neon2:#0099cc;--glow:rgba(0,212,255,0.18);--green:#00ff88;--green2:#00cc66;--red:#ff3b5c;--red2:#cc2244;--gold:#ffd700;--orange:#ff6b35;--purple:#a855f7;--text:#e0f0ff;--muted:#6a8caa;--border:rgba(0,212,255,0.14);--border2:rgba(0,212,255,0.07);--glass:rgba(0,212,255,0.04);}
@@ -716,11 +716,33 @@ window.createPoll=async function(){
   const n=document.getElementById('cp-n').value.trim(),f=parseInt(document.getElementById('cp-f').value),p=parseInt(document.getElementById('cp-p').value);
   const e=document.getElementById('cp-err');
   if(!n||!f||!p){e.textContent='Name, Fee, Prize required';return;}
+  e.textContent='Creating...';
   try{
-    await db.collection('polls').add({name:n,fee:f,prize:p,maxUsers:parseInt(document.getElementById('cp-m').value)||200,status:document.getElementById('cp-s').value,description:document.getElementById('cp-d').value.trim(),matchDate:document.getElementById('cp-dt').value,users:0,questions:[],createdAt:FS.serverTimestamp()});
-    cm('m-cp');['cp-n','cp-f','cp-p','cp-d'].forEach(function(id){document.getElementById(id).value='';});
-    toast('✅ Poll created!','var(--green)');loadPolls();loadDash();
-  }catch(err){e.textContent=err.message;}
+    const docRef=await db.collection('polls').add({
+      name:n,
+      fee:f,
+      prize:p,
+      maxUsers:parseInt(document.getElementById('cp-m').value)||200,
+      status:document.getElementById('cp-s').value||'active',
+      description:document.getElementById('cp-d').value.trim(),
+      matchDate:document.getElementById('cp-dt').value,
+      users:0,
+      joined:0,
+      questions:[],
+      createdAt:FS.serverTimestamp()
+    });
+    console.log('[Admin] Poll created:', docRef.id);
+    cm('m-cp');
+    ['cp-n','cp-f','cp-p','cp-d'].forEach(function(id){document.getElementById(id).value='';});
+    e.textContent='';
+    toast('✅ Poll created! ID: '+docRef.id,'var(--green)');
+    loadPolls();
+    loadDash();
+  }catch(err){
+    console.error('[Admin] createPoll error:', err);
+    e.textContent='Error: '+err.message+' (code: '+err.code+')';
+    toast('❌ '+err.message,'var(--red)');
+  }
 };
 window.openEP=function(id){
   const p=allPolls.find(function(x){return x.id===id;});if(!p)return;

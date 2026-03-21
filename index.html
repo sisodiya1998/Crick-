@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Smart 11 - Cricket Prediction</title>
+<title>Smart 11 - Cricket Prediction v3.1</title>
 <!-- PWA manifest injected via JS -->
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Exo+2:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
 
@@ -1311,6 +1311,8 @@ function listenBQ(){
     var bb=document.getElementById('bq-badge');
     if(count>0){bb.textContent=count;bb.style.display='block';}
     else bb.style.display='none';
+  },function(err){
+    console.warn('[BQ] snapshot error:',err.code);
   });
 }
 
@@ -1385,6 +1387,8 @@ function listenSQ(){
       var ans=UD&&UD.sqa&&UD.sqa[d.id]!==undefined?UD.sqa[d.id]:undefined;
       el.innerHTML+=mkSQ(d.id,q,ans);
     });
+  },function(err){
+    console.warn('[SQ] snapshot error:',err.code);
   });
 }
 
