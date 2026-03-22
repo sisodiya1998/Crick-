@@ -426,6 +426,32 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   </div>
 
 
+  <!-- MY CONTESTS PAGE -->
+  <div class="page" id="page-mycontests">
+    <div class="sh"><h3>🏆 Mere Contests</h3></div>
+    <div id="my-contests-list">
+      <div class="empty"><div class="ei">🏏</div><p>Abhi koi contest join nahi kiya</p></div>
+    </div>
+  </div>
+
+  <!-- POLL DETAIL PAGE -->
+  <div class="page" id="page-polldetail">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+      <button onclick="goPage('mycontests')" style="background:none;border:none;color:var(--neon);font-size:20px;cursor:pointer">&#x2190;</button>
+      <h2 id="pd-title" style="font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700"></h2>
+    </div>
+    <!-- Poll Stats -->
+    <div id="pd-stats" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px"></div>
+    <!-- Tabs -->
+    <div style="display:flex;gap:0;background:var(--bg2);border-radius:9px;padding:3px;margin-bottom:14px">
+      <button id="pd-tab-lb" onclick="pdTab('lb')" style="flex:1;padding:8px;border:none;border-radius:7px;background:linear-gradient(135deg,var(--neon2),var(--neon));color:#000;font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;cursor:pointer">🏅 Leaderboard</button>
+      <button id="pd-tab-my" onclick="pdTab('my')" style="flex:1;padding:8px;border:none;background:transparent;color:var(--muted);font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;cursor:pointer">⭐ Mere Points</button>
+      <button id="pd-tab-prize" onclick="pdTab('prize')" style="flex:1;padding:8px;border:none;background:transparent;color:var(--muted);font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;cursor:pointer">🏆 Prize</button>
+    </div>
+    <!-- Tab content -->
+    <div id="pd-tab-content"></div>
+  </div>
+
   <!-- BOTTOM NAVIGATION -->
   <div id="botnav">
     <button class="bn on" id="bn-home" onclick="goPage('home')"><div class="bi">🏠</div>Home</button>
@@ -433,6 +459,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     <button class="bn" id="bn-lb" onclick="goPage('lb')"><div class="bi">🏅</div>Rank</button>
     <button class="bn" id="bn-points" onclick="goPage('points')"><div class="bi">⭐</div>Points</button>
     <button class="bn" id="bn-wallet" onclick="goPage('wallet')"><div class="bi">💰</div>Wallet</button>
+    <button class="bn" id="bn-mycontests" onclick="goPage('mycontests')"><div class="bi">🏆</div>Contests<span class="bn-badge" id="mc-badge" style="display:none">!</span></button>
     <button class="bn" id="bn-profile" onclick="goPage('profile')"><div class="bi">👤</div>Profile</button>
   </div>
 </div>
@@ -444,7 +471,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
   <div class="modal">
     <h3 id="quiz-title">📝 Pre-Match Quiz</h3>
     <div class="qp-bar"><div class="qp-fill" id="qpf" style="width:0%"></div></div>
-    <div class="qp-num" id="qpn">0/10</div>
+    <div class="qp-num" id="qpn">0/11</div>
     <div id="quiz-body"></div>
     <div id="quiz-done" style="display:none">
       <div class="quiz-done">
@@ -1043,6 +1070,229 @@ window._real_ansSQ=async function(qid,i,pts){
 };
 
 // ============================================================
+// MY CONTESTS - Joined polls list
+// ============================================================
+async function loadMyContests(){
+  var el=document.getElementById('my-contests-list');
+  if(!el)return;
+  try{
+    // Get user's joinedPolls from user doc
+    var ud=await db.collection('users').doc(CU.uid).get();
+    if(!ud.exists){el.innerHTML='<div class="empty"><div class="ei">🏏</div><p>Koi contest join nahi kiya</p></div>';return;}
+    var joinedPolls=ud.data().joinedPolls||{};
+    var pollIds=Object.keys(joinedPolls);
+    
+    if(pollIds.length===0){
+      el.innerHTML='<div class="empty"><div class="ei">🏏</div><p>Abhi koi contest join nahi kiya</p><p style="font-size:10px;color:var(--muted);margin-top:5px">Home se contests join karo!</p></div>';
+      // Update badge
+      var badge=document.getElementById('mc-badge');
+      if(badge)badge.style.display='none';
+      return;
+    }
+    
+    // Update badge count
+    var badge=document.getElementById('mc-badge');
+    if(badge){badge.textContent=pollIds.length;badge.style.display='inline';}
+    
+    el.innerHTML='';
+    // Load each poll details
+    for(var pid of pollIds){
+      var pollData=joinedPolls[pid];
+      var myPts=pollData.points||0;
+      var fee=pollData.fee||0;
+      var pollName=pollData.pollName||'Contest';
+      
+      // Get poll doc for current info
+      try{
+        var pDoc=await db.collection('polls').doc(pid).get();
+        var p=pDoc.exists?pDoc.data():{};
+        var joined=p.joined||p.users||0;
+        var maxUsers=p.maxUsers||100;
+        var appCut=p.appCutPct||40;
+        var currentPrize=Math.floor(fee*joined*(1-appCut/100));
+        var maxPrize=Math.floor(fee*maxUsers*(1-appCut/100));
+        var status=p.status||'active';
+        
+        // Get my rank
+        var myRank='--';
+        try{
+          var entries=await db.collection('polls').doc(pid).collection('entries').orderBy('points','desc').get();
+          var rank=1;
+          entries.forEach(function(d){
+            if(d.data().uid===CU.uid)myRank=rank;
+            rank++;
+          });
+        }catch(e){}
+        
+        el.innerHTML+='<div class="pc" style="cursor:pointer" onclick="openPollDetail(''+pid+'',''+pollName.replace(/'/g,'')+'')">'
+          +'<div class="pc-h">'
+          +'<span class="pc-name">🏏 '+pollName+'</span>'
+          +'<span class="bdg b-'+(status==='active'?'act':'rej')+'">'+status+'</span>'
+          +'</div>'
+          +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px">'
+          +'<div style="background:rgba(168,85,247,0.08);border:1px solid rgba(168,85,247,0.2);border-radius:7px;padding:7px;text-align:center">'
+          +'<div style="font-size:9px;color:var(--muted)">Mere Points</div>'
+          +'<div style="font-family:Rajdhani,sans-serif;font-size:18px;font-weight:700;color:var(--purple)">'+myPts+'</div>'
+          +'</div>'
+          +'<div style="background:rgba(0,212,255,0.06);border:1px solid rgba(0,212,255,0.15);border-radius:7px;padding:7px;text-align:center">'
+          +'<div style="font-size:9px;color:var(--muted)">Meri Rank</div>'
+          +'<div style="font-family:Rajdhani,sans-serif;font-size:18px;font-weight:700;color:var(--neon)">#'+myRank+'</div>'
+          +'</div>'
+          +'<div style="background:rgba(255,215,0,0.06);border:1px solid rgba(255,215,0,0.15);border-radius:7px;padding:7px;text-align:center">'
+          +'<div style="font-size:9px;color:var(--muted)">Prize Pool</div>'
+          +'<div style="font-family:Rajdhani,sans-serif;font-size:14px;font-weight:700;color:var(--gold)">&#x20B9;'+currentPrize.toLocaleString('en-IN')+'</div>'
+          +'</div>'
+          +'</div>'
+          +'<div style="font-size:9px;color:var(--muted)">&#x1F4C5; Joined | &#x1F4B0; Entry: &#x20B9;'+fee+' | 👥 '+joined+'/'+maxUsers+' players</div>'
+          +'<div style="font-size:9px;color:var(--neon);margin-top:4px">Tap for details &rarr;</div>'
+          +'</div>';
+      }catch(e){
+        el.innerHTML+='<div class="pc"><div class="pc-name">🏏 '+pollName+'</div><div style="font-size:10px;color:var(--muted)">Loading...</div></div>';
+      }
+    }
+  }catch(e){console.error('loadMyContests',e);}
+}
+
+// ============================================================
+// POLL DETAIL PAGE
+// ============================================================
+var _curPollId=null;
+
+window.openPollDetail=function(pid,pname){
+  _curPollId=pid;
+  document.getElementById('pd-title').textContent=pname;
+  goPage('polldetail');
+  pdTab('lb');
+};
+
+window.pdTab=function(tab){
+  // Update tab buttons
+  ['lb','my','prize'].forEach(function(t){
+    var btn=document.getElementById('pd-tab-'+t);
+    if(btn){
+      if(t===tab){
+        btn.style.background='linear-gradient(135deg,var(--neon2),var(--neon))';
+        btn.style.color='#000';
+      }else{
+        btn.style.background='transparent';
+        btn.style.color='var(--muted)';
+      }
+    }
+  });
+  
+  var el=document.getElementById('pd-tab-content');
+  el.innerHTML='<div class="empty"><div class="ei">⏳</div><div class="ld"><span></span><span></span><span></span></div></div>';
+  
+  if(tab==='lb') loadPollLeaderboard(_curPollId);
+  else if(tab==='my') loadMyPollPoints(_curPollId);
+  else if(tab==='prize') loadPollPrize(_curPollId);
+};
+
+async function loadPollLeaderboard(pid){
+  var el=document.getElementById('pd-tab-content');
+  try{
+    var entries=await db.collection('polls').doc(pid).collection('entries').orderBy('points','desc').limit(20).get();
+    if(entries.empty){el.innerHTML='<div class="empty"><div class="ei">🏅</div><p>Koi entry nahi abhi</p></div>';return;}
+    el.innerHTML='';
+    var rank=1;
+    entries.forEach(function(d){
+      var e=d.data();
+      var isMe=e.uid===CU.uid;
+      var medal=rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':'#'+rank;
+      el.innerHTML+='<div class="lb-item '+(isMe?'me':'')+'" style="'+(isMe?'border-color:var(--neon);background:rgba(0,212,255,0.06)':'')+'">'
+        +'<div class="lb-r '+(rank<=3?'r'+rank:'')+'">'+medal+'</div>'
+        +'<div class="lb-av">'+(e.name||'U').charAt(0).toUpperCase()+'</div>'
+        +'<div class="lb-info">'
+        +'<div class="lb-name">'+(e.name||'User')+(isMe?' <span style="font-size:9px;color:var(--neon)">(Aap)</span>':'')+'</div>'
+        +'<div class="lb-sub">Poll Points</div>'
+        +'</div>'
+        +'<div class="lb-pts">'+(e.points||0)+'<div style="font-size:9px;color:var(--muted)">pts</div></div>'
+        +'</div>';
+      rank++;
+    });
+  }catch(e){el.innerHTML='<p style="color:var(--red);font-size:11px;padding:10px">Error: '+e.message+'</p>';}
+}
+
+async function loadMyPollPoints(pid){
+  var el=document.getElementById('pd-tab-content');
+  try{
+    var ud=await db.collection('users').doc(CU.uid).get();
+    var jp=ud.data()&&ud.data().joinedPolls&&ud.data().joinedPolls[pid]?ud.data().joinedPolls[pid]:{};
+    
+    var totalPts=jp.points||0;
+    var pmPts=jp.pmPoints||0;
+    var bqPts=jp.bqPoints||0;
+    var iqPts=jp.iqPoints||0;
+    var sqPts=jp.sqPoints||0;
+    
+    el.innerHTML='<div style="background:linear-gradient(135deg,rgba(168,85,247,0.12),rgba(0,212,255,0.08));border:1px solid rgba(168,85,247,0.25);border-radius:16px;padding:20px;text-align:center;margin-bottom:14px">'
+      +'<div style="font-size:10px;color:var(--muted);letter-spacing:2px">IS POLL MEIN MERE POINTS</div>'
+      +'<div style="font-family:Rajdhani,sans-serif;font-size:52px;font-weight:700;color:var(--purple);line-height:1">'+totalPts+'</div>'
+      +'<div style="font-size:10px;color:var(--muted)">Poll Points</div>'
+      +'</div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'
+      +'<div style="background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:10px;text-align:center"><div style="font-family:Rajdhani,sans-serif;font-size:20px;color:var(--neon)">'+pmPts+'</div><div style="font-size:9px;color:var(--muted)">Pre-Match Qs</div></div>'
+      +'<div style="background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:10px;text-align:center"><div style="font-family:Rajdhani,sans-serif;font-size:20px;color:var(--green)">'+bqPts+'</div><div style="font-size:9px;color:var(--muted)">Bonus Qs</div></div>'
+      +'<div style="background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:10px;text-align:center"><div style="font-family:Rajdhani,sans-serif;font-size:20px;color:var(--gold)">'+sqPts+'</div><div style="font-size:9px;color:var(--muted)">Score Qs</div></div>'
+      +'<div style="background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:10px;text-align:center"><div style="font-family:Rajdhani,sans-serif;font-size:20px;color:var(--red)">'+iqPts+'</div><div style="font-size:9px;color:var(--muted)">Instant Qs</div></div>'
+      +'</div>';
+  }catch(e){el.innerHTML='<p style="color:var(--red);font-size:11px;padding:10px">Error: '+e.message+'</p>';}
+}
+
+async function loadPollPrize(pid){
+  var el=document.getElementById('pd-tab-content');
+  try{
+    var pDoc=await db.collection('polls').doc(pid).get();
+    if(!pDoc.exists){el.innerHTML='<p style="color:var(--muted)">Poll not found</p>';return;}
+    var p=pDoc.data();
+    var fee=p.fee||0;
+    var joined=p.joined||0;
+    var maxUsers=p.maxUsers||100;
+    var appCut=p.appCutPct||40;
+    var currentPrize=Math.floor(fee*joined*(1-appCut/100));
+    var maxPrize=Math.floor(fee*maxUsers*(1-appCut/100));
+    
+    // Prize breakdown
+    function breakdown(pool){
+      var r=[];
+      r.push(Math.floor(pool*0.50));
+      r.push(Math.floor(pool*0.30));
+      r.push(Math.floor(pool*0.10));
+      var rem=pool-r[0]-r[1]-r[2];
+      var each=Math.floor(rem/7);
+      for(var j=0;j<7;j++)r.push(each);
+      return r;
+    }
+    
+    var bd=breakdown(currentPrize);
+    var medals=['🥇','🥈','🥉','4th','5th','6th','7th','8th','9th','10th'];
+    
+    el.innerHTML='<div style="background:linear-gradient(135deg,rgba(255,215,0,0.08),rgba(255,107,53,0.05));border:1px solid rgba(255,215,0,0.3);border-radius:12px;padding:14px;margin-bottom:12px">'
+      +'<div style="display:flex;justify-content:space-between;margin-bottom:4px">'
+      +'<span style="font-size:11px;color:var(--muted)">Max Prize Pool</span>'
+      +'<span style="font-family:Rajdhani,sans-serif;font-size:22px;font-weight:700;color:var(--gold)">&#x20B9;'+maxPrize.toLocaleString('en-IN')+'</span>'
+      +'</div>'
+      +'<div style="display:flex;justify-content:space-between">'
+      +'<span style="font-size:10px;color:var(--muted)">Current ('+joined+' players)</span>'
+      +'<span style="font-size:14px;font-weight:700;color:var(--green)">&#x20B9;'+currentPrize.toLocaleString('en-IN')+'</span>'
+      +'</div>'
+      +'</div>'
+      +'<div style="font-size:10px;color:var(--muted);margin-bottom:8px;font-weight:700">PRIZE DISTRIBUTION:</div>';
+    
+    bd.forEach(function(amt,i){
+      if(amt<=0||i>=10)return;
+      el.innerHTML+='<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:9px;margin-bottom:6px">'
+        +'<div style="display:flex;align-items:center;gap:8px">'
+        +'<span style="font-size:16px">'+medals[i]+'</span>'
+        +'<span style="font-size:12px;font-weight:600">'+(i===0?'1st':i===1?'2nd':i===2?'3rd':(i+1)+'th')+' Place</span>'
+        +'</div>'
+        +'<span style="font-family:Rajdhani,sans-serif;font-size:18px;font-weight:700;color:var(--gold)">&#x20B9;'+amt.toLocaleString('en-IN')+'</span>'
+        +'</div>';
+    });
+  }catch(e){el.innerHTML='<p style="color:var(--red);font-size:11px;padding:10px">Error: '+e.message+'</p>';}
+}
+
+// ============================================================
 // LEADERBOARD
 // ============================================================
 async function loadLB(elId,lim){
@@ -1450,13 +1700,15 @@ function mkPC(id, p){
     +'<div class="pc-stats"><span>👥 <b>'+joined+'</b> Joined</span><span>🎯 <b>'+maxUsers+'</b> Max</span><span>📊 <b>'+fillPct+'%</b> Full</span></div>'
     +'<div class="prog"><div class="prog-f" style="width:'+pct+'%;background:'+barColor+'"></div></div>'
     +prizeHtml
-    +'<div class="pc-ptag">📝 Answer 10 questions → Pay fee → Win prizes!</div>'
-    +'<button class="btn-j" onclick="startQuiz(\''+id+'\',\''+( p.name||'Contest').replace(/'/g,"\\'")+'\','+fee+','+prizePool+')">📝 Quiz &amp; Join →</button>'
+    +'<div class="pc-ptag">📝 Answer 11 questions → Pay fee → Win prizes!</div>'
+    +(UD&&UD.joinedPolls&&UD.joinedPolls[id]
+    ?'<button class="btn-j" style="background:linear-gradient(135deg,#006600,var(--green))" onclick="openPollDetail(\''+id+'\',\''+encodeURIComponent(p.name||'Contest')+'\')">✅ Joined — Details Dekho →</button>'
+    :'<button class="btn-j" onclick="startQuiz(\''+id+'\',\''+( p.name||'Contest').replace(/\'/g,"\\'")+'\'\','+fee+','+prizePool+')">📝 Quiz & Join →</button>')
     +'</div>';
 }
 
 // ============================================================
-// PRE-MATCH QUIZ — 10 questions, progress bar, no retake
+// PRE-MATCH QUIZ — 11 questions, progress bar, no retake
 // ============================================================
 var QD={};
 window._real_startQuiz=async function(pid,pname,fee,prize){
@@ -1586,7 +1838,15 @@ function openJoinDlg(){
 
 window._real_confirmJoin=async function(){
   if(!SP||!CU)return;
-  if(WL()<SP.fee){document.getElementById('j-err').textContent='Insufficient balance! Need ₹'+SP.fee;return;}
+  var bal=WL();
+  var fee=SP.fee;
+  if(bal<fee){
+    var need=fee-bal;
+    document.getElementById('j-err').innerHTML='<span style="color:var(--red)">&#x274C; Balance kam hai!</span><br>'
+      +'<span style="font-size:10px">Aapke paas: <b style="color:var(--gold)">&#x20B9;'+bal.toFixed(0)+'</b> | Chahiye: <b style="color:var(--neon)">&#x20B9;'+fee+'</b></span><br>'
+      +'<span style="font-size:10px;color:var(--orange)">&#x20B9;'+need+' aur chahiye — Wallet mein add karo!</span>';
+    return;
+  }
   try{
     await db.collection('users').doc(CU.uid).update({
       wallet:firebase.firestore.FieldValue.increment(-SP.fee),
@@ -1806,7 +2066,7 @@ window._real_sendMsg=async function(){
     if(lower.includes('point')&&lower.includes('how'))reply='⭐ Points: Pre-match Q=10pts, Bonus Q=5pts, Live timer=1pt/5min, Score Q=5-20pts';
     else if(lower.includes('deposit')||lower.includes('add money'))reply='💳 Pay via UPI: rishabhsisodiya1998@ybl (Min ₹500). Enter UTR after payment.';
     else if(lower.includes('withdraw'))reply='💸 Withdrawals processed within 24h. Min ₹100.';
-    else if(lower.includes('contest')||lower.includes('pool'))reply='🏆 Answer 10 pre-match questions → Pay entry fee → Win prizes!';
+    else if(lower.includes('contest')||lower.includes('pool'))reply='🏆 Answer 11 pre-match questions → Pay entry fee → Win prizes!';
     else if(lower.includes('result')||lower.includes('answer'))reply='📋 All results settled by admin after match ends.';
     else if(lower.includes('bonus'))reply='🎁 Daily bonus: ₹10/day. Live bonus: +1 pt every 5 min during match!';
     if(reply){
@@ -1857,6 +2117,7 @@ window._real_goPage=function(pg){
   if(pg==='wallet')loadTxns();
   if(pg==='lb')loadLB('lb-full',20);
   if(pg==='points')loadPH();
+  if(pg==='mycontests')loadMyContests();
 };
 
 window._real_om=function(id){
