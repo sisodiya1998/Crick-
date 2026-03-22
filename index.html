@@ -1446,21 +1446,44 @@ function updateUI(){
 // ============================================================
 // AWARD POINTS
 // ============================================================
-async function awardPts(pts,type,title){
+async function awardPts(pts,type,title,pollId){
   if(!CU||!pts)return;
   try{
+    // Update global user points
     var upd={points:firebase.firestore.FieldValue.increment(pts)};
     upd['pb.'+type]=firebase.firestore.FieldValue.increment(pts);
     await db.collection('users').doc(CU.uid).update(upd);
+
+    // Also update poll leaderboard if pollId given
+    if(pollId&&UD&&UD.joinedPolls&&UD.joinedPolls[pollId]){
+      var pollUpd={};
+      pollUpd['joinedPolls.'+pollId+'.points']=firebase.firestore.FieldValue.increment(pts);
+      pollUpd['joinedPolls.'+pollId+'.lvPoints']=firebase.firestore.FieldValue.increment(pts);
+      await db.collection('users').doc(CU.uid).update(pollUpd);
+      // Update poll entry too
+      try{
+        var pollEntries=await db.collection('polls').doc(pollId).collection('entries').where('uid','==',CU.uid).get();
+        if(!pollEntries.empty){
+          await pollEntries.docs[0].ref.update({
+            points:firebase.firestore.FieldValue.increment(pts),
+            lvPoints:firebase.firestore.FieldValue.increment(pts)
+          });
+        }
+      }catch(pe){}
+    }
+
+    // Points history
     await db.collection('users').doc(CU.uid).collection('ph').add({
       type:type,title:title,pts:pts,
       createdAt:firebase.firestore.FieldValue.serverTimestamp()
     });
+
+    // Update local state
     UD.points=(UD.points||0)+pts;
     if(!UD.pb)UD.pb={};
     UD.pb[type]=(UD.pb[type]||0)+pts;
     updateUI();
-    toast('⭐ +'+pts+' pts! '+title,'var(--purple)');
+    toast('&#x2B50; +'+pts+' pts! '+title,'var(--purple)');
   }catch(e){console.error('awardPts',e);}
 }
 
@@ -1525,7 +1548,9 @@ async function checkLB(){
       var last=parseInt(localStorage.getItem(key)||'0');
       if(Date.now()-last>=5*60*1000){
         localStorage.setItem(key,Date.now()+'');
-        await awardPts(1,'lv','⚡ Live Bonus (5 min)');
+        // Award to global points AND active poll leaderboard
+        var activePollId=d.pollId||null;
+        await awardPts(1,'lv','&#x26A1; Live Bonus (5 min)',activePollId);
       }
       renderLBActive(en,d.matchName||'Live Match');
     }else if(now<st){
