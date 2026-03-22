@@ -246,6 +246,18 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .chat-input-row input{flex:1;padding:8px 10px;background:rgba(0,212,255,0.05);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Exo 2',sans-serif;font-size:12px;outline:none;}
 .chat-send{padding:8px 12px;background:linear-gradient(135deg,var(--neon2),var(--neon));border:none;border-radius:8px;color:#000;font-size:14px;cursor:pointer;font-weight:700;}
 .chat-typing{font-size:11px;color:var(--muted);padding:0 12px 8px;display:none;}
+/* ============================================================
+   AD SLOTS — Responsive ad placement areas
+   Replace the placeholder divs with your ad code
+   ============================================================ */
+.ad-slot{width:100%;overflow:hidden;text-align:center;background:transparent;}
+.ad-slot-banner{min-height:50px;margin:8px 0;}
+.ad-slot-rect{min-height:100px;margin:10px 0;}
+.ad-slot-sticky{position:fixed;bottom:62px;left:0;right:0;z-index:120;text-align:center;background:rgba(5,10,20,0.95);backdrop-filter:blur(6px);border-top:1px solid rgba(0,212,255,0.1);padding:4px 0;}
+.ad-slot-sticky.hidden{display:none;}
+.ad-placeholder{display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.02);border:1px dashed rgba(255,255,255,0.08);border-radius:8px;color:rgba(255,255,255,0.15);font-size:9px;letter-spacing:1px;text-transform:uppercase;}
+.ad-close-btn{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:4px;line-height:1;}
+
 /* INSTALL BTN */
 #inst-btn{display:none;position:fixed;bottom:82px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#006600,var(--green));color:#000;border:none;border-radius:20px;padding:10px 22px;font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;cursor:pointer;z-index:150;white-space:nowrap;letter-spacing:1px;box-shadow:0 4px 20px rgba(0,255,136,0.4);animation:installPulse 2s infinite;}
 @keyframes installPulse{0%,100%{box-shadow:0 4px 20px rgba(0,255,136,0.4);}50%{box-shadow:0 4px 30px rgba(0,255,136,0.8);}}
@@ -342,11 +354,27 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
       <span class="tag">🏆 Knowledge + Points = Prizes!</span>
     </div>
 
+    <!-- AD SLOT 1: Top Banner (320x50 or 320x100) -->
+    <!-- Paste your Google AdSense / Facebook Audience Network code here -->
+    <div class="ad-slot ad-slot-banner" id="ad-top">
+      <!-- YOUR AD CODE HERE - Example:
+      <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+      <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-XXXXXXX" data-ad-slot="XXXXXXX" data-ad-format="auto"></ins>
+      <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+      -->
+    </div>
+
     <!-- Daily Bonus Section -->
     <div id="daily-bonus-ui"></div>
 
     <!-- Live Bonus Section -->
     <div id="live-bonus-ui"></div>
+
+    <!-- AD SLOT 2: Rectangle Banner (300x250) -->
+    <!-- Paste your ad code here -->
+    <div class="ad-slot ad-slot-rect" id="ad-mid">
+      <!-- YOUR AD CODE HERE -->
+    </div>
 
     <div class="sh"><h3>🏆 Live Contests</h3><span class="live-dot">● LIVE</span></div>
     <div id="pools-list"><div class="empty"><div class="ei">⏳</div><div class="ld"><span></span><span></span><span></span></div></div></div>
@@ -450,6 +478,17 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
     </div>
     <!-- Tab content -->
     <div id="pd-tab-content"></div>
+  </div>
+
+  <!-- AD SLOT 3: Sticky Bottom Banner (320x50) -->
+  <!-- This sits just above the bottom navigation -->
+  <div class="ad-slot ad-slot-sticky" id="ad-sticky">
+    <button class="ad-close-btn" onclick="document.getElementById('ad-sticky').classList.add('hidden')" title="Close">&#x00D7;</button>
+    <!-- YOUR AD CODE HERE - Example:
+    <ins class="adsbygoogle" style="display:inline-block;width:320px;height:50px" data-ad-client="ca-pub-XXXXXXX" data-ad-slot="XXXXXXX"></ins>
+    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+    -->
+    <div class="ad-placeholder" style="height:50px;margin:0 30px;">Advertisement</div>
   </div>
 
   <!-- BOTTOM NAVIGATION -->
