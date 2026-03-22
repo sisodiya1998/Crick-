@@ -251,7 +251,12 @@ tbody tr:last-child td{border-bottom:none;}
 
       <!-- POLLS -->
       <div class="sec" id="sec-polls">
-        <div class="ph"><div class="ph-l"><h1>🏏 Poll Manager</h1><p>Create, edit, delete polls — only admin controls this</p></div><button class="btn bp" onclick="om('m-cp')">➕ New Poll</button></div>
+        <div class="ph"><div class="ph-l"><h1>🏏 Poll Manager</h1><p>Create, edit, delete polls — only admin controls this</p></div>
+          <div style="display:flex;gap:7px">
+            <button class="btn bp" onclick="om('m-cp')">➕ New Poll</button>
+            <button class="btn bs" onclick="om('m-sendnotif')">&#x1F514; Notify Users</button>
+          </div>
+        </div>
         <div class="alert ai">ℹ️ Polls are shown to users ONLY when created here. Each poll has its own leaderboard, points, and questions.</div>
         <div class="sb2"><input class="si" id="pool-srch" placeholder="🔍 Search polls..." oninput="filterPolls()"/><select class="sf2" id="pool-flt" onchange="filterPolls()"><option value="all">All</option><option value="active">Active</option><option value="closed">Closed</option></select></div>
         <div id="polls-list">Loading...</div>
@@ -664,6 +669,37 @@ tbody tr:last-child td{border-bottom:none;}
   <div class="mfoot" style="margin-top:12px">
     <button class="btn bg2" onclick="cm('m-template')">Cancel</button>
     <button class="btn bs" onclick="saveTemplate()">💾 Save All Questions</button>
+  </div>
+</div></div>
+
+<!-- Send Notification Modal -->
+<div class="mov" id="m-sendnotif"><div class="modal" style="max-width:420px">
+  <h3>&#x1F514; Send Notification to All Users</h3>
+  <div class="alert ai" style="font-size:10px;margin-bottom:12px">Yeh in-app notification bhejega. Jinhe browser notifications allow hain unhe push notification bhi milega.</div>
+  <div class="fg">
+    <div class="fl fl-full">
+      <label>Notification Title *</label>
+      <input type="text" id="sn-title" placeholder="e.g. New Contest Live!" maxlength="50"/>
+    </div>
+    <div class="fl fl-full">
+      <label>Message *</label>
+      <textarea id="sn-body" placeholder="e.g. RCB vs KKR contest join karo! Entry: ₹500, Prize: ₹6,00,000" style="height:80px;resize:none"></textarea>
+    </div>
+    <div class="fl fl-full">
+      <label>Type</label>
+      <select id="sn-type">
+        <option value="contest">🏏 New Contest</option>
+        <option value="bonus">⭐ Bonus Question</option>
+        <option value="result">🏆 Result / Winner</option>
+        <option value="offer">🎁 Special Offer</option>
+        <option value="general">📢 General</option>
+      </select>
+    </div>
+  </div>
+  <div class="merr" id="sn-err"></div>
+  <div class="mfoot">
+    <button class="btn bg2" onclick="cm('m-sendnotif')">Cancel</button>
+    <button class="btn bp" onclick="sendNotifToAll()">&#x1F514; Send to All Users</button>
   </div>
 </div></div>
 
@@ -1315,6 +1351,42 @@ async function loadSettings(){
     document.getElementById('tog-wd').checked=d.withdrawals!==false;
   }catch(e){}
 }
+window.sendNotifToAll=async function(){
+  var title=document.getElementById('sn-title').value.trim();
+  var body=document.getElementById('sn-body').value.trim();
+  var type=document.getElementById('sn-type').value;
+  var e=document.getElementById('sn-err');
+  if(!title||!body){e.textContent='Title aur message dono required hain';return;}
+
+  e.textContent='Sending...';
+  try{
+    // Save notification to Firestore - users will see it when they open app
+    await db.collection('notifications').add({
+      title:title,
+      body:body,
+      type:type,
+      createdAt:FS.serverTimestamp(),
+      sentBy:'admin',
+      read:false
+    });
+
+    // Also update a "lastNotification" in settings for real-time detection
+    await db.collection('settings').doc('notification').set({
+      title:title,
+      body:body,
+      type:type,
+      createdAt:FS.serverTimestamp(),
+      id:Date.now()+''
+    });
+
+    cm('m-sendnotif');
+    document.getElementById('sn-title').value='';
+    document.getElementById('sn-body').value='';
+    e.textContent='';
+    toast('&#x2705; Notification sent to all users!','var(--green)');
+  }catch(err){e.textContent='Error: '+err.message;}
+};
+
 window.calcPreview=function(){
   var fee=parseInt(document.getElementById('s-prev-fee').value)||0;
   var players=parseInt(document.getElementById('s-prev-players').value)||0;
