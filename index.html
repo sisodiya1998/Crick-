@@ -626,6 +626,7 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 </script>
 
 <script>
+
 // ============================================================
 // FIREBASE CONFIG — No type=module, global scope
 // ============================================================
@@ -1639,73 +1640,64 @@ function mkPC(id, p){
   var joined=Number(p.joined||p.users||0);
   var appCut=typeof p.appCutPct==='number'?p.appCutPct:APP_CUT_PCT;
   var fillPct=maxUsers>0?Math.round((joined/maxUsers)*100):0;
-  var fillThresh=typeof p.fillThreshold==='number'?p.fillThreshold:FILL_THRESHOLD;
-  var prizePool=calcPrizePool(fee,joined,appCut);
-  // If fillThreshold is 0, always show prize (no lock)
-  var threshReached=(fillThresh===0)||fillPct>=fillThresh;
-  var breakdown=calcPrizeBreakdown(prizePool);
-  var medals=['🥇','🥈','🥉','4th','5th','6th','7th','8th','9th','10th'];
-  var distPcts=[50,30,10];for(var x=0;x<7;x++)distPcts.push(Math.floor(10/7));
-
-  // Prize pool display
-  // Current prize (based on joined players)
-  var currentPrize=calcPrizePool(fee,joined,appCut);
-  // Maximum prize (based on maxUsers)
   var maxPrize=calcPrizePool(fee,maxUsers,appCut);
-  var currentBreakdown=calcPrizeBreakdown(currentPrize);
+  var currentPrize=calcPrizePool(fee,joined,appCut);
   var maxBreakdown=calcPrizeBreakdown(maxPrize);
-  var medals=['🥇','🥈','🥉','4th','5th','6th','7th','8th','9th','10th'];
+  var medals=['&#x1F947;','&#x1F948;','&#x1F949;','4th','5th','6th','7th','8th','9th','10th'];
+  var pct=Math.min(100,fillPct);
+  var barColor='linear-gradient(90deg,var(--neon2),var(--neon))';
 
   var prizeHtml='';
-  // Main prize box - always show
   prizeHtml+='<div style="background:linear-gradient(135deg,rgba(255,215,0,0.08),rgba(255,107,53,0.05));border:1px solid rgba(255,215,0,0.3);border-radius:10px;padding:10px;margin-bottom:8px">';
-  
-  // Max prize (highlighted)
   prizeHtml+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">';
-  prizeHtml+='<span style="font-size:10px;color:var(--muted)">🏆 Max Prize Pool</span>';
-  prizeHtml+='<span style="font-family:Rajdhani,sans-serif;font-size:24px;font-weight:700;color:var(--gold)">₹'+maxPrize.toLocaleString('en-IN')+'</span>';
+  prizeHtml+='<span style="font-size:10px;color:var(--muted)">&#x1F3C6; Max Prize</span>';
+  prizeHtml+='<span style="font-family:Rajdhani,sans-serif;font-size:22px;font-weight:700;color:var(--gold)">&#x20B9;'+maxPrize.toLocaleString('en-IN')+'</span>';
   prizeHtml+='</div>';
-  
-  // Current prize (if players joined)
   if(joined>0){
-    prizeHtml+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
-    prizeHtml+='<span style="font-size:9px;color:var(--muted)">💰 Current ('+joined+' joined)</span>';
-    prizeHtml+='<span style="font-size:13px;font-weight:700;color:var(--green)">₹'+currentPrize.toLocaleString('en-IN')+'</span>';
+    prizeHtml+='<div style="display:flex;justify-content:space-between;margin-bottom:6px">';
+    prizeHtml+='<span style="font-size:9px;color:var(--muted)">Current ('+joined+' players)</span>';
+    prizeHtml+='<span style="font-size:13px;font-weight:700;color:var(--green)">&#x20B9;'+currentPrize.toLocaleString('en-IN')+'</span>';
     prizeHtml+='</div>';
   }
-  
-  // Progress bar showing how full pool is
-  var fillBar=Math.min(100,fillPct);
-  prizeHtml+='<div style="height:3px;background:rgba(255,255,255,0.08);border-radius:2px;margin-bottom:6px;overflow:hidden">';
-  prizeHtml+='<div style="width:'+fillBar+'%;height:100%;background:linear-gradient(90deg,var(--gold),var(--orange));border-radius:2px;transition:width 0.5s"></div>';
-  prizeHtml+='</div>';
-  
-  // Winners breakdown (based on max prize)
-  prizeHtml+='<div style="font-size:9px;color:var(--muted);margin-bottom:5px">Prize distribution ('+maxUsers+' players pe):</div>';
+  prizeHtml+='<div style="height:3px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden;margin-bottom:6px">';
+  prizeHtml+='<div style="width:'+pct+'%;height:100%;background:'+barColor+'"></div></div>';
   prizeHtml+='<div style="display:flex;flex-wrap:wrap;gap:3px">';
   for(var wi=0;wi<Math.min(10,maxUsers);wi++){
-    var wamt=maxBreakdown[wi]||0;
-    if(wamt<=0)break;
-    prizeHtml+='<span style="background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.2);border-radius:3px;padding:1px 5px;font-size:9px;color:var(--gold)">'+medals[wi]+' ₹'+wamt.toLocaleString('en-IN')+'</span>';
+    var wa=maxBreakdown[wi]||0;
+    if(wa<=0)break;
+    prizeHtml+='<span style="background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.2);border-radius:3px;padding:1px 5px;font-size:9px;color:var(--gold)">'+medals[wi]+' &#x20B9;'+wa.toLocaleString('en-IN')+'</span>';
   }
   prizeHtml+='</div>';
-  prizeHtml+='<div style="font-size:8px;color:var(--muted);margin-top:5px">⬆️ Jitne zyada players, utna bada prize!</div>';
+  prizeHtml+='<div style="font-size:8px;color:var(--muted);margin-top:4px">Jitne zyada players = bada prize!</div>';
   prizeHtml+='</div>';
-  var pct=Math.min(100,fillPct);
-  var barColor=fillPct>=fillThresh?'linear-gradient(90deg,var(--gold),var(--orange))':'linear-gradient(90deg,var(--neon2),var(--neon))';
 
-  return'<div class="pc">'
-    +'<div class="pc-h"><span class="pc-name">🏏 '+(p.name||'Contest')+'</span><span class="pc-fee">₹'+fee+'</span></div>'
-    +(p.description?'<div style="font-size:10px;color:var(--muted);margin-bottom:6px">'+p.description+'</div>':'')
-    +'<div class="pc-stats"><span>👥 <b>'+joined+'</b> Joined</span><span>🎯 <b>'+maxUsers+'</b> Max</span><span>📊 <b>'+fillPct+'%</b> Full</span></div>'
-    +'<div class="prog"><div class="prog-f" style="width:'+pct+'%;background:'+barColor+'"></div></div>'
-    +prizeHtml
-    +'<div class="pc-ptag">📝 Answer 11 questions → Pay fee → Win prizes!</div>'
-    +(UD&&UD.joinedPolls&&UD.joinedPolls[id]
-    ?'<button class="btn-j" style="background:linear-gradient(135deg,#006600,var(--green))" onclick="openPollDetail(\''+id+'\',\''+encodeURIComponent(p.name||'Contest')+'\')">✅ Joined — Details Dekho →</button>'
-    :'<button class="btn-j" onclick="startQuiz(\''+id+'\',\''+( p.name||'Contest').replace(/\'/g,"\\'")+'\'\','+fee+','+prizePool+')">📝 Quiz & Join →</button>')
-    +'</div>';
+  var alreadyJoined=UD&&UD.joinedPolls&&UD.joinedPolls[id];
+  var qReady=(p.questions||[]).length>=11;
+  var pnameEnc=encodeURIComponent(p.name||'Contest');
+
+  var html='<div class="pc">';
+  html+='<div class="pc-h"><span class="pc-name">&#x1F3CF; '+(p.name||'Contest')+'</span><span class="pc-fee">&#x20B9;'+fee+'</span></div>';
+  if(p.description)html+='<div style="font-size:10px;color:var(--muted);margin-bottom:6px">'+p.description+'</div>';
+  html+='<div class="pc-stats"><span>&#x1F465; <b>'+joined+'</b> Joined</span><span>&#x1F3AF; <b>'+maxUsers+'</b> Max</span><span>&#x1F4CA; <b>'+fillPct+'%</b> Full</span></div>';
+  html+='<div class="prog"><div class="prog-f" style="width:'+pct+'%;background:'+barColor+'"></div></div>';
+  html+=prizeHtml;
+  if(alreadyJoined){
+    html+='<div class="pc-ptag" style="background:rgba(0,255,136,0.1);border-color:rgba(0,255,136,0.3);color:var(--green)">&#x2705; Aap join hain!</div>';
+    html+='<button class="btn-j" style="background:linear-gradient(135deg,#006600,var(--green))" data-pid="'+id+'" data-pname="'+pnameEnc+'" onclick="pdClick(this)">&#x1F4CB; Details Dekho</button>';
+  }else if(!qReady){
+    html+='<div class="pc-ptag" style="background:rgba(255,107,53,0.1);border-color:rgba(255,107,53,0.3);color:var(--orange)">&#x23F3; Setup ho raha hai ('+(p.questions||[]).length+'/11)</div>';
+    html+='<button class="btn-j" disabled style="opacity:.5">&#x23F3; Coming Soon</button>';
+  }else{
+    html+='<div class="pc-ptag">&#x1F4DD; 11 Questions + Pay = Win!</div>';
+    html+='<button class="btn-j" data-pid="'+id+'" data-pname="'+pnameEnc+'" data-fee="'+fee+'" data-prize="'+maxPrize+'" onclick="sqClick(this)">&#x1F4DD; Quiz & Join</button>';
+  }
+  html+='</div>';
+  return html;
 }
+
+window.pdClick=function(b){openPollDetail(b.dataset.pid,decodeURIComponent(b.dataset.pname));};
+window.sqClick=function(b){startQuiz(b.dataset.pid,decodeURIComponent(b.dataset.pname),parseInt(b.dataset.fee),parseInt(b.dataset.prize));};
+
 
 // ============================================================
 // PRE-MATCH QUIZ — 11 questions, progress bar, no retake
@@ -2242,6 +2234,7 @@ if(window._drainQ)window._drainQ();
 document.addEventListener('DOMContentLoaded', function(){
   if(window._drainQ)window._drainQ();
 });
+
 
 </script>
 </body>
