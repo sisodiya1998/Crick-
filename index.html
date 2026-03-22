@@ -714,7 +714,6 @@ var _notifPopupTimeout = null;
 
 // Show in-app notification popup
 function showNotifPopup(title, body, action, actionLabel){
-  // Remove existing popup
   var old = document.getElementById('notif-popup-el');
   if(old) old.remove();
   if(_notifPopupTimeout) clearTimeout(_notifPopupTimeout);
@@ -722,20 +721,49 @@ function showNotifPopup(title, body, action, actionLabel){
   var popup = document.createElement('div');
   popup.className = 'notif-popup';
   popup.id = 'notif-popup-el';
-  popup.innerHTML = '<button class="notif-popup-close" onclick="this.parentElement.remove()">&#x00D7;</button>'
-    + '<div class="notif-popup-title">&#x1F514; ' + title + '</div>'
-    + '<div class="notif-popup-body">' + body + '</div>'
-    + '<div class="notif-popup-action">'
-    + (action ? '<button style="background:linear-gradient(135deg,var(--purple),var(--neon2));color:#fff" onclick="' + action + ';this.closest('.notif-popup').remove()">' + actionLabel + '</button>' : '')
-    + '<button style="background:var(--bg3);color:var(--muted)" onclick="this.closest('.notif-popup').remove()">Dismiss</button>'
-    + '</div>';
+
+  var closeBtn = document.createElement('button');
+  closeBtn.className = 'notif-popup-close';
+  closeBtn.innerHTML = '&#x00D7;';
+  closeBtn.onclick = function(){ popup.remove(); };
+
+  var titleEl = document.createElement('div');
+  titleEl.className = 'notif-popup-title';
+  titleEl.innerHTML = '&#x1F514; ' + title;
+
+  var bodyEl = document.createElement('div');
+  bodyEl.className = 'notif-popup-body';
+  bodyEl.innerHTML = body;
+
+  var actEl = document.createElement('div');
+  actEl.className = 'notif-popup-action';
+
+  if(action){
+    var actBtn = document.createElement('button');
+    actBtn.style.cssText = 'background:linear-gradient(135deg,var(--purple),var(--neon2));color:#fff';
+    actBtn.innerHTML = actionLabel || 'Open';
+    actBtn.onclick = function(){
+      try{ eval(action); }catch(e){}
+      popup.remove();
+    };
+    actEl.appendChild(actBtn);
+  }
+
+  var dimBtn = document.createElement('button');
+  dimBtn.style.cssText = 'background:var(--bg3);color:var(--muted)';
+  dimBtn.textContent = 'Dismiss';
+  dimBtn.onclick = function(){ popup.remove(); };
+  actEl.appendChild(dimBtn);
+
+  popup.appendChild(closeBtn);
+  popup.appendChild(titleEl);
+  popup.appendChild(bodyEl);
+  popup.appendChild(actEl);
   document.body.appendChild(popup);
 
-  // Show red dot on profile
   var dot = document.getElementById('notif-dot');
   if(dot) dot.style.display = 'block';
 
-  // Auto dismiss after 8 seconds
   _notifPopupTimeout = setTimeout(function(){
     var p = document.getElementById('notif-popup-el');
     if(p) p.remove();
