@@ -870,6 +870,178 @@ async function loadPH(){
   }catch(e){console.error('loadPH',e);}
 }
 
+
+// ============================================================
+// WALLET - DEPOSIT
+// ============================================================
+window._real_openDep=function(){
+  document.getElementById('d-amt').value='';
+  document.getElementById('d-utr').value='';
+  document.getElementById('d-err').textContent='';
+  document.getElementById('dep-modal').classList.add('open');
+};
+
+window._real_submitDep=async function(){
+  var amt=parseInt(document.getElementById('d-amt').value);
+  var utr=document.getElementById('d-utr').value.trim();
+  var e=document.getElementById('d-err');
+  if(!amt||amt<500){e.textContent='&#x26A0;&#xFE0F; Minimum deposit &#x20B9;500 hai!';return;}
+  if(!utr||utr.length<6){e.textContent='Valid UTR number daalo (min 6 digits)';return;}
+  try{
+    var ud=UD;
+    if(!ud){var snp=await db.collection('users').doc(CU.uid).get();if(snp.exists)ud=snp.data();}
+    await db.collection('depositRequests').add({
+      uid:sU(),name:String(ud&&ud.name?ud.name:sN()),email:sE(),
+      amount:Number(amt),utr:String(utr),status:'pending',
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    await db.collection('users').doc(CU.uid).collection('txns').add({
+      type:'credit',title:'&#x1F4B3; Deposit &#x20B9;'+amt+' (Pending)',
+      amount:Number(amt),status:'pending',
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    cacheClear('txns');
+    document.getElementById('dep-modal').classList.remove('open');
+    toast('&#x2705; Submitted! Admin 30 min mein verify karega.','var(--green)');
+  }catch(e2){document.getElementById('d-err').textContent=e2.message;}
+};
+
+// ============================================================
+// WALLET - WITHDRAW
+// ============================================================
+window._real_openWd=function(){
+  document.getElementById('w-amt').value='';
+  document.getElementById('w-upi').value='';
+  document.getElementById('w-err').textContent='';
+  document.getElementById('wd-modal').classList.add('open');
+};
+
+window._real_submitWd=async function(){
+  var amt=parseInt(document.getElementById('w-amt').value);
+  var upi=document.getElementById('w-upi').value.trim();
+  var e=document.getElementById('w-err');
+  if(!amt||amt<100){e.textContent='Minimum withdrawal &#x20B9;100 hai';return;}
+  if(WL()<amt){e.textContent='Insufficient balance! Aapke paas &#x20B9;'+WL().toFixed(0)+' hain';return;}
+  if(!upi){e.textContent='UPI ID daalo';return;}
+  try{
+    var ud=UD;
+    if(!ud){var snp=await db.collection('users').doc(CU.uid).get();if(snp.exists)ud=snp.data();}
+    await db.collection('withdrawRequests').add({
+      uid:sU(),name:String(ud&&ud.name?ud.name:sN()),email:sE(),
+      amount:Number(amt),upi:String(upi),status:'pending',
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    await db.collection('users').doc(CU.uid).update({
+      wallet:firebase.firestore.FieldValue.increment(-amt)
+    });
+    await db.collection('users').doc(CU.uid).collection('txns').add({
+      type:'debit',title:'&#x1F4B8; Withdrawal &#x20B9;'+amt+' (Pending)',
+      amount:Number(amt),status:'pending',
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    UD.wallet=(UD.wallet||0)-amt;
+    updateUI();
+    cacheClear('txns');
+    document.getElementById('wd-modal').classList.remove('open');
+    toast('&#x2705; Withdrawal request submit ho gaya!','var(--green)');
+  }catch(e2){document.getElementById('w-err').textContent=e2.message;}
+};
+
+// ============================================================
+// CHAT
+// ============================================================
+window._real_toggleChat=function(){
+  var w=document.getElementById('chat-window');
+  w.classList.toggle('open');
+  if(w.classList.contains('open')){
+    listenChat();
+    // Glow off
+    var cb=document.getElementById('chatbot-btn');
+    if(cb)cb.style.boxShadow='';
+  }else{
+    if(chatUnsub){chatUnsub();chatUnsub=null;}
+  }
+};
+
+function listenChat(){
+  if(chatUnsub)return;
+  var el=document.getElementById('chat-msgs');
+  chatUnsub=db.collection('chats').orderBy('createdAt','asc').limit(50).onSnapshot(function(s){
+    el.innerHTML='<div class="chat-msg admin">&#x1F44B; Hello! Main Smart 11 Support hoon. Kuch poochna ho?<div class="cm-time">Smart 11</div></div>';
+    var prevCount=0;
+    s.forEach(function(d){
+      var m=d.data();
+      var isAdmin=m.isAdmin;
+      var t=m.createdAt&&m.createdAt.toDate?m.createdAt.toDate().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}):'--';
+      el.innerHTML+='<div class="chat-msg '+(isAdmin?'admin':'user')+'">'
+        +(isAdmin?'<b style="font-size:10px;color:var(--neon)">Support</b><br>':'')+m.text
+        +'<div class="cm-time">'+(isAdmin?'Smart 11 &#xB7; ':((m.name||'Aap')+' &#xB7; '))+t+'</div></div>';
+    });
+    setTimeout(function(){el.scrollTop=el.scrollHeight;},50);
+  },function(err){console.warn('chat:',err.code);});
+}
+
+window._real_sendMsg=async function(){
+  var inp=document.getElementById('chat-inp');
+  var txt=(inp.value||'').trim();
+  if(!txt||!CU)return;
+  inp.value='';
+  try{
+    await db.collection('chats').add({
+      uid:sU(),name:sN(),text:txt,isAdmin:false,
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    // Auto reply check
+    var lower=txt.toLowerCase();
+    var reply='';
+    if(lower.includes('point')||lower.includes('pts'))reply='&#x2B50; Points: Pre-match Q=10pts, Bonus Q=5pts, Live=1pt/5min, Score Q=5-20pts';
+    else if(lower.includes('deposit')||lower.includes('add'))reply='&#x1F4B3; UPI pe pay karo: rishabhsisodiya1998@ybl (Min &#x20B9;500). UTR number submit karo.';
+    else if(lower.includes('withdraw'))reply='&#x1F4B8; Withdrawal 24h mein process hoti hai. Min &#x20B9;100.';
+    else if(lower.includes('join')||lower.includes('contest'))reply='&#x1F3C6; Quiz answer karo &#x2192; Entry fee pay karo &#x2192; Prizes jeeto!';
+    else if(lower.includes('hello')||lower.includes('hi')||lower.includes('help'))reply='&#x1F44B; Hello! Kya help chahiye? Points, deposits, withdrawals ya contests ke baare mein poochho!';
+    else if(lower.includes('result')||lower.includes('settle'))reply='&#x1F4CB; Results admin match ke baad settle karta hai.';
+    if(reply){
+      var ct=document.getElementById('chat-typing');
+      if(ct)ct.style.display='block';
+      setTimeout(async function(){
+        if(ct)ct.style.display='none';
+        try{
+          await db.collection('chats').add({
+            uid:'admin',name:'Smart 11 Bot',text:reply,isAdmin:true,
+            createdAt:firebase.firestore.FieldValue.serverTimestamp()
+          });
+        }catch(e){}
+      },1200);
+    }
+  }catch(e){console.error('sendMsg',e);}
+};
+
+// ============================================================
+// SCORE QUESTION ANSWER
+// ============================================================
+window.ansSQClick=function(btn){
+  var qid=btn.getAttribute('data-qid');
+  var idx=parseInt(btn.getAttribute('data-idx'));
+  var pts=parseInt(btn.getAttribute('data-pts'));
+  ansSQ(qid,idx,pts);
+};
+
+window._real_ansSQ=async function(qid,i,pts){
+  if(!CU||!UD)return;
+  if(UD.sqa&&UD.sqa[qid]!==undefined)return;
+  try{
+    var upd={};upd['sqa.'+qid]=i;
+    await db.collection('users').doc(CU.uid).update(upd);
+    await db.collection('pollQuestions').doc(qid).collection('entries').add({
+      uid:sU(),name:sN(),answer:i,potPts:pts,
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    if(!UD.sqa)UD.sqa={};
+    UD.sqa[qid]=i;
+    toast('&#x2705; Score prediction save! Match ke baad result!','var(--gold)');
+  }catch(e){toast('Error: '+e.message,'var(--red)');}
+};
+
 // ============================================================
 // LEADERBOARD
 // ============================================================
@@ -1710,8 +1882,12 @@ var dp=null;
 window.addEventListener('beforeinstallprompt',function(e){
   e.preventDefault();
   dp=e;
+  // Show floating install button
   var btn=document.getElementById('inst-btn');
   if(btn)btn.style.display='block';
+  // Show install button in profile too
+  var pw=document.getElementById('profile-install-wrap');
+  if(pw)pw.style.display='block';
 });
 
 // Hide install button after app is installed
