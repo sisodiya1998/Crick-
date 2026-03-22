@@ -1909,7 +1909,7 @@ function listenBQ(){
     var el=document.getElementById('bqs-list');
     var count=0;
     if(s.empty){
-      el.innerHTML='<div class="empty"><div class="ei">🎯</div><p>No bonus questions right now</p></div>';
+      el.innerHTML='<div class="empty"><div class="ei">&#x1F3AF;</div><p>No bonus questions right now</p></div>';
       document.getElementById('bq-badge').style.display='none';
       return;
     }
@@ -1925,6 +1925,26 @@ function listenBQ(){
     else bb.style.display='none';
   },function(err){
     console.warn('[BQ] snapshot error:',err.code);
+  });
+}
+
+function listenSQ(){
+  if(sqUnsub)sqUnsub();
+  sqUnsub=db.collection('pollQuestions').where('type','==','score').onSnapshot(function(s){
+    var el=document.getElementById('sqs-list');
+    if(!el)return;
+    if(s.empty){
+      el.innerHTML='<div class="empty"><div class="ei">&#x1F4CA;</div><p>No score questions yet</p></div>';
+      return;
+    }
+    el.innerHTML='';
+    s.forEach(function(d){
+      var q=d.data();
+      var ans=UD&&UD.sqa&&UD.sqa[d.id]!==undefined?UD.sqa[d.id]:undefined;
+      el.innerHTML+=mkSQ(d.id,q,ans);
+    });
+  },function(err){
+    console.warn('[SQ] snapshot error:',err.code);
   });
 }
 
