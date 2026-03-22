@@ -1272,21 +1272,9 @@ async function loadPollPrize(pid){
     var appCut=p.appCutPct||40;
     var currentPrize=Math.floor(fee*joined*(1-appCut/100));
     var maxPrize=Math.floor(fee*maxUsers*(1-appCut/100));
-    
-    // Prize breakdown
-    function breakdown(pool){
-      var r=[];
-      r.push(Math.floor(pool*0.50));
-      r.push(Math.floor(pool*0.30));
-      r.push(Math.floor(pool*0.10));
-      var rem=pool-r[0]-r[1]-r[2];
-      var each=Math.floor(rem/7);
-      for(var j=0;j<7;j++)r.push(each);
-      return r;
-    }
-    
-    var bd=breakdown(currentPrize);
-    var medals=['🥇','🥈','🥉','4th','5th','6th','7th','8th','9th','10th'];
+    var bd=calcPrizeBreakdown(maxPrize); // Show MAX prizes always
+    var medals=['&#x1F947;','&#x1F948;','&#x1F949;','4th','5th','6th','7th','8th','9th','10th'];
+    var placeNames=['1st Place','2nd Place','3rd Place','4th Place','5th Place','6th Place','7th Place','8th Place','9th Place','10th Place'];
     
     el.innerHTML='<div style="background:linear-gradient(135deg,rgba(255,215,0,0.08),rgba(255,107,53,0.05));border:1px solid rgba(255,215,0,0.3);border-radius:12px;padding:14px;margin-bottom:12px">'
       +'<div style="display:flex;justify-content:space-between;margin-bottom:4px">'
@@ -1300,16 +1288,37 @@ async function loadPollPrize(pid){
       +'</div>'
       +'<div style="font-size:10px;color:var(--muted);margin-bottom:8px;font-weight:700">PRIZE DISTRIBUTION:</div>';
     
+    // Header - Total Prize
+    el.innerHTML+='<div style="background:linear-gradient(135deg,rgba(255,215,0,0.1),rgba(255,107,53,0.05));border:1px solid rgba(255,215,0,0.4);border-radius:14px;padding:16px;text-align:center;margin-bottom:14px">'
+      +'<div style="font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase">Kul Prize Pool</div>'
+      +'<div style="font-family:Rajdhani,sans-serif;font-size:42px;font-weight:700;color:var(--gold);line-height:1.1">&#x20B9;'+maxPrize.toLocaleString('en-IN')+'</div>'
+      +'<div style="font-size:10px;color:var(--muted);margin-top:4px">'+maxUsers+' Players &times; &#x20B9;'+fee+' Entry Fee</div>'
+      +'</div>';
+
+    // Prize rows
+    var colors=['var(--gold)','#C0C0C0','#CD7F32','var(--neon)','var(--neon)','var(--neon)','var(--neon)','var(--neon)','var(--neon)','var(--neon)'];
+    var bgColors=['rgba(255,215,0,0.08)','rgba(192,192,192,0.06)','rgba(205,127,50,0.06)','rgba(0,212,255,0.04)','rgba(0,212,255,0.04)','rgba(0,212,255,0.04)','rgba(0,212,255,0.04)','rgba(0,212,255,0.04)','rgba(0,212,255,0.04)','rgba(0,212,255,0.04)'];
+    
     bd.forEach(function(amt,i){
       if(amt<=0||i>=10)return;
-      el.innerHTML+='<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:var(--bg3);border:1px solid var(--border);border-radius:9px;margin-bottom:6px">'
-        +'<div style="display:flex;align-items:center;gap:8px">'
-        +'<span style="font-size:16px">'+medals[i]+'</span>'
-        +'<span style="font-size:12px;font-weight:600">'+(i===0?'1st':i===1?'2nd':i===2?'3rd':(i+1)+'th')+' Place</span>'
+      var isTop3=i<3;
+      el.innerHTML+='<div style="display:flex;align-items:center;justify-content:space-between;padding:'+(isTop3?'14px':'10px')+' 14px;background:'+bgColors[i]+';border:1px solid rgba(255,255,255,0.07);border-radius:'+(isTop3?'12px':'9px')+';margin-bottom:8px">'
+        +'<div style="display:flex;align-items:center;gap:10px">'
+        +'<span style="font-size:'+(isTop3?'26px':'18px')+'">'+medals[i]+'</span>'
+        +'<div>'
+        +'<div style="font-size:'+(isTop3?'13px':'11px')+';font-weight:700;color:var(--text)">'+placeNames[i]+'</div>'
+        +(isTop3?'<div style="font-size:9px;color:var(--muted)">'+(i===0?'50%':i===1?'30%':'10%')+' of prize pool</div>':'')
         +'</div>'
-        +'<span style="font-family:Rajdhani,sans-serif;font-size:18px;font-weight:700;color:var(--gold)">&#x20B9;'+amt.toLocaleString('en-IN')+'</span>'
+        +'</div>'
+        +'<div style="text-align:right">'
+        +'<div style="font-family:Rajdhani,sans-serif;font-size:'+(isTop3?'24px':'18px')+';font-weight:700;color:'+colors[i]+'">&#x20B9;'+amt.toLocaleString('en-IN')+'</div>'
+        +(isTop3?'':('<div style="font-size:9px;color:var(--muted)">each</div>'))
+        +'</div>'
         +'</div>';
     });
+    
+    // Note
+    el.innerHTML+='<div style="font-size:9px;color:var(--muted);text-align:center;margin-top:8px;padding:8px">&#x26A0;&#xFE0F; Prizes current prize pool ke hisaab se hain. Jitne players, utna bada prize!</div>';
   }catch(e){el.innerHTML='<p style="color:var(--red);font-size:11px;padding:10px">Error: '+e.message+'</p>';}
 }
 
@@ -1688,7 +1697,7 @@ function mkPC(id, p){
     prizeHtml+='<span style="background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.2);border-radius:3px;padding:1px 5px;font-size:9px;color:var(--gold)">'+medals[wi]+' &#x20B9;'+wa.toLocaleString('en-IN')+'</span>';
   }
   prizeHtml+='</div>';
-  prizeHtml+='<div style="font-size:8px;color:var(--muted);margin-top:4px">Jitne zyada players = bada prize!</div>';
+  prizeHtml+='<div style="font-size:8px;color:var(--muted);margin-top:4px">&#x2B06;&#xFE0F; Jitne zyada players join kare, utna bada prize pool!</div>';
   prizeHtml+='</div>';
 
   var alreadyJoined=UD&&UD.joinedPolls&&UD.joinedPolls[id];
