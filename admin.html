@@ -662,13 +662,24 @@ tbody tr:last-child td{border-bottom:none;}
 
 <!-- Template Editor Modal -->
 <div class="mov" id="m-template"><div class="modal" style="max-width:560px">
-  <h3>⚡ Hindi Template — Edit & Save</h3>
+  <h3>⚡ 11 Questions Template</h3>
   <input type="hidden" id="tmpl-pid"/>
-  <div class="alert ai" style="font-size:10px;margin-bottom:10px">✏️ Saare questions aur options edit kar sakte ho. Save karo to poll mein add ho jayenge.</div>
-  <div id="tmpl-body" style="max-height:450px;overflow-y:auto;padding-right:4px"></div>
+  
+  <!-- Match Date Time -->
+  <div style="background:rgba(255,107,53,0.06);border:1px solid rgba(255,107,53,0.25);border-radius:9px;padding:11px;margin-bottom:10px">
+    <div style="font-size:10px;color:var(--orange);font-weight:700;margin-bottom:6px">⏰ MATCH DATE & TIME SET KARO</div>
+    <input type="datetime-local" id="tmpl-matchdate" style="width:100%;padding:8px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:12px;outline:none;box-sizing:border-box"/>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px">
+      <div style="background:rgba(255,107,53,0.08);border-radius:6px;padding:6px 8px;font-size:9px;color:var(--orange)">⏰ Q1 Toss: Match se <b>30 min pehle</b> band</div>
+      <div style="background:rgba(255,59,92,0.08);border-radius:6px;padding:6px 8px;font-size:9px;color:var(--red)">🚀 Q2-Q11: Match <b>start hote hi</b> band</div>
+    </div>
+  </div>
+  
+  <div class="alert ai" style="font-size:10px;margin-bottom:10px">✏️ Team names aur options edit kar sakte ho. Match time zaroori hai timers ke liye.</div>
+  <div id="tmpl-body" style="max-height:400px;overflow-y:auto;padding-right:4px"></div>
   <div class="mfoot" style="margin-top:12px">
     <button class="btn bg2" onclick="cm('m-template')">Cancel</button>
-    <button class="btn bs" onclick="saveTemplate()">💾 Save All Questions</button>
+    <button class="btn bs" onclick="saveTemplate()">💾 Save All + Set Timers</button>
   </div>
 </div></div>
 
@@ -1623,36 +1634,79 @@ window.fillOpts=function(a,b,c,d){
 };
 
 // Template questions store
-var _templateQs = [{"q": "कौन टीम इस मैच में विजेता होगी?", "opts": ["टीम A", "टीम B", "टाई → सुपर ओवर", "अनिर्णीत"], "correct": null}, {"q": "इस मैच का टोटल रन स्कोर कितना होगा?", "opts": ["140–160", "161–180", "181–200", "201+"], "correct": null}, {"q": "इस मैच में कुल कितने विकेट गिरेंगे?", "opts": ["6–8", "9–11", "12–14", "15+"], "correct": null}, {"q": "इस मैच में सबसे ज्यादा रन कौन बनाएगा?", "opts": ["टीम A का ओपनर", "टीम A का मिडिल-ऑर्डर", "टीम B का ओपनर", "टीम B का फिनिशर"], "correct": null}, {"q": "इस मैच का उच्चतम ओवर स्कोर कितना रहेगा?", "opts": ["10–15 रन", "16–20 रन", "21–25 रन", "26+ रन"], "correct": null}, {"q": "मैच में सबसे ज्यादा छक्के कौन लगाएगा?", "opts": ["टीम A का ओपनर", "टीम B का फिनिशर", "टीम A का मिडिल-ऑर्डर", "टीम B का मिडिल-ऑर्डर"], "correct": null}, {"q": "इस मैच में सबसे ज्यादा विकेट कौन लेगा?", "opts": ["टीम A का बॉलर", "टीम B का बॉलर", "स्पिनर", "पेसर"], "correct": null}, {"q": "इस मैच में कुल रन रेट (RR) क्या रहेगा?", "opts": ["6–7", "7.1–8", "8.1–9", "9+"], "correct": null}, {"q": "मैच का टॉप स्कोरिंग बल्लेबाज किस टीम से होगा?", "opts": ["टीम A", "टीम B", "मध्य क्रम का खिलाड़ी", "फिनिशर"], "correct": null}, {"q": "डेथ ओवर में कितने रन बनेंगे?", "opts": ["30–35 रन", "36–40 रन", "41–45 रन", "46+ रन"], "correct": null}, {"q": "अंतिम ओवर का रन स्कोर कितना रहेगा?", "opts": ["6–10 रन", "11–15 रन", "16–20 रन", "21+ रन"], "correct": null}];
+
+
+// Template questions
+var _templateQs=[{"q": "आज टॉस कौन जीतेगा?", "opts": ["Team A", "Team B"], "correct": null, "pts": 10, "timerType": "before", "timerMins": 30, "note": "Match se 30 min pehle band"}, {"q": "आज के मैच में कौन सी टीम जीतेगी?", "opts": ["Team A", "Team B"], "correct": null, "pts": 10, "timerType": "match", "note": "Match start hote hi band"}, {"q": "क्या मैच में 300+ रन बनेंगे?", "opts": ["हाँ (Yes)", "नहीं (No)"], "correct": null, "pts": 10, "timerType": "match"}, {"q": "आज के मैच में कुल कितने छक्के लगेंगे?", "opts": ["5–10", "10–15", "15–20", "20+"], "correct": null, "pts": 10, "timerType": "match"}, {"q": "आज के मैच में कुल कितने चौके (4) लगेंगे?", "opts": ["20–30", "30–40", "40–50", "50+"], "correct": null, "pts": 10, "timerType": "match"}, {"q": "मैच में कुल कितने विकेट गिरेंगे?", "opts": ["10–15", "15–20", "20–25", "25+"], "correct": null, "pts": 10, "timerType": "match"}, {"q": "मैच में सबसे ज्यादा रन कौन बनाएगा?", "opts": ["Team A का खिलाड़ी", "Team B का खिलाड़ी"], "correct": null, "pts": 10, "timerType": "match"}, {"q": "क्या किसी गेंदबाज को 3+ विकेट मिलेंगे?", "opts": ["हाँ (Yes)", "नहीं (No)"], "correct": null, "pts": 10, "timerType": "match"}, {"q": "आज का मैन ऑफ द मैच कौन होगा?", "opts": ["Team A का खिलाड़ी", "Team B का खिलाड़ी"], "correct": null, "pts": 10, "timerType": "match"}, {"q": "क्या मैच में कोई खिलाड़ी 100+ रन बनाएगा?", "opts": ["हाँ (Yes)", "नहीं (No)"], "correct": null, "pts": 10, "timerType": "match"}, {"q": "जीतने वाली टीम का जीत का अंतर?", "opts": ["1–20 रन / 1–3 विकेट", "21–50 रन / 4–6 विकेट", "50+ रन / 7+ विकेट"], "correct": null, "pts": 10, "timerType": "match"}];
 
 window.loadHindiTemplate=function(){
   var pid=document.getElementById('pm-sel').value;
   if(!pid){toast('Pehle poll select karo!','var(--orange)');return;}
-  // Open editable template modal
   renderTemplateEditor(pid);
   om('m-template');
 };
 
 window.renderTemplateEditor=function(pid){
   document.getElementById('tmpl-pid').value=pid;
-  var html='';
+  document.getElementById('tmpl-body').innerHTML='';
+  
+  // Get poll's matchDate for deadline calculation
+  var pollData=allPolls.find(function(p){return p.id===pid;});
+  var matchDate=pollData&&pollData.matchDate?pollData.matchDate:'';
+  document.getElementById('tmpl-matchdate').value=matchDate;
+  
   _templateQs.forEach(function(q,idx){
-    html+='<div style="background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:11px;margin-bottom:8px">';
-    html+='<div style="font-size:9px;color:var(--neon);font-weight:700;margin-bottom:6px">Q'+(idx+1)+'</div>';
-    html+='<input type="text" value="'+q.q+'" id="tmpl-q-'+idx+'" style="width:100%;padding:7px 10px;background:rgba(0,212,255,0.04);border:1px solid var(--border);border-radius:7px;color:var(--text);font-family:Exo 2,sans-serif;font-size:12px;outline:none;margin-bottom:7px"/>';
-    html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:5px">';
+    var isToss=idx===0;
+    var timerBadge=isToss
+      ?'<span style="background:rgba(255,107,53,0.15);color:var(--orange);font-size:9px;padding:1px 6px;border-radius:3px;margin-left:6px">⏰ Match se 30 min pehle band</span>'
+      :'<span style="background:rgba(255,59,92,0.12);color:var(--red);font-size:9px;padding:1px 6px;border-radius:3px;margin-left:6px">🚀 Match start pe band</span>';
+    
+    html+='<div style="background:var(--bg3);border:1px solid '+(isToss?'rgba(255,107,53,0.3)':'var(--border)')+';border-radius:9px;padding:11px;margin-bottom:8px">';
+    html+='<div style="display:flex;align-items:center;margin-bottom:6px">';
+    html+='<span style="font-size:9px;color:var(--neon);font-weight:700">Q'+(idx+1)+'</span>';
+    html+=timerBadge;
+    html+='</div>';
+    
+    var inputStyle='width:100%;padding:7px 10px;background:rgba(0,212,255,0.04);border:1px solid var(--border);border-radius:7px;color:var(--text);font-family:Exo 2,sans-serif;font-size:12px;outline:none;margin-bottom:7px;box-sizing:border-box';
+    // Create input via DOM to avoid quote issues
+    var qWrap=document.createElement('div');
+    qWrap.setAttribute('style','background:var(--bg3);border:1px solid '+(isToss?'rgba(255,107,53,0.3)':'var(--border)')+';border-radius:9px;padding:11px;margin-bottom:8px');
+    var badge=document.createElement('div');
+    badge.setAttribute('style','display:flex;align-items:center;margin-bottom:6px');
+    badge.innerHTML='<span style="font-size:9px;color:var(--neon);font-weight:700">Q'+(idx+1)+'</span>'+timerBadge;
+    var qInput=document.createElement('input');
+    qInput.type='text';
+    qInput.value=q.q;
+    qInput.id='tmpl-q-'+idx;
+    qInput.setAttribute('style',inputStyle);
+    var optsGrid=document.createElement('div');
+    optsGrid.setAttribute('style','display:grid;grid-template-columns:1fr 1fr;gap:5px');
     q.opts.forEach(function(opt,oi){
       var label=['A','B','C','D'][oi];
-      html+='<input type="text" value="'+opt+'" id="tmpl-o-'+idx+'-'+oi+'" placeholder="Option '+label+'" style="padding:6px 9px;background:rgba(0,212,255,0.04);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:Exo 2,sans-serif;font-size:11px;outline:none"/>';
+      var oInput=document.createElement('input');
+      oInput.type='text';
+      oInput.value=opt;
+      oInput.id='tmpl-o-'+idx+'-'+oi;
+      oInput.placeholder='Option '+label;
+      oInput.setAttribute('style','padding:6px 9px;background:rgba(0,212,255,0.04);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:Exo 2,sans-serif;font-size:11px;outline:none');
+      optsGrid.appendChild(oInput);
     });
-    html+='</div></div>';
+    qWrap.appendChild(badge);
+    qWrap.appendChild(qInput);
+    qWrap.appendChild(optsGrid);
+    document.getElementById('tmpl-body').appendChild(qWrap);
   });
-  document.getElementById('tmpl-body').innerHTML=html;
 };
+
 
 window.saveTemplate=async function(){
   var pid=document.getElementById('tmpl-pid').value;
   if(!pid){toast('Poll select karo','var(--orange)');return;}
+  
+  // Get match date/time for deadline calculation
+  var matchDateStr=document.getElementById('tmpl-matchdate').value;
+  var matchTime=matchDateStr?new Date(matchDateStr):null;
+  
   toast('⏳ Saving...','var(--neon)');
   try{
     var newQs=[];
@@ -1664,14 +1718,37 @@ window.saveTemplate=async function(){
         var v=document.getElementById('tmpl-o-'+idx+'-'+oi);
         if(v&&v.value.trim())opts.push(v.value.trim());
       });
-      if(opts.length>=2){
-        newQs.push({q:qText,opts:opts,correct:null,pts:10});
+      if(opts.length<2)return;
+      
+      var qObj={q:qText,opts:opts,correct:null,pts:10};
+      
+      // Set deadline based on timer type
+      if(matchTime){
+        if(idx===0){
+          // Toss Q: 30 min before match
+          qObj.deadline=new Date(matchTime.getTime()-(30*60*1000));
+          qObj.timerType='before';
+          qObj.timerMins=30;
+        } else {
+          // All other Q: lock at match start time
+          qObj.deadline=new Date(matchTime.getTime());
+          qObj.timerType='match';
+        }
       }
+      
+      newQs.push(qObj);
     });
-    if(newQs.length<11){toast('Kam se kam 11 questions chahiye! Abhi: '+newQs.length,'var(--orange)');return;}
+    
+    if(newQs.length<11){
+      toast('Kam se kam 11 questions chahiye! Abhi: '+newQs.length,'var(--orange)');
+      return;
+    }
+    
     await db.collection('polls').doc(pid).update({questions:newQs});
     cm('m-template');
-    toast('✅ '+newQs.length+' questions save ho gaye!','var(--green)');
+    
+    var timeMsg=matchTime?' (Timers set!)':'(Match time set nahi - timers nahi lagenge)';
+    toast('✅ 11 questions + timers save!'+timeMsg,'var(--green)');
     loadPMQs();
   }catch(e){toast('Error: '+e.message,'var(--red)');}
 };
