@@ -806,8 +806,15 @@ window.lockPanel=function(){document.getElementById('ap').style.display='none';d
 // ===== INIT =====
 async function initAdmin(){
   startClock();
-  // Fix: check both 'settings' and 'setting' collection
   await fixSettingsCollection();
+  // Load custom template from Firestore if exists
+  try{
+    var tmplDoc=await db.collection('settings').doc('questionTemplate').get();
+    if(tmplDoc.exists&&tmplDoc.data().questions&&tmplDoc.data().questions.length>=11){
+      _templateQs=tmplDoc.data().questions;
+      console.log('[Admin] Custom template loaded from Firestore');
+    }
+  }catch(e){}
   await Promise.all([loadDash(),loadPolls(),loadPollQs(),loadIQs(),loadDeps(),loadWds(),loadUsers(),loadWinners(),loadLBStatus(),loadSettings()]);
   populateAllPollSelects();
   startChatListen();
@@ -1721,55 +1728,101 @@ window.renderTemplateEditor=function(pid){
   body.innerHTML='';
   document.getElementById('tmpl-pid').value=pid;
 
-  // Get poll matchDate
   var pollData=allPolls.find(function(p){return p.id===pid;});
   var matchDate=pollData&&pollData.matchDate?pollData.matchDate:'';
   document.getElementById('tmpl-matchdate').value=matchDate;
 
   _templateQs.forEach(function(q,idx){
-    var isToss=(idx===0);
+    buildQCard(body,q,idx);
+  });
+};
 
-    // Card wrapper
-    var card=document.createElement('div');
-    card.style.cssText='background:var(--bg3);border:1px solid '+(isToss?'rgba(255,107,53,0.3)':'var(--border)')+';border-radius:9px;padding:11px;margin-bottom:8px';
+window.buildQCard=function(body,q,idx){
+  var isToss=(idx===0);
+  var card=document.createElement('div');
+  card.id='tmpl-card-'+idx;
+  card.style.cssText='background:var(--bg3);border:1px solid '+(isToss?'rgba(255,107,53,0.3)':'var(--border)')+';border-radius:9px;padding:11px;margin-bottom:8px';
 
-    // Header badge
-    var hdr=document.createElement('div');
-    hdr.style.cssText='display:flex;align-items:center;gap:6px;margin-bottom:8px';
-    var qNum=document.createElement('span');
-    qNum.style.cssText='font-size:9px;color:var(--neon);font-weight:700';
-    qNum.textContent='Q'+(idx+1);
-    var timer=document.createElement('span');
-    timer.style.cssText='font-size:9px;padding:1px 6px;border-radius:3px;'+(isToss?'background:rgba(255,107,53,0.15);color:var(--orange)':'background:rgba(255,59,92,0.12);color:var(--red)');
-    timer.textContent=isToss?'⏰ Match se 30 min pehle band':'🚀 Match start pe band';
-    hdr.appendChild(qNum);
-    hdr.appendChild(timer);
-    card.appendChild(hdr);
+  // Header
+  var hdr=document.createElement('div');
+  hdr.style.cssText='display:flex;align-items:center;gap:6px;margin-bottom:7px';
+  var qNum=document.createElement('span');
+  qNum.style.cssText='font-size:9px;color:var(--neon);font-weight:700';
+  qNum.textContent='Q'+(idx+1);
+  var timerBadge=document.createElement('span');
+  timerBadge.style.cssText='font-size:9px;padding:1px 6px;border-radius:3px;flex:1;'+(isToss?'background:rgba(255,107,53,0.15);color:var(--orange)':'background:rgba(255,59,92,0.12);color:var(--red)');
+  timerBadge.textContent=isToss?'⏰ 30 min pehle band':'🚀 Match start pe band';
+  hdr.appendChild(qNum);
+  hdr.appendChild(timerBadge);
+  card.appendChild(hdr);
 
-    // Question input
-    var qInp=document.createElement('input');
-    qInp.type='text';
-    qInp.id='tmpl-q-'+idx;
-    qInp.value=q.q;
-    qInp.style.cssText='width:100%;padding:7px 10px;background:rgba(0,212,255,0.04);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:12px;outline:none;margin-bottom:7px;box-sizing:border-box';
-    card.appendChild(qInp);
+  // Question input
+  var qInp=document.createElement('input');
+  qInp.type='text';
+  qInp.id='tmpl-q-'+idx;
+  qInp.value=q.q;
+  qInp.placeholder='Question likho...';
+  qInp.style.cssText='width:100%;padding:7px 10px;background:rgba(0,212,255,0.04);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:12px;outline:none;margin-bottom:7px;box-sizing:border-box';
+  card.appendChild(qInp);
 
-    // Options grid
-    var grid=document.createElement('div');
-    var cols=q.opts.length<=2?'1fr 1fr':'1fr 1fr';
-    grid.style.cssText='display:grid;grid-template-columns:'+cols+';gap:5px';
-    q.opts.forEach(function(opt,oi){
+  // Options container
+  var optsDiv=document.createElement('div');
+  optsDiv.id='tmpl-opts-'+idx;
+
+  function renderOpts(opts){
+    optsDiv.innerHTML='';
+    opts.forEach(function(opt,oi){
+      var row=document.createElement('div');
+      row.style.cssText='display:flex;gap:5px;align-items:center;margin-bottom:5px';
+      var label=['A','B','C','D','E'][oi]||('Opt '+(oi+1));
       var oInp=document.createElement('input');
       oInp.type='text';
       oInp.id='tmpl-o-'+idx+'-'+oi;
       oInp.value=opt;
-      oInp.placeholder=['A','B','C','D'][oi];
-      oInp.style.cssText='padding:6px 9px;background:rgba(0,212,255,0.04);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;outline:none;width:100%;box-sizing:border-box';
-      grid.appendChild(oInp);
+      oInp.placeholder='Option '+label;
+      oInp.style.cssText='flex:1;padding:6px 9px;background:rgba(0,212,255,0.04);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;outline:none';
+      // Delete option button (only if more than 2 options)
+      var delBtn=document.createElement('button');
+      delBtn.style.cssText='background:rgba(255,59,92,0.12);border:1px solid rgba(255,59,92,0.3);border-radius:5px;color:var(--red);width:26px;height:26px;cursor:pointer;font-size:13px;flex-shrink:0';
+      delBtn.innerHTML='&#x2212;';
+      delBtn.title='Option hatao';
+      delBtn.onclick=function(){
+        var curOpts=getCurrentOpts(idx);
+        if(curOpts.length<=2){toast('Minimum 2 options chahiye!','var(--orange)');return;}
+        curOpts.splice(oi,1);
+        renderOpts(curOpts);
+      };
+      row.appendChild(oInp);
+      row.appendChild(delBtn);
+      optsDiv.appendChild(row);
     });
-    card.appendChild(grid);
-    body.appendChild(card);
-  });
+
+    // Add option button (max 4)
+    var curLen=optsDiv.querySelectorAll('input').length;
+    if(curLen<4){
+      var addOptBtn=document.createElement('button');
+      addOptBtn.style.cssText='width:100%;padding:5px;background:rgba(0,212,255,0.05);border:1px dashed rgba(0,212,255,0.25);border-radius:6px;color:var(--neon);font-size:11px;cursor:pointer;margin-top:2px';
+      addOptBtn.innerHTML='+ Option Add Karo';
+      addOptBtn.onclick=function(){
+        var curOpts=getCurrentOpts(idx);
+        if(curOpts.length>=4){toast('Maximum 4 options!','var(--orange)');return;}
+        curOpts.push('');
+        renderOpts(curOpts);
+      };
+      optsDiv.appendChild(addOptBtn);
+    }
+  }
+
+  function getCurrentOpts(qIdx){
+    var opts=[];
+    var inputs=document.querySelectorAll('[id^="tmpl-o-'+qIdx+'-"]');
+    inputs.forEach(function(inp){opts.push(inp.value);});
+    return opts;
+  }
+
+  renderOpts(q.opts||['','']);
+  card.appendChild(optsDiv);
+  body.appendChild(card);
 };
 
 
@@ -1787,11 +1840,15 @@ window.saveTemplate=async function(){
     _templateQs.forEach(function(q,idx){
       var qText=document.getElementById('tmpl-q-'+idx).value.trim();
       if(!qText)return;
+      // Collect all options dynamically (user may have added/removed)
       var opts=[];
-      q.opts.forEach(function(o,oi){
+      var oi=0;
+      while(true){
         var v=document.getElementById('tmpl-o-'+idx+'-'+oi);
-        if(v&&v.value.trim())opts.push(v.value.trim());
-      });
+        if(!v)break;
+        if(v.value.trim())opts.push(v.value.trim());
+        oi++;
+      }
       if(opts.length<2)return;
       
       var qObj={q:qText,opts:opts,correct:null,pts:10};
@@ -1819,10 +1876,21 @@ window.saveTemplate=async function(){
     }
     
     await db.collection('polls').doc(pid).update({questions:newQs});
+
+    // Save edited template as new default to Firestore
+    var templateToSave=newQs.map(function(q){
+      return{q:q.q,opts:q.opts,correct:null,pts:10,timerType:q.timerType||'match'};
+    });
+    try{
+      await db.collection('settings').doc('questionTemplate').set({
+        questions:templateToSave,
+        updatedAt:FS.serverTimestamp()
+      });
+    }catch(te){console.warn('Template save:',te);}
+
     cm('m-template');
-    
-    var timeMsg=matchTime?' (Timers set!)':'(Match time set nahi - timers nahi lagenge)';
-    toast('✅ 11 questions + timers save!'+timeMsg,'var(--green)');
+    var timeMsg=matchTime?' ⏰ Timers set!':' (Match time daalo timers ke liye)';
+    toast('✅ '+newQs.length+' questions save! Template bhi update!'+timeMsg,'var(--green)');
     loadPMQs();
   }catch(e){toast('Error: '+e.message,'var(--red)');}
 };
