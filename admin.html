@@ -1260,7 +1260,7 @@ window.settlePMQ=async function(pid,qi,cor){
 };
 
 // ===== POLL QUESTIONS (Bonus + Score) =====
-async function loadPollQs(){
+window.loadPollQs=async function(){
   const el=document.getElementById('pq-admin-list');
   const filterPid=document.getElementById('pq-poll-filter')&&document.getElementById('pq-poll-filter').value;
   try{
@@ -1497,7 +1497,7 @@ async function loadWinners(){
 
 // ===== DEPOSITS =====
 async function loadDeps(){try{const s=await db.collection('depositRequests').orderBy('createdAt','desc').get();allDeps=[];s.forEach(function(d){allDeps.push({id:d.id,...d.data()});});renderDeps();}catch(e){}}
-function renderDeps(){
+window.renderDeps=function(){
   const tb=document.getElementById('dep-tbl');
   const fl=depFlt==='all'?allDeps:allDeps.filter(function(d){return d.status===depFlt;});
   if(!fl.length){tb.innerHTML='<tr class="erow"><td colspan="6">No requests</td></tr>';return;}
@@ -1523,7 +1523,7 @@ window.rejDep=async function(rid){if(!confirm('Reject?'))return;try{await db.col
 
 // ===== WITHDRAWALS =====
 async function loadWds(){try{const s=await db.collection('withdrawRequests').orderBy('createdAt','desc').get();allWds=[];s.forEach(function(d){allWds.push({id:d.id,...d.data()});});renderWds();}catch(e){}}
-function renderWds(){
+window.renderWds=function(){
   const tb=document.getElementById('wd-tbl');
   const fl=wdFlt==='all'?allWds:allWds.filter(function(d){return d.status===wdFlt;});
   if(!fl.length){tb.innerHTML='<tr class="erow"><td colspan="6">No requests</td></tr>';return;}
