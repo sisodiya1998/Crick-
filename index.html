@@ -798,7 +798,12 @@ function showNotifPopup(title, body, action, actionLabel){
     actBtn.style.cssText = 'background:linear-gradient(135deg,var(--purple),var(--neon2));color:#fff';
     actBtn.innerHTML = actionLabel || 'Open';
     actBtn.onclick = function(){
-      try{ eval(action); }catch(e){}
+      var act = action;
+      if(act){
+        if(act.indexOf('goPage') >= 0){ var pg=act.match(/goPage\(['"](\w+)['"]\)/); if(pg)goPage(pg[1]); }
+        if(act.indexOf('loadPools') >= 0){ cacheClear('polls'); loadPools(); }
+        if(act.indexOf('requestNotifPermission') >= 0){ requestNotifPermission(); }
+      }
       popup.remove();
     };
     actEl.appendChild(actBtn);
