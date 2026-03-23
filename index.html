@@ -2119,7 +2119,7 @@ function mkPC(id, p){
     prizeHtml+='<span style="background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.2);border-radius:3px;padding:1px 5px;font-size:9px;color:var(--gold)">'+medals[wi]+' &#x20B9;'+wa.toLocaleString('en-IN')+'</span>';
   }
   prizeHtml+='</div>';
-  prizeHtml+='<div style="font-size:8px;color:var(--muted);margin-top:4px">&#x2B06;&#xFE0F; Jitne zyada players join kare, utna bada prize pool!</div>';
+  prizeHtml+='<div style="font-size:8px;color:var(--muted);margin-top:4px">&#x2B06;&#xFE0F; Prize pool depends on total participation!</div>';
   prizeHtml+='</div>';
 
   var alreadyJoined=UD&&UD.joinedPolls&&UD.joinedPolls[id];
@@ -2139,7 +2139,7 @@ function mkPC(id, p){
     html+='<div class="pc-ptag" style="background:rgba(255,107,53,0.1);border-color:rgba(255,107,53,0.3);color:var(--orange)">&#x23F3; Setup ho raha hai ('+(p.questions||[]).length+'/11)</div>';
     html+='<button class="btn-j" disabled style="opacity:.5">&#x23F3; Coming Soon</button>';
   }else{
-    html+='<div class="pc-ptag">&#x1F4DD; 11 Questions + Pay = Win!</div>';
+    html+='<div class="pc-ptag">&#x1F4DD; 11 Questions + Join & Test Your Cricket Knowledge!</div>';
     html+='<button class="btn-j" data-pid="'+id+'" data-pname="'+pnameEnc+'" data-fee="'+fee+'" data-prize="'+maxPrize+'" onclick="sqClick(this)">&#x1F4DD; Quiz & Join</button>';
   }
   html+='</div>';
@@ -2687,5 +2687,41 @@ document.addEventListener('DOMContentLoaded', function(){
 
 
 </script>
+<footer style="background:linear-gradient(90deg,#020617,#0f172a); color:#cbd5f5; padding:30px 15px; font-family:Arial, sans-serif;">
+
+  <div style="max-width:1000px; margin:auto; text-align:center;">
+
+    <!-- Logo / Title -->
+    <h2 style="color:#22c55e; margin-bottom:10px;">🏏 SMART 11</h2>
+    <p style="font-size:14px; margin-bottom:20px;">
+      Skill-based Cricket Prediction Contest Platform
+    </p>
+
+    <!-- Links -->
+    <div style="margin-bottom:20px;">
+      <a href="terms.html" style="color:#38bdf8; margin:0 10px; text-decoration:none;">Terms & Conditions</a> | 
+      <a href="privacy.html" style="color:#38bdf8; margin:0 10px; text-decoration:none;">Privacy Policy</a> | 
+      <a href="refund.html" style="color:#38bdf8; margin:0 10px; text-decoration:none;">Refund Policy</a>
+    </div>
+
+    <!-- Disclaimer -->
+    <div style="background:#020617; padding:15px; border-radius:10px; font-size:13px; line-height:1.6;">
+      
+      <p>This is a skill-based cricket prediction contest.</p>
+      <p>No betting or gambling is involved.</p>
+      <p>Winners are selected based on correct answers and points scored.</p>
+      <p>This platform is not associated with BCCI, IPL, Facebook or Instagram.</p>
+      <p style="font-weight:bold; margin-top:10px;">Terms & Conditions apply.</p>
+
+    </div>
+
+    <!-- Copyright -->
+    <p style="margin-top:20px; font-size:12px; color:#94a3b8;">
+      © 2026 SMART 11. All rights reserved.
+    </p>
+
+  </div>
+
+</footer>
 </body>
 </html>
