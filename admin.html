@@ -680,6 +680,41 @@ tbody tr:last-child td{border-bottom:none;}
   <div class="mfoot" style="grid-template-columns:1fr"><button class="btn bg2" onclick="cm('m-spm')">Cancel</button></div>
 </div></div>
 
+<!-- Bonus Templates Modal -->
+<div class="mov" id="m-bonus-tmpl"><div class="modal" style="max-width:540px">
+  <h3>📦 Bonus Question Templates</h3>
+  <div class="alert ai" style="font-size:10px;margin-bottom:10px">
+    ⚡ Match ke dauran ready-made questions — edit karke ek click push karo!
+  </div>
+
+  <!-- Poll Select -->
+  <div style="margin-bottom:10px">
+    <label style="font-size:10px;color:var(--muted)">Poll Select Karo *</label>
+    <select id="btmpl-poll" style="width:100%;padding:8px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:12px;outline:none;margin-top:4px">
+      <option value="">-- Poll Select --</option>
+    </select>
+  </div>
+
+  <!-- Team Name for replacement -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+    <div>
+      <label style="font-size:10px;color:var(--muted)">Batting Team (Q mein aayega)</label>
+      <input type="text" id="btmpl-team" placeholder="e.g. RCB, MI, CSK..." style="width:100%;padding:7px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:12px;outline:none;box-sizing:border-box;margin-top:4px"/>
+    </div>
+    <div>
+      <label style="font-size:10px;color:var(--muted)">Match Name</label>
+      <input type="text" id="btmpl-match" placeholder="e.g. RCB vs MI" style="width:100%;padding:7px 10px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:12px;outline:none;box-sizing:border-box;margin-top:4px"/>
+    </div>
+  </div>
+
+  <!-- Template List -->
+  <div id="btmpl-list" style="max-height:420px;overflow-y:auto;display:grid;gap:8px"></div>
+
+  <div class="mfoot" style="margin-top:12px">
+    <button class="btn bg2" onclick="cm('m-bonus-tmpl')">Close</button>
+  </div>
+</div></div>
+
 <!-- Push Bonus Q -->
 <div class="mov" id="m-bq"><div class="modal"><h3>⭐ Push Bonus Question</h3>
   <div class="alert ai" style="font-size:10px">Goes LIVE to users in selected poll. Settle after match → 5 poll points.</div>
@@ -1587,6 +1622,125 @@ async function loadSettings(){
     document.getElementById('tog-wd').checked=d.withdrawals!==false;
   }catch(e){}
 }
+// ===== BONUS TEMPLATES =====
+var BONUS_TEMPLATES = [{"id": "5over", "icon": "⚡", "label": "5 Over Score", "q": "{TEAM} 5 ओवर में कितने रन बनाएगी?", "opts": ["0–30 रन", "31–40 रन", "41–50 रन", "50+ रन"], "pts": 5, "timer": 120, "hint": "5 over khatam hone se pehle push karo"}, {"id": "10over", "icon": "🏏", "label": "10 Over Score", "q": "{TEAM} 10 ओवर में कितने रन बनाएगी?", "opts": ["50–70 रन", "71–90 रन", "91–110 रन", "110+ रन"], "pts": 5, "timer": 120, "hint": "10 over se pehle push karo"}, {"id": "15over", "icon": "🎯", "label": "15 Over Score", "q": "{TEAM} 15 ओवर में कितने रन बनाएगी?", "opts": ["80–100 रन", "101–120 रन", "121–140 रन", "140+ रन"], "pts": 5, "timer": 120, "hint": "15 over se pehle push karo"}, {"id": "finalscore", "icon": "🏆", "label": "Final Score (20 Over)", "q": "{TEAM} का फाइनल स्कोर (20 ओवर) क्या होगा?", "opts": ["120–140 रन", "141–160 रन", "161–180 रन", "180+ रन"], "pts": 5, "timer": 120, "hint": "Innings shuru hone ke baad push karo"}, {"id": "wicket1", "icon": "🎳", "label": "Pehli Wicket Over", "q": "पहली विकेट किस ओवर में गिरेगी?", "opts": ["1–3 ओवर", "4–6 ओवर", "7–10 ओवर", "10+ ओवर"], "pts": 5, "timer": 120, "hint": "Match shuru hote hi push karo"}, {"id": "sixesinn1", "icon": "💥", "label": "1st Innings Sixes", "q": "पहली पारी में कुल कितने छक्के लगेंगे?", "opts": ["0–5 छक्के", "6–10 छक्के", "11–15 छक्के", "15+ छक्के"], "pts": 5, "timer": 120, "hint": "1st innings mein push karo"}, {"id": "powerplay", "icon": "⚡", "label": "Powerplay Score (1-6 Over)", "q": "पावरप्ले (1-6 ओवर) में कितने रन बनेंगे?", "opts": ["30–40 रन", "41–50 रन", "51–60 रन", "60+ रन"], "pts": 5, "timer": 120, "hint": "6 overs se pehle push karo"}, {"id": "deathover", "icon": "💀", "label": "Death Overs (17-20)", "q": "डेथ ओवर (17-20) में कितने रन बनेंगे?", "opts": ["30–40 रन", "41–50 रन", "51–60 रन", "60+ रन"], "pts": 5, "timer": 120, "hint": "17th over se pehle push karo"}, {"id": "toss_result", "icon": "🪙", "label": "Toss Result", "q": "टॉस जीतने वाली टीम क्या करेगी?", "opts": ["पहले बल्लेबाज़ी", "पहले गेंदबाज़ी"], "pts": 5, "timer": 120, "hint": "Toss ke turant baad push karo"}, {"id": "mom", "icon": "⭐", "label": "Man of the Match", "q": "मैन ऑफ द मैच कौन होगा?", "opts": ["बल्लेबाज़ (Batsman)", "गेंदबाज़ (Bowler)", "ऑल-राउंडर (All-rounder)"], "pts": 5, "timer": 120, "hint": "Match ke dauran ya baad mein push karo"}];
+
+// Build template list when modal opens
+(function(){
+  var origOm2=window.om;
+  window.om=function(id){
+    origOm2(id);
+    if(id==='m-bonus-tmpl') buildBonusTmplList();
+  };
+})();
+
+function buildBonusTmplList(){
+  var el=document.getElementById('btmpl-list');
+  if(!el)return;
+  el.innerHTML='';
+
+  BONUS_TEMPLATES.forEach(function(t,idx){
+    var card=document.createElement('div');
+    card.style.cssText='background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px';
+
+    // Header
+    var hdr=document.createElement('div');
+    hdr.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:8px';
+    hdr.innerHTML='<span style="font-size:18px">'+t.icon+'</span>'
+      +'<div style="flex:1"><div style="font-family:Rajdhani,sans-serif;font-size:14px;font-weight:700">'+t.label+'</div>'
+      +'<div style="font-size:9px;color:var(--muted)">'+t.hint+'</div></div>'
+      +'<span style="font-size:9px;background:rgba(0,212,255,0.1);color:var(--neon);padding:2px 7px;border-radius:4px">+'+t.pts+' pts</span>';
+
+    // Question input (editable)
+    var qInp=document.createElement('input');
+    qInp.type='text';
+    qInp.id='bt-q-'+idx;
+    qInp.value=t.q;
+    qInp.style.cssText='width:100%;padding:7px 10px;background:rgba(0,212,255,0.04);border:1px solid var(--border);border-radius:7px;color:var(--text);font-size:12px;outline:none;margin-bottom:7px;box-sizing:border-box';
+
+    // Options (editable)
+    var optsDiv=document.createElement('div');
+    optsDiv.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:8px';
+    t.opts.forEach(function(opt,oi){
+      var inp=document.createElement('input');
+      inp.type='text';
+      inp.id='bt-o-'+idx+'-'+oi;
+      inp.value=opt;
+      inp.style.cssText='padding:6px 9px;background:rgba(0,212,255,0.04);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;outline:none';
+      optsDiv.appendChild(inp);
+    });
+
+    // Timer input
+    var timerRow=document.createElement('div');
+    timerRow.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:8px';
+    timerRow.innerHTML='<span style="font-size:10px;color:var(--muted)">⏱️ Timer (sec):</span>'
+      +'<input type="number" id="bt-timer-'+idx+'" value="'+t.timer+'" min="30" max="300" style="width:70px;padding:5px 8px;background:rgba(0,212,255,0.04);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;outline:none"/>';
+
+    // Push button
+    var pushBtn=document.createElement('button');
+    pushBtn.className='btn bp';
+    pushBtn.style.cssText='width:100%';
+    pushBtn.innerHTML='&#x26A1; Push Live Now';
+    pushBtn.setAttribute('data-idx', idx);
+    pushBtn.onclick=function(){
+      pushBonusTemplate(parseInt(this.getAttribute('data-idx')));
+    };
+
+    card.appendChild(hdr);
+    card.appendChild(qInp);
+    card.appendChild(optsDiv);
+    card.appendChild(timerRow);
+    card.appendChild(pushBtn);
+    el.appendChild(card);
+  });
+}
+
+window.pushBonusTemplate=async function(idx){
+  var pid=document.getElementById('btmpl-poll').value;
+  var team=document.getElementById('btmpl-team').value.trim()||'टीम';
+  var match=document.getElementById('btmpl-match').value.trim()||'Live Match';
+  var e=document.getElementById('ipl-err')||{textContent:''};
+
+  if(!pid){toast('Pehle poll select karo!','var(--orange)');return;}
+
+  var t=BONUS_TEMPLATES[idx];
+  // Get edited values
+  var q=document.getElementById('bt-q-'+idx).value.trim();
+  var timer=parseInt(document.getElementById('bt-timer-'+idx).value)||120;
+  var opts=[];
+  var oi=0;
+  while(document.getElementById('bt-o-'+idx+'-'+oi)){
+    var v=document.getElementById('bt-o-'+idx+'-'+oi).value.trim();
+    if(v)opts.push({label:v,pts:t.pts});
+    oi++;
+  }
+
+  if(!q){toast('Question khali hai!','var(--orange)');return;}
+  if(opts.length<2){toast('Minimum 2 options chahiye!','var(--orange)');return;}
+
+  // Replace {TEAM} in question
+  q=q.replace(/\{TEAM\}/g,team);
+
+  try{
+    await db.collection('pollQuestions').add({
+      type:'bonus',
+      pollId:pid,
+      question:q,
+      options:opts,
+      match:match,
+      timerSeconds:timer,
+      pts:t.pts,
+      settled:false,
+      correctOpt:null,
+      createdAt:FS.serverTimestamp()
+    });
+    toast('&#x26A1; "'+q.slice(0,30)+'..." pushed!','var(--green)');
+    loadPollQs();loadDash();
+  }catch(err){
+    toast('Error: '+err.message,'var(--red)');
+  }
+};
+
 window.sendNotifToAll=async function(){
   var title=document.getElementById('sn-title').value.trim();
   var body=document.getElementById('sn-body').value.trim();
