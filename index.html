@@ -1678,6 +1678,7 @@ auth.onAuthStateChanged(async function(u){
     await loadUD();
     showMain();
     loadPools();
+    loadAdsFromFirestore();
     listenBQ();
     listenSQ();
     // Load home LB only top 3 (less reads)
@@ -1976,6 +1977,52 @@ function calcTiePrizes(rankedUsers, prizePool){
     i = tieEnd;
   }
   return result;
+}
+
+// ============================================================
+// AD LOADER FROM FIRESTORE
+// ============================================================
+async function loadAdsFromFirestore(){
+  var slots={1:'ad-top',2:'ad-mid',3:'ad-sticky'};
+  for(var s=1;s<=3;s++){
+    try{
+      var doc=await db.collection('settings').doc('ad'+s).get();
+      var el=document.getElementById(slots[s]);
+      if(!el)continue;
+      if(!doc.exists||doc.data().type==='off'){
+        el.style.display='none';continue;
+      }
+      var d=doc.data();
+      var html='';
+      if(d.type==='image'&&d.img){
+        html='<a href="'+(d.link||'#')+'" target="_blank" style="display:block;text-decoration:none">'
+          +'<img src="'+d.img+'" alt="Ad" style="width:100%;max-width:728px;height:auto;border-radius:8px;display:block;margin:0 auto"/>'
+          +'</a>';
+      }else if(d.type==='html'&&d.html){
+        html=d.html;
+      }else if(d.type==='text'&&d.text){
+        html='<a href="'+(d.link||'#')+'" target="_blank" style="display:block;background:linear-gradient(135deg,rgba(0,212,255,0.08),rgba(168,85,247,0.08));border:1px solid rgba(0,212,255,0.2);border-radius:10px;padding:12px;text-align:center;color:var(--neon);font-size:13px;font-weight:700;text-decoration:none;font-family:Rajdhani,sans-serif">'+d.text+'</a>';
+      }
+      if(html){
+        if(s===3){
+          var cb=document.createElement('button');
+          cb.className='ad-close-btn';
+          cb.innerHTML='&#x00D7;';
+          cb.onclick=function(){document.getElementById('ad-sticky').classList.add('hidden');};
+          el.innerHTML=html;
+          el.appendChild(cb);
+        }else{
+          el.innerHTML=html;
+        }
+        el.style.display='';
+      }else{
+        el.style.display='none';
+      }
+    }catch(e){
+      var el2=document.getElementById(slots[s]);
+      if(el2)el2.style.display='none';
+    }
+  }
 }
 
 // ============================================================
