@@ -269,6 +269,28 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
 .ad-placeholder{display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.02);border:1px dashed rgba(255,255,255,0.08);border-radius:8px;color:rgba(255,255,255,0.15);font-size:9px;letter-spacing:1px;text-transform:uppercase;}
 .ad-close-btn{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:4px;line-height:1;}
 
+/* ============================================================
+   IPL SCHEDULE TICKER
+   ============================================================ */
+.ipl-ticker-wrap{background:linear-gradient(135deg,rgba(5,10,20,0.95),rgba(10,20,40,0.95));border:1px solid rgba(0,212,255,0.15);border-radius:12px;margin:10px 0;overflow:hidden;position:relative;}
+.ipl-ticker-header{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid rgba(0,212,255,0.1);background:rgba(0,212,255,0.04);}
+.ipl-ticker-title{font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;color:var(--neon);letter-spacing:2px;text-transform:uppercase;}
+.ipl-ticker-live{font-size:9px;color:var(--muted);display:flex;align-items:center;gap:4px;}
+.ipl-ticker-scroll{overflow:hidden;padding:0;}
+.ipl-ticker-inner{display:flex;gap:0;animation:tickerSlide 40s linear infinite;width:max-content;}
+.ipl-ticker-inner:hover{animation-play-state:paused;}
+@keyframes tickerSlide{0%{transform:translateX(0);}100%{transform:translateX(-50%);}}
+.ipl-match-card{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;min-width:200px;padding:10px 14px;border-right:1px solid rgba(255,255,255,0.05);cursor:pointer;transition:background .2s;}
+.ipl-match-card:hover{background:rgba(0,212,255,0.06);}
+.ipl-match-date{font-size:9px;color:var(--muted);margin-bottom:4px;letter-spacing:.5px;}
+.ipl-match-teams{display:flex;align-items:center;gap:8px;margin-bottom:4px;}
+.ipl-team-badge{font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;padding:2px 7px;border-radius:4px;}
+.ipl-vs{font-size:9px;color:var(--muted);font-weight:700;}
+.ipl-match-venue{font-size:9px;color:var(--muted);}
+.ipl-match-time{font-size:9px;color:var(--orange);font-weight:600;margin-top:2px;}
+.ipl-today-badge{background:rgba(0,255,136,0.15);color:var(--green);font-size:8px;padding:1px 5px;border-radius:3px;font-weight:700;margin-left:4px;}
+.ipl-done-badge{background:rgba(255,255,255,0.06);color:var(--muted);font-size:8px;padding:1px 5px;border-radius:3px;}
+
 /* INSTALL BTN */
 #inst-btn{display:none;position:fixed;bottom:82px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#006600,var(--green));color:#000;border:none;border-radius:20px;padding:10px 22px;font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;cursor:pointer;z-index:150;white-space:nowrap;letter-spacing:1px;box-shadow:0 4px 20px rgba(0,255,136,0.4);animation:installPulse 2s infinite;}
 @keyframes installPulse{0%,100%{box-shadow:0 4px 20px rgba(0,255,136,0.4);}50%{box-shadow:0 4px 30px rgba(0,255,136,0.8);}}
@@ -363,6 +385,19 @@ body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellips
       <h2>🏏 Cricket Prediction Contest!</h2>
       <p>Apni cricket knowledge use karo &amp; exciting prizes jeeto!</p>
       <span class="tag">🏆 Knowledge + Points = Prizes!</span>
+    </div>
+
+    <!-- IPL 2026 SCHEDULE TICKER -->
+    <div class="ipl-ticker-wrap" id="ipl-ticker">
+      <div class="ipl-ticker-header">
+        <div class="ipl-ticker-title">&#x1F3CF; TATA IPL 2026 Schedule</div>
+        <div class="ipl-ticker-live"><span style="width:6px;height:6px;background:var(--green);border-radius:50%;display:inline-block;animation:pulse 1s infinite"></span> Live Schedule</div>
+      </div>
+      <div class="ipl-ticker-scroll">
+        <div class="ipl-ticker-inner" id="ipl-ticker-inner">
+          <!-- JS se fill hoga -->
+        </div>
+      </div>
     </div>
 
     <!-- AD SLOT 1: Top Banner -->
@@ -1643,7 +1678,6 @@ auth.onAuthStateChanged(async function(u){
     await loadUD();
     showMain();
     loadPools();
-    loadAdsFromFirestore();
     listenBQ();
     listenSQ();
     // Load home LB only top 3 (less reads)
@@ -1944,57 +1978,68 @@ function calcTiePrizes(rankedUsers, prizePool){
   return result;
 }
 
-// Load ads from Firestore (admin se publish kiye hue)
-async function loadAdsFromFirestore(){
-  var slots={1:'ad-top',2:'ad-mid',3:'ad-sticky'};
-  for(var s=1;s<=3;s++){
-    try{
-      var doc=await db.collection('settings').doc('ad'+s).get();
-      var el=document.getElementById(slots[s]);
-      if(!el)continue;
-      if(!doc.exists||doc.data().type==='off'){
-        el.style.display='none';
-        continue;
-      }
-      var d=doc.data();
-      var html='';
-      if(d.type==='image'&&d.img){
-        var link=d.link||'#';
-        html='<a href="'+link+'" target="_blank" style="display:block;text-decoration:none">'
-          +'<img src="'+d.img+'" alt="Ad" style="width:100%;max-width:728px;height:auto;border-radius:8px;display:block;margin:0 auto"/>'
-          +'</a>';
-      }else if(d.type==='html'&&d.html){
-        html=d.html;
-      }else if(d.type==='text'&&d.text){
-        var lnk=d.link||'#';
-        html='<a href="'+lnk+'" target="_blank" style="display:block;background:linear-gradient(135deg,rgba(0,212,255,0.08),rgba(168,85,247,0.08));border:1px solid rgba(0,212,255,0.2);border-radius:10px;padding:12px;text-align:center;color:var(--neon);font-size:13px;font-weight:700;text-decoration:none;font-family:Rajdhani,sans-serif">'+d.text+'</a>';
-      }
-      if(html){
-        // Keep close button for sticky
-        if(s===3){
-          var closeBtn=el.querySelector('.ad-close-btn');
-          el.innerHTML=html;
-          if(closeBtn){el.appendChild(closeBtn);}
-          else{
-            var cb=document.createElement('button');
-            cb.className='ad-close-btn';
-            cb.innerHTML='&#x00D7;';
-            cb.onclick=function(){document.getElementById('ad-sticky').classList.add('hidden');};
-            el.appendChild(cb);
-          }
-        }else{
-          el.innerHTML=html;
-        }
-        el.style.display='';
-      }else{
-        el.style.display='none';
-      }
-    }catch(e){
-      var el2=document.getElementById(slots[s]);
-      if(el2)el2.style.display='none';
-    }
+// ============================================================
+// IPL 2026 SCHEDULE TICKER
+// ============================================================
+var IPL_SCHEDULE = [{"no": 1, "date": "28 Mar", "day": "Sat", "time": "7:30 PM", "home": "RCB", "away": "SRH", "venue": "Bengaluru"}, {"no": 2, "date": "29 Mar", "day": "Sun", "time": "7:30 PM", "home": "MI", "away": "KKR", "venue": "Mumbai"}, {"no": 3, "date": "30 Mar", "day": "Mon", "time": "7:30 PM", "home": "RR", "away": "CSK", "venue": "Guwahati"}, {"no": 4, "date": "31 Mar", "day": "Tue", "time": "7:30 PM", "home": "PBKS", "away": "GT", "venue": "New Chandigarh"}, {"no": 5, "date": "01 Apr", "day": "Wed", "time": "7:30 PM", "home": "LSG", "away": "DC", "venue": "Lucknow"}, {"no": 6, "date": "02 Apr", "day": "Thu", "time": "7:30 PM", "home": "KKR", "away": "SRH", "venue": "Kolkata"}, {"no": 7, "date": "03 Apr", "day": "Fri", "time": "7:30 PM", "home": "CSK", "away": "PBKS", "venue": "Chennai"}, {"no": 8, "date": "04 Apr", "day": "Sat", "time": "3:30 PM", "home": "DC", "away": "MI", "venue": "Delhi"}, {"no": 9, "date": "04 Apr", "day": "Sat", "time": "7:30 PM", "home": "GT", "away": "RR", "venue": "Ahmedabad"}, {"no": 10, "date": "05 Apr", "day": "Sun", "time": "3:30 PM", "home": "SRH", "away": "LSG", "venue": "Hyderabad"}, {"no": 11, "date": "05 Apr", "day": "Sun", "time": "7:30 PM", "home": "RCB", "away": "CSK", "venue": "Bengaluru"}, {"no": 12, "date": "06 Apr", "day": "Mon", "time": "7:30 PM", "home": "KKR", "away": "PBKS", "venue": "Kolkata"}, {"no": 13, "date": "07 Apr", "day": "Tue", "time": "7:30 PM", "home": "RR", "away": "MI", "venue": "Guwahati"}, {"no": 14, "date": "08 Apr", "day": "Wed", "time": "7:30 PM", "home": "DC", "away": "GT", "venue": "Delhi"}, {"no": 15, "date": "09 Apr", "day": "Thu", "time": "7:30 PM", "home": "KKR", "away": "LSG", "venue": "Kolkata"}, {"no": 16, "date": "10 Apr", "day": "Fri", "time": "7:30 PM", "home": "RR", "away": "RCB", "venue": "Guwahati"}, {"no": 17, "date": "11 Apr", "day": "Sat", "time": "3:30 PM", "home": "PBKS", "away": "SRH", "venue": "New Chandigarh"}, {"no": 18, "date": "11 Apr", "day": "Sat", "time": "7:30 PM", "home": "CSK", "away": "DC", "venue": "Chennai"}, {"no": 19, "date": "12 Apr", "day": "Sun", "time": "3:30 PM", "home": "LSG", "away": "GT", "venue": "Lucknow"}, {"no": 20, "date": "12 Apr", "day": "Sun", "time": "7:30 PM", "home": "MI", "away": "RCB", "venue": "Mumbai"}];
+
+var TEAM_COLORS = {
+  'RCB':'#EC1C24','SRH':'#FF822A','MI':'#004BA0','KKR':'#3A225D',
+  'RR':'#EA1A85','CSK':'#c8a400','PBKS':'#ED1F27','GT':'#555555',
+  'LSG':'#6faa00','DC':'#0078BC'
+};
+
+var TEAM_FULL = {
+  'RCB':'Royal Challengers Bengaluru','SRH':'Sunrisers Hyderabad',
+  'MI':'Mumbai Indians','KKR':'Kolkata Knight Riders',
+  'RR':'Rajasthan Royals','CSK':'Chennai Super Kings',
+  'PBKS':'Punjab Kings','GT':'Gujarat Titans',
+  'LSG':'Lucknow Super Giants','DC':'Delhi Capitals'
+};
+
+function buildIPLTicker(){
+  var el=document.getElementById('ipl-ticker-inner');
+  if(!el)return;
+  var today=new Date();
+  var html='';
+
+  function mkCard(m){
+    // Parse match date
+    var parts=m.date.split(' ');
+    var monthMap={Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
+    var mDate=new Date(2026, monthMap[parts[1]], parseInt(parts[0]));
+    var isToday=mDate.toDateString()===today.toDateString();
+    var isPast=mDate<today&&!isToday;
+
+    var hc=TEAM_COLORS[m.home]||'#333';
+    var ac=TEAM_COLORS[m.away]||'#333';
+
+    var badge=isToday?'<span class="ipl-today-badge">TODAY</span>':isPast?'<span class="ipl-done-badge">DONE</span>':'';
+
+    return '<div class="ipl-match-card" title="'+( TEAM_FULL[m.home]||m.home)+' vs '+(TEAM_FULL[m.away]||m.away)+' • '+m.venue+'" style="'+(isPast?'opacity:0.5':'')+'opacity:'+(isPast?'0.5':'1')+'">'
+      +'<div class="ipl-match-date">M'+m.no+' • '+m.date+' '+m.day+badge+'</div>'
+      +'<div class="ipl-match-teams">'
+      +'<span class="ipl-team-badge" style="background:'+hc+';color:#fff">'+m.home+'</span>'
+      +'<span class="ipl-vs">VS</span>'
+      +'<span class="ipl-team-badge" style="background:'+ac+';color:#fff">'+m.away+'</span>'
+      +'</div>'
+      +'<div class="ipl-match-venue">&#x1F4CD; '+m.venue+'</div>'
+      +'<div class="ipl-match-time">&#x23F0; '+m.time+'</div>'
+      +'</div>';
   }
+
+  // Build cards
+  var cards='';
+  IPL_SCHEDULE.forEach(function(m){ cards+=mkCard(m); });
+  // Duplicate for seamless loop
+  html=cards+cards;
+  el.innerHTML=html;
 }
+
+// Build ticker on page load
+document.addEventListener('DOMContentLoaded', function(){
+  buildIPLTicker();
+});
 
 async function loadPools(){
   var el=document.getElementById('pools-list');
