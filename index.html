@@ -1557,9 +1557,11 @@ async function loadPollPrize(pid){
     var joined=p.joined||0;
     var maxUsers=p.maxUsers||100;
     var appCut=p.appCutPct||40;
-    var currentPrize=Math.floor(fee*joined*(1-appCut/100));
-    var maxPrize=Math.floor(fee*maxUsers*(1-appCut/100));
-    var bd=calcPrizeBreakdown(maxPrize); // Show MAX prizes always
+    var slabs = await loadPrizeSlabs();
+    var useSlab = slabs && slabs.length > 0;
+    var currentPrize = useSlab ? getPrizeFromSlabs(joined,slabs) : Math.floor(fee*joined*(1-appCut/100));
+    var maxPrize = useSlab ? getMaxPrizeFromSlabs(slabs) : Math.floor(fee*maxUsers*(1-appCut/100));
+    var bd=calcPrizeBreakdown(maxPrize);
     var medals=['&#x1F947;','&#x1F948;','&#x1F949;','4th','5th','6th','7th','8th','9th','10th'];
     var placeNames=['1st Place','2nd Place','3rd Place','4th Place','5th Place','6th Place','7th Place','8th Place','9th Place','10th Place'];
     
@@ -1572,17 +1574,31 @@ async function loadPollPrize(pid){
       +'<span style="font-size:10px;color:var(--muted)">Current ('+joined+' players)</span>'
       +'<span style="font-size:14px;font-weight:700;color:var(--green)">&#x20B9;'+currentPrize.toLocaleString('en-IN')+'</span>'
       +'</div>'
-      +'</div>'
-      +'<div style="font-size:10px;color:var(--muted);margin-bottom:8px;font-weight:700">PRIZE DISTRIBUTION:</div>';
-    
-    // Header - Total Prize
-    el.innerHTML+='<div style="background:linear-gradient(135deg,rgba(255,215,0,0.1),rgba(255,107,53,0.05));border:1px solid rgba(255,215,0,0.4);border-radius:14px;padding:16px;text-align:center;margin-bottom:14px">'
-      +'<div style="font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase">Kul Prize Pool</div>'
-      +'<div style="font-family:Rajdhani,sans-serif;font-size:42px;font-weight:700;color:var(--gold);line-height:1.1">&#x20B9;'+maxPrize.toLocaleString('en-IN')+'</div>'
-      +'<div style="font-size:10px;color:var(--muted);margin-top:4px">'+maxUsers+' Players &times; &#x20B9;'+fee+' Entry Fee</div>'
       +'</div>';
 
-    // Prize rows
+    // Show slabs if active
+    if(useSlab){
+      el.innerHTML += '<div style="margin-bottom:12px">';
+      el.innerHTML += '<div style="font-size:10px;color:var(--muted);font-weight:700;margin-bottom:6px;letter-spacing:1px">📈 PRIZE SLABS</div>';
+      slabs.forEach(function(sl,si){
+        var isCurrent = (joined >= sl.minUsers) && (si===slabs.length-1 || joined<slabs[si+1].minUsers);
+        var isAchieved = joined >= sl.minUsers;
+        el.innerHTML += '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-radius:8px;margin-bottom:5px;'
+          +(isCurrent?'background:linear-gradient(135deg,rgba(255,215,0,0.12),rgba(255,107,53,0.08));border:1px solid rgba(255,215,0,0.4)':isAchieved?'background:rgba(0,255,136,0.06);border:1px solid rgba(0,255,136,0.18)':'background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07)')+'">'
+          +'<span style="font-size:11px;color:'+(isAchieved?'var(--text)':'var(--muted)')+'">👥 '+(si===0?'1':''+sl.minUsers)+'+ players</span>'
+          +'<span style="font-family:Rajdhani,sans-serif;font-size:16px;font-weight:700;color:'+(isCurrent?'var(--gold)':isAchieved?'var(--green)':'var(--muted)')+'">₹'+sl.prize.toLocaleString('en-IN')+(isCurrent?' ✅':'')+'</span>'
+          +'</div>';
+      });
+      el.innerHTML += '</div>';
+    }
+    
+    el.innerHTML+='<div style="font-family:Rajdhani,sans-serif;font-size:15px;font-weight:700;margin-bottom:14px;padding:12px;background:linear-gradient(135deg,rgba(255,215,0,0.1),rgba(255,107,53,0.05));border:1px solid rgba(255,215,0,0.4);border-radius:14px;text-align:center">'
+      +'<div style="font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px">Kul Prize Pool</div>'
+      +'<div style="font-size:42px;font-weight:700;color:var(--gold);line-height:1.1">&#x20B9;'+maxPrize.toLocaleString('en-IN')+'</div>'
+      +'</div>';
+    
+    el.innerHTML+='<div style="font-size:10px;color:var(--muted);margin-bottom:8px;font-weight:700">PRIZE DISTRIBUTION:</div>';
+
     var colors=['var(--gold)','#C0C0C0','#CD7F32','var(--neon)','var(--neon)','var(--neon)','var(--neon)','var(--neon)','var(--neon)','var(--neon)'];
     var bgColors=['rgba(255,215,0,0.08)','rgba(192,192,192,0.06)','rgba(205,127,50,0.06)','rgba(0,212,255,0.04)','rgba(0,212,255,0.04)','rgba(0,212,255,0.04)','rgba(0,212,255,0.04)','rgba(0,212,255,0.04)','rgba(0,212,255,0.04)','rgba(0,212,255,0.04)'];
     
@@ -1604,8 +1620,7 @@ async function loadPollPrize(pid){
         +'</div>';
     });
     
-    // Note
-    el.innerHTML+='<div style="font-size:9px;color:var(--muted);text-align:center;margin-top:8px;padding:8px">&#x26A0;&#xFE0F; Prizes current prize pool ke hisaab se hain. Jitne players, utna bada prize!</div>';
+    el.innerHTML+='<div style="font-size:9px;color:var(--muted);text-align:center;margin-top:8px;padding:8px">⚠️ Jitne players, utna bada prize! '+( useSlab?'Prize slabs ke hisaab se badhta hai.':'Current prize pool ke hisaab se hain.')+'</div>';
   }catch(e){el.innerHTML='<p style="color:var(--red);font-size:11px;padding:10px">Error: '+e.message+'</p>';}
 }
 
@@ -1897,7 +1912,56 @@ async function loadPlatformSettings(){
   }catch(e){}
 }
 
-// Compute prize pool from entries collected
+// ============================================================
+// DYNAMIC PRIZE SLABS — Participants ke aadhar par prize badhe
+// Admin Firestore 'settings/prizeSlabs' mein slabs set karta hai
+// Format: [{minUsers:1,prize:500},{minUsers:100,prize:2000},...]
+// ============================================================
+var _prizeSlabs = null; // cached from Firestore
+
+async function loadPrizeSlabs(){
+  if(_prizeSlabs !== null) return _prizeSlabs;
+  try{
+    var s = await db.collection('settings').doc('prizeSlabs').get();
+    if(s.exists && s.data().slabs && s.data().slabs.length){
+      _prizeSlabs = s.data().slabs.slice().sort(function(a,b){return a.minUsers-b.minUsers;});
+    }
+  }catch(e){}
+  if(!_prizeSlabs) _prizeSlabs = []; // empty = fallback to fee-based
+  return _prizeSlabs;
+}
+
+// Get prize for current participant count from slabs
+// Returns fixed prize from highest matching slab, or fee-based if no slabs
+function getPrizeFromSlabs(joined, slabs){
+  if(!slabs || slabs.length === 0) return null; // use fee-based
+  var prize = slabs[0].prize; // minimum slab
+  for(var i = 0; i < slabs.length; i++){
+    if(joined >= slabs[i].minUsers){
+      prize = slabs[i].prize;
+    } else {
+      break;
+    }
+  }
+  return prize;
+}
+
+// Get MAX prize (last/highest slab)
+function getMaxPrizeFromSlabs(slabs){
+  if(!slabs || slabs.length === 0) return null;
+  return slabs[slabs.length - 1].prize;
+}
+
+// Get next slab (to show "X more players needed" message)
+function getNextSlab(joined, slabs){
+  if(!slabs || slabs.length === 0) return null;
+  for(var i = 0; i < slabs.length; i++){
+    if(joined < slabs[i].minUsers) return slabs[i];
+  }
+  return null; // already at max slab
+}
+
+// Compute prize pool from entries collected (fallback if no slabs)
 // prizePool = totalCollected * (1 - appCutPct/100)
 function calcPrizePool(fee, joined, appCut){
   // appCut = 40 means app keeps 40%, 60% goes to winners
@@ -2061,12 +2125,13 @@ async function loadPools(){
   var cached=cacheGet('polls');
   if(cached){
     el.innerHTML='';
-    cached.forEach(function(p){el.innerHTML+=mkPC(p.id,p.data);});
+    cached.forEach(function(p){el.innerHTML+=mkPC(p.id,p.data,p.slabs);});
     return;
   }
   el.innerHTML='<div class="empty"><div class="ei">⏳</div><div class="ld"><span></span><span></span><span></span></div></div>';
   try{
     await loadPlatformSettings();
+    var slabs = await loadPrizeSlabs();
     var s=await db.collection('polls').where('status','==','active').get();
     if(s.empty){
       el.innerHTML='<div class="empty"><div class="ei">🏏</div><p>No active contests right now.<br><span style="font-size:10px">Admin will add contests soon!</span></p></div>';
@@ -2076,8 +2141,8 @@ async function loadPools(){
     var pollsData=[];
     s.forEach(function(d){
       var p=d.data();
-      pollsData.push({id:d.id,data:p});
-      el.innerHTML+=mkPC(d.id,p);
+      pollsData.push({id:d.id,data:p,slabs:slabs});
+      el.innerHTML+=mkPC(d.id,p,slabs);
     });
     cacheSet('polls',pollsData,300); // 5 min cache
   }catch(e){
@@ -2085,41 +2150,104 @@ async function loadPools(){
   }
 }
 
-function mkPC(id, p){
+function mkPC(id, p, slabs){
   var fee=Number(p.fee)||0;
   var maxUsers=Number(p.maxUsers)||100;
   var joined=Number(p.joined||p.users||0);
   var appCut=typeof p.appCutPct==='number'?p.appCutPct:APP_CUT_PCT;
   var fillPct=maxUsers>0?Math.round((joined/maxUsers)*100):0;
-  var maxPrize=calcPrizePool(fee,maxUsers,appCut);
-  var currentPrize=calcPrizePool(fee,joined,appCut);
-  var maxBreakdown=calcPrizeBreakdown(maxPrize);
-  var medals=['&#x1F947;','&#x1F948;','&#x1F949;','4th','5th','6th','7th','8th','9th','10th'];
   var pct=Math.min(100,fillPct);
   var barColor='linear-gradient(90deg,var(--neon2),var(--neon))';
 
+  // === SLAB-BASED or FEE-BASED prize ===
+  var useSlab = slabs && slabs.length > 0;
+  var currentPrize, maxPrize;
+  if(useSlab){
+    currentPrize = getPrizeFromSlabs(joined, slabs);
+    maxPrize = getMaxPrizeFromSlabs(slabs);
+  } else {
+    currentPrize = calcPrizePool(fee, joined, appCut);
+    maxPrize = calcPrizePool(fee, maxUsers, appCut);
+  }
+
+  var maxBreakdown=calcPrizeBreakdown(maxPrize);
+  var medals=['&#x1F947;','&#x1F948;','&#x1F949;','4th','5th','6th','7th','8th','9th','10th'];
+
+  // Next slab info
+  var nextSlabHtml = '';
+  if(useSlab){
+    var nextSlab = getNextSlab(joined, slabs);
+    if(nextSlab){
+      var needed = nextSlab.minUsers - joined;
+      nextSlabHtml = '<div style="background:rgba(168,85,247,0.08);border:1px solid rgba(168,85,247,0.22);border-radius:6px;padding:6px 9px;font-size:10px;color:var(--purple);margin-bottom:6px;display:flex;align-items:center;gap:6px">'
+        +'<span style="font-size:14px">🚀</span>'
+        +'<span><b>'+needed+' aur players</b> aaye to prize badhkar <b style="color:var(--gold)">₹'+nextSlab.prize.toLocaleString('en-IN')+'</b> ho jaayega!</span>'
+        +'</div>';
+    } else {
+      nextSlabHtml = '<div style="background:rgba(0,255,136,0.07);border:1px solid rgba(0,255,136,0.22);border-radius:6px;padding:6px 9px;font-size:10px;color:var(--green);margin-bottom:6px">🏆 Maximum Prize Pool Reach Ho Gayi! Abhi Join Karo!</div>';
+    }
+  }
+
+  // Prize Slabs table (if slab-based)
+  var slabTableHtml = '';
+  if(useSlab && slabs.length > 0){
+    slabTableHtml += '<div style="margin-bottom:7px">';
+    slabTableHtml += '<div style="font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;font-weight:700;margin-bottom:5px">📈 PRIZE SLABS (Players → Prize)</div>';
+    slabTableHtml += '<div style="display:flex;flex-wrap:wrap;gap:4px">';
+    slabs.forEach(function(sl, si){
+      var isCurrent = (joined >= sl.minUsers) && (si === slabs.length-1 || joined < slabs[si+1].minUsers);
+      slabTableHtml += '<div style="padding:4px 8px;border-radius:5px;font-size:10px;font-weight:700;'
+        +(isCurrent
+          ? 'background:linear-gradient(135deg,rgba(255,215,0,0.2),rgba(255,107,53,0.15));border:1px solid rgba(255,215,0,0.5);color:var(--gold)'
+          : 'background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:var(--muted)')
+        +'">'+(si===0?'1':''+sl.minUsers)+'+👥 → ₹'+sl.prize.toLocaleString('en-IN')+(isCurrent?' ✅':'')+'</div>';
+    });
+    slabTableHtml += '</div></div>';
+  }
+
   var prizeHtml='';
   prizeHtml+='<div style="background:linear-gradient(135deg,rgba(255,215,0,0.08),rgba(255,107,53,0.05));border:1px solid rgba(255,215,0,0.3);border-radius:10px;padding:10px;margin-bottom:8px">';
-  prizeHtml+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">';
-  prizeHtml+='<span style="font-size:10px;color:var(--muted)">&#x1F3C6; Max Prize</span>';
-  prizeHtml+='<span style="font-family:Rajdhani,sans-serif;font-size:22px;font-weight:700;color:var(--gold)">&#x20B9;'+maxPrize.toLocaleString('en-IN')+'</span>';
+  
+  // Current prize (big display)
+  prizeHtml+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">';
+  prizeHtml+='<span style="font-size:10px;color:var(--muted)">🏆 '+(useSlab?'Current Prize':'Max Prize')+'</span>';
+  prizeHtml+='<span style="font-family:Rajdhani,sans-serif;font-size:24px;font-weight:700;color:var(--gold)">₹'+currentPrize.toLocaleString('en-IN')+'</span>';
   prizeHtml+='</div>';
-  if(joined>0){
+
+  if(useSlab && maxPrize > currentPrize){
+    prizeHtml+='<div style="display:flex;justify-content:space-between;margin-bottom:6px">';
+    prizeHtml+='<span style="font-size:9px;color:var(--muted)">Max Possible</span>';
+    prizeHtml+='<span style="font-size:12px;font-weight:700;color:var(--purple)">₹'+maxPrize.toLocaleString('en-IN')+'</span>';
+    prizeHtml+='</div>';
+  } else if(!useSlab && joined > 0){
     prizeHtml+='<div style="display:flex;justify-content:space-between;margin-bottom:6px">';
     prizeHtml+='<span style="font-size:9px;color:var(--muted)">Current ('+joined+' players)</span>';
-    prizeHtml+='<span style="font-size:13px;font-weight:700;color:var(--green)">&#x20B9;'+currentPrize.toLocaleString('en-IN')+'</span>';
+    prizeHtml+='<span style="font-size:13px;font-weight:700;color:var(--green)">₹'+currentPrize.toLocaleString('en-IN')+'</span>';
     prizeHtml+='</div>';
   }
+
   prizeHtml+='<div style="height:3px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden;margin-bottom:6px">';
   prizeHtml+='<div style="width:'+pct+'%;height:100%;background:'+barColor+'"></div></div>';
+  
+  // Slab table
+  prizeHtml += slabTableHtml;
+  
+  // Next slab motivator
+  prizeHtml += nextSlabHtml;
+
+  // Prize breakdown chips
   prizeHtml+='<div style="display:flex;flex-wrap:wrap;gap:3px">';
   for(var wi=0;wi<Math.min(10,maxUsers);wi++){
     var wa=maxBreakdown[wi]||0;
     if(wa<=0)break;
-    prizeHtml+='<span style="background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.2);border-radius:3px;padding:1px 5px;font-size:9px;color:var(--gold)">'+medals[wi]+' &#x20B9;'+wa.toLocaleString('en-IN')+'</span>';
+    prizeHtml+='<span style="background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.2);border-radius:3px;padding:1px 5px;font-size:9px;color:var(--gold)">'+medals[wi]+' ₹'+wa.toLocaleString('en-IN')+'</span>';
   }
   prizeHtml+='</div>';
-  prizeHtml+='<div style="font-size:8px;color:var(--muted);margin-top:4px">&#x2B06;&#xFE0F; Prize pool depends on total participation!</div>';
+  if(useSlab){
+    prizeHtml+='<div style="font-size:8px;color:var(--muted);margin-top:4px">⬆️ Jitne zyada players join karenge, utna bada prize milega!</div>';
+  } else {
+    prizeHtml+='<div style="font-size:8px;color:var(--muted);margin-top:4px">⬆️ Prize pool depends on total participation!</div>';
+  }
   prizeHtml+='</div>';
 
   var alreadyJoined=UD&&UD.joinedPolls&&UD.joinedPolls[id];
@@ -2127,20 +2255,20 @@ function mkPC(id, p){
   var pnameEnc=encodeURIComponent(p.name||'Contest');
 
   var html='<div class="pc">';
-  html+='<div class="pc-h"><span class="pc-name">&#x1F3CF; '+(p.name||'Contest')+'</span><span class="pc-fee">&#x20B9;'+fee+'</span></div>';
+  html+='<div class="pc-h"><span class="pc-name">🏏 '+(p.name||'Contest')+'</span><span class="pc-fee">₹'+fee+'</span></div>';
   if(p.description)html+='<div style="font-size:10px;color:var(--muted);margin-bottom:6px">'+p.description+'</div>';
-  html+='<div class="pc-stats"><span>&#x1F465; <b>'+joined+'</b> Joined</span><span>&#x1F3AF; <b>'+maxUsers+'</b> Max</span><span>&#x1F4CA; <b>'+fillPct+'%</b> Full</span></div>';
+  html+='<div class="pc-stats"><span>👥 <b>'+joined+'</b> Joined</span><span>🎯 <b>'+maxUsers+'</b> Max</span><span>📊 <b>'+fillPct+'%</b> Full</span></div>';
   html+='<div class="prog"><div class="prog-f" style="width:'+pct+'%;background:'+barColor+'"></div></div>';
   html+=prizeHtml;
   if(alreadyJoined){
-    html+='<div class="pc-ptag" style="background:rgba(0,255,136,0.1);border-color:rgba(0,255,136,0.3);color:var(--green)">&#x2705; Aap join hain!</div>';
-    html+='<button class="btn-j" style="background:linear-gradient(135deg,#006600,var(--green))" data-pid="'+id+'" data-pname="'+pnameEnc+'" onclick="pdClick(this)">&#x1F4CB; Details Dekho</button>';
+    html+='<div class="pc-ptag" style="background:rgba(0,255,136,0.1);border-color:rgba(0,255,136,0.3);color:var(--green)">✅ Aap join hain!</div>';
+    html+='<button class="btn-j" style="background:linear-gradient(135deg,#006600,var(--green))" data-pid="'+id+'" data-pname="'+pnameEnc+'" onclick="pdClick(this)">📋 Details Dekho</button>';
   }else if(!qReady){
-    html+='<div class="pc-ptag" style="background:rgba(255,107,53,0.1);border-color:rgba(255,107,53,0.3);color:var(--orange)">&#x23F3; Setup ho raha hai ('+(p.questions||[]).length+'/11)</div>';
-    html+='<button class="btn-j" disabled style="opacity:.5">&#x23F3; Coming Soon</button>';
+    html+='<div class="pc-ptag" style="background:rgba(255,107,53,0.1);border-color:rgba(255,107,53,0.3);color:var(--orange)">⏳ Setup ho raha hai ('+(p.questions||[]).length+'/11)</div>';
+    html+='<button class="btn-j" disabled style="opacity:.5">⏳ Coming Soon</button>';
   }else{
-    html+='<div class="pc-ptag">&#x1F4DD; 11 Questions + Join & Test Your Cricket Knowledge!</div>';
-    html+='<button class="btn-j" data-pid="'+id+'" data-pname="'+pnameEnc+'" data-fee="'+fee+'" data-prize="'+maxPrize+'" onclick="sqClick(this)">&#x1F4DD; Quiz & Join</button>';
+    html+='<div class="pc-ptag">📝 11 Questions + Join & Test Your Cricket Knowledge!</div>';
+    html+='<button class="btn-j" data-pid="'+id+'" data-pname="'+pnameEnc+'" data-fee="'+fee+'" data-prize="'+maxPrize+'" onclick="sqClick(this)">📝 Quiz & Join</button>';
   }
   html+='</div>';
   return html;

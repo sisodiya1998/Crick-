@@ -437,6 +437,55 @@ tbody tr:last-child td{border-bottom:none;}
           </div>
           <button class="btn bp" style="margin-top:12px" onclick="savePrizeSettings()">💾 Save Prize Settings</button>
         </div>
+
+        <!-- DYNAMIC PRIZE SLABS CARD -->
+        <div class="card">
+          <div class="ct"><div class="ctl">📈 Dynamic Prize Slabs</div><span class="bdg b-act">NEW</span></div>
+          <div class="alert ai" style="font-size:10px;margin-bottom:12px">
+            📈 <b>Participation-based prize system</b> — jitne zyada players, utna bada prize! App Cut percentage-based system ki jagah yeh fixed slabs use hote hain. Koi slab na ho to fee-based system kaam karega.
+          </div>
+          
+          <!-- Current Slabs List -->
+          <div style="margin-bottom:12px">
+            <div style="font-size:10px;color:var(--muted);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Current Prize Slabs</div>
+            <div id="prize-slabs-list" style="display:flex;flex-direction:column;gap:6px">
+              <div style="color:var(--muted);font-size:11px;text-align:center;padding:12px">Loading slabs...</div>
+            </div>
+          </div>
+          
+          <!-- Add New Slab -->
+          <div style="background:rgba(0,212,255,0.04);border:1px solid var(--border);border-radius:10px;padding:13px;margin-bottom:12px">
+            <div style="font-size:10px;color:var(--neon);font-weight:700;margin-bottom:9px">➕ New Slab Jodo</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end">
+              <div class="fl">
+                <label>Min Players (Jab se)</label>
+                <input type="number" id="slab-min" placeholder="e.g. 100" min="1"/>
+              </div>
+              <div class="fl">
+                <label>Prize Amount (₹)</label>
+                <input type="number" id="slab-prize" placeholder="e.g. 2000" min="1"/>
+              </div>
+              <button class="btn bs" style="margin-bottom:0;height:35px" onclick="addPrizeSlab()">+ Add</button>
+            </div>
+            <div style="font-size:9px;color:var(--muted);margin-top:6px">💡 Example: Min=100, Prize=₹2000 → 100+ players aaye to prize ₹2000 hoga</div>
+          </div>
+
+          <!-- Slab Examples Helper -->
+          <div style="background:rgba(168,85,247,0.06);border:1px solid rgba(168,85,247,0.2);border-radius:8px;padding:10px;margin-bottom:12px">
+            <div style="font-size:10px;color:var(--purple);font-weight:700;margin-bottom:6px">💡 Quick Templates</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <button class="btn bg2 bxs" onclick="loadSlabTemplate('basic')">Basic (3 slabs)</button>
+              <button class="btn bg2 bxs" onclick="loadSlabTemplate('premium')">Premium (5 slabs)</button>
+              <button class="btn bg2 bxs" onclick="loadSlabTemplate('mega')">Mega IPL (7 slabs)</button>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:8px">
+            <button class="btn bp" style="flex:1" onclick="savePrizeSlabs()">💾 Save Slabs</button>
+            <button class="btn bd" onclick="clearPrizeSlabs()">🗑️ Clear All Slabs</button>
+          </div>
+          <div id="slab-msg" style="font-size:10px;color:var(--green);margin-top:7px;text-align:center"></div>
+        </div>
         <div class="card"><div class="ct"><div class="ctl">🎮 Toggles</div></div>
           <div class="sr"><div class="sr-i"><div class="st">Dummy Users in Polls (+82)</div><div class="sd">Make pools look more active</div></div><label class="tog"><input type="checkbox" id="tog-dummy" checked/><div class="tog-t"></div><div class="tog-th"></div></label></div>
           <div class="sr"><div class="sr-i"><div class="st">Maintenance Mode</div><div class="sd">Block user access</div></div><label class="tog"><input type="checkbox" id="tog-maint"/><div class="tog-t"></div><div class="tog-th"></div></label></div>
@@ -2524,6 +2573,144 @@ window.danger=async function(action){
     else if(action==='reject-deps'){const s=await db.collection('depositRequests').where('status','==','pending').get();const b=db.batch();s.forEach(function(d){b.update(d.ref,{status:'rejected'});});await b.commit();toast(s.size+' rejected','var(--red)');loadDeps();}
   }catch(e){toast('Error: '+e.message,'var(--red)');}
 };
+
+// ===== PRIZE SLABS MANAGEMENT =====
+var _adminSlabs = [];
+
+async function loadAdminPrizeSlabs(){
+  try{
+    var s = await db.collection('settings').doc('prizeSlabs').get();
+    if(s.exists && s.data().slabs){
+      _adminSlabs = s.data().slabs.slice().sort(function(a,b){return a.minUsers-b.minUsers;});
+    } else {
+      _adminSlabs = [];
+    }
+  }catch(e){ _adminSlabs = []; }
+  renderSlabList();
+}
+
+function renderSlabList(){
+  var el = document.getElementById('prize-slabs-list');
+  if(!el) return;
+  if(_adminSlabs.length === 0){
+    el.innerHTML = '<div style="color:var(--muted);font-size:11px;text-align:center;padding:12px;background:var(--bg3);border-radius:8px">Koi slab nahi — fee-based system use ho raha hai.<br><span style="font-size:9px">Slabs add karo to participation-based prizes activate honge.</span></div>';
+    return;
+  }
+  var html = '';
+  _adminSlabs.forEach(function(sl,i){
+    html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 13px;background:var(--bg3);border:1px solid var(--border);border-radius:9px">'
+      +'<div style="display:flex;align-items:center;gap:10px">'
+      +'<span style="font-size:18px">📊</span>'
+      +'<div><div style="font-size:12px;font-weight:700;color:var(--text)">'+sl.minUsers+'+ Players</div>'
+      +'<div style="font-size:9px;color:var(--muted)">Slab '+(i+1)+'</div></div>'
+      +'</div>'
+      +'<div style="display:flex;align-items:center;gap:10px">'
+      +'<span style="font-family:Rajdhani,sans-serif;font-size:20px;font-weight:700;color:var(--gold)">₹'+sl.prize.toLocaleString('en-IN')+'</span>'
+      +'<button class="btn bd bxs" onclick="removeSlab('+i+')">✕</button>'
+      +'</div>'
+      +'</div>';
+  });
+  el.innerHTML = html;
+}
+
+window.addPrizeSlab = function(){
+  var minU = parseInt(document.getElementById('slab-min').value);
+  var prize = parseInt(document.getElementById('slab-prize').value);
+  if(!minU || minU < 1){toast('Min players daalo (e.g. 100)','var(--orange)');return;}
+  if(!prize || prize < 1){toast('Prize amount daalo (e.g. 2000)','var(--orange)');return;}
+  // Check duplicate
+  for(var i=0;i<_adminSlabs.length;i++){
+    if(_adminSlabs[i].minUsers === minU){
+      _adminSlabs[i].prize = prize;
+      toast('Slab updated!','var(--neon)');
+      renderSlabList();
+      document.getElementById('slab-min').value='';
+      document.getElementById('slab-prize').value='';
+      return;
+    }
+  }
+  _adminSlabs.push({minUsers:minU, prize:prize});
+  _adminSlabs.sort(function(a,b){return a.minUsers-b.minUsers;});
+  renderSlabList();
+  document.getElementById('slab-min').value='';
+  document.getElementById('slab-prize').value='';
+  toast('Slab added! Save karna mat bhoolo.','var(--green)');
+};
+
+window.removeSlab = function(idx){
+  _adminSlabs.splice(idx,1);
+  renderSlabList();
+  toast('Slab removed. Save karo.','var(--orange)');
+};
+
+window.savePrizeSlabs = async function(){
+  try{
+    await db.collection('settings').doc('prizeSlabs').set({
+      slabs: _adminSlabs,
+      updatedAt: FS.serverTimestamp()
+    });
+    var msg = document.getElementById('slab-msg');
+    if(msg) msg.textContent = '✅ Slabs saved! Users ko turant dikhega.';
+    setTimeout(function(){if(msg)msg.textContent='';},3000);
+    toast('✅ Prize slabs saved!','var(--green)');
+  }catch(e){toast('Error: '+e.message,'var(--red)');}
+};
+
+window.clearPrizeSlabs = async function(){
+  if(!confirm('Saare slabs delete karein? Fee-based system wapis aa jaayega.')) return;
+  try{
+    await db.collection('settings').doc('prizeSlabs').set({slabs:[],updatedAt:FS.serverTimestamp()});
+    _adminSlabs = [];
+    renderSlabList();
+    toast('Slabs cleared. Ab fee-based system active.','var(--orange)');
+  }catch(e){toast('Error: '+e.message,'var(--red)');}
+};
+
+window.loadSlabTemplate = function(type){
+  var templates = {
+    'basic': [
+      {minUsers:1, prize:500},
+      {minUsers:100, prize:2000},
+      {minUsers:200, prize:5000}
+    ],
+    'premium': [
+      {minUsers:1, prize:500},
+      {minUsers:50, prize:1500},
+      {minUsers:100, prize:3000},
+      {minUsers:200, prize:7000},
+      {minUsers:500, prize:15000}
+    ],
+    'mega': [
+      {minUsers:1, prize:1000},
+      {minUsers:50, prize:3000},
+      {minUsers:100, prize:6000},
+      {minUsers:250, prize:12000},
+      {minUsers:500, prize:25000},
+      {minUsers:1000, prize:50000},
+      {minUsers:2000, prize:100000}
+    ]
+  };
+  if(!templates[type]) return;
+  _adminSlabs = templates[type].slice();
+  renderSlabList();
+  toast('Template loaded! Save karna mat bhoolo.','var(--neon)');
+};
+
+// Load slabs when settings section opens
+var _origGoSec = window.goSec;
+// Will be overridden after goSec is defined — use MutationObserver trick instead:
+document.addEventListener('DOMContentLoaded', function(){
+  // Auto-load slabs when settings section is visited
+  var origGoSec2 = window.goSec;
+  if(origGoSec2){
+    window.goSec = function(sec, el){
+      origGoSec2(sec, el);
+      if(sec === 'settings'){
+        loadAdminPrizeSlabs();
+      }
+    };
+  }
+});
 
 // ===== TOAST =====
 // ===== CUSTOM BLOCK =====
