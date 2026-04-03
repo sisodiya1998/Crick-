@@ -1036,7 +1036,7 @@ const FS=firebase.firestore.FieldValue;
       console.log('[Admin] Password loaded from Firestore');
     }else{
       // First time: save default password to Firestore
-      await db.collection('settings').doc('admin').set({password:'123456',uids:['9oMaD4nQaiUZGERBKDts7NUUahT2']},{merge:true});
+      await db.collection('settings').doc('admin').set({password:'1234',uids:['9oMaD4nQaiUZGERBKDts7NUUahT2']},{merge:true});
       console.log('[Admin] Default password saved to Firestore');
     }
   }catch(e){
